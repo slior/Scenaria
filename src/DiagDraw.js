@@ -24,16 +24,16 @@ async function layoutModel(model)
 {
     //create graph structure for layout library
     let nodes = model.actors.map(a => {
-        return { id : a.id, 
-                 caption : a.caption,
-                 height : DRAW_MARGIN_HEIGHT*2 + DRAW_TEXT_HEIGHT,
-                 width : DRAW_CHAR_WIDTH * a.caption.length + 2 * DRAW_MARGIN_WIDTH
-        }
+        return Object.assign({},a,{
+            height : DRAW_MARGIN_HEIGHT*2 + DRAW_TEXT_HEIGHT,
+            width : DRAW_CHAR_WIDTH * a.caption.length + 2 * DRAW_MARGIN_WIDTH
+        })
     }).concat(model.channels.map(c => {
-        return { id : channelID(c), 
-                 width : DRAW_CHANNEL_RADIUS,
-                 height : DRAW_CHANNEL_RADIUS
-        }
+        return Object.assign({},c, {
+            id : channelID(c), 
+            width : DRAW_CHANNEL_RADIUS,
+            height : DRAW_CHANNEL_RADIUS
+        })
     }))
 
     let edges = model.channels.flatMap(channel => {
@@ -41,10 +41,16 @@ async function layoutModel(model)
             {id : channel.from + "_" + channelID(channel), sources : [channel.from], targets : [channelID(channel)]},
             {id : channelID(channel) + "_" + channel.to, sources : [channelID(channel)], targets : [channel.to]}
         ]
-    })
+    }).concat(model.data_flows.map(f => {
+        return {
+            id : f.from + "_" + f.to,
+            sources : [f.from],
+            targets : [f.to]
+        }
+    }))
 
     let graph = {
-        id : "test_graph",
+        id : (model.name || "graph"),
         layoutOptions: { 'elk.algorithm': 'layered', 'edgeRouting' : 'ORTHOGONAL' },
         children: nodes,
         edges: edges
@@ -87,7 +93,10 @@ function drawActor(draw,actor,actorView)
 {
     let g = draw.group();
     let r = g.rect(actorView.width,actorView.height).fill(actorView.fillColor).attr('stroke',actorView.lineColor)
-    r.radius(2)
+    if (actor.type == 'store') //TODO: should be constant string
+        r.radius(30)
+    else
+        r.radius(2)
     let t = g.text(actor.caption)
     t.cx(r.cx())
     t.cy(r.cy())

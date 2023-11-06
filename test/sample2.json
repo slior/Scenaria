@@ -1,0 +1,33 @@
+{
+    "name" : "Sample2",
+    "actors" : [
+        {
+            "type" : "agent",
+            "caption" : "Client",
+            "id" : "c"
+        },
+        {
+            "type" : "agent",
+            "caption" : "Server",
+            "id" : "s"
+        }, 
+        {
+            "type" : "store", 
+            "caption" : "App Data",
+            "id" : "ad"
+        }
+    ],
+    "channels" : [
+        {
+            "from" : "c",
+            "to" : "s"
+        }
+    ],
+    "data_flows" : [
+        {
+            "type" : "read",
+            "from" : "ad",
+            "to" : "s"
+        }
+    ]
+}  
