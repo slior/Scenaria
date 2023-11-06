@@ -1,0 +1,26 @@
+{
+    "name": "dynseq",
+    "version": "0.1.0",
+    "description": "Dynamic Visualization of Sequence Diagrams",
+    "main": "index.js",
+    "scripts": {
+        "test": "mocha",
+        "build": "webpack"
+    },
+    "author": "Lior Schejter",
+    "license": "ISC",
+    "devDependencies": {
+        "mocha": "^8.1.3",
+        "rewire": "^6.0.0",
+        "should": "^13.2.3",
+        "webpack": "^4.44.1",
+        "webpack-cli": "^3.3.12"
+    },
+    "dependencies": {
+        "@svgdotjs/svg.js": "^3.1.2",
+        "elkjs": "^0.8.2",
+        "monaco-editor": "^0.34.1",
+        "ohm-js": "^16.4.0",
+        "web-worker": "^1.2.0"
+    }
+}

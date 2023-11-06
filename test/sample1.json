@@ -1,0 +1,26 @@
+{
+    "actors" : [
+        {
+            "caption" : "Client",
+            "id" : "c"
+        },
+        {
+            "caption" : "Server",
+            "id" : "s"
+        }, 
+        { 
+            "caption" : "3rd Party",
+            "id" : "tp"
+        }
+    ],
+    "channels" : [
+        {
+            "from" : "c",
+            "to" : "s"
+        },
+        {
+            "from": "c",
+            "to":"tp"
+        }
+    ]
+}  

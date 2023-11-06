@@ -1,0 +1,240 @@
+<html>
+<head>
+    <title>Interactive Model</title>
+    <style>
+        .errorText { 
+            color: red;
+        }
+
+        .consoleText {
+            color : black;
+            font-family:Courier, monospace;
+            overflow-y: auto;
+            height: 100px;
+            border: 1px solid black;
+        }
+        
+        button {
+            color: #090909;
+            padding: 0.7em 1.7em;
+            font-size: 18px;
+            border-radius: 0.5em;
+            background: #e8e8e8;
+            border: 1px solid #e8e8e8;
+            transition: all .3s;
+            box-shadow: 6px 6px 12px #c5c5c5,
+                        -6px -6px 12px #ffffff;
+        }
+
+        button:active {
+            color: #666;
+            box-shadow: inset 4px 4px 12px #c5c5c5,
+                        inset -4px -4px 12px #ffffff;
+        }
+
+        body{
+            font-family: arial;	
+        }
+
+        .drawingArea {
+            height : 38vh;
+            width:100%;
+            border:1px solid black;
+            overflow-y:scroll;
+            border-radius: 6px;
+        }
+
+        .drawingSVG {
+            height : 1000px;
+            width : 100%;
+        }
+
+        .wrapper{
+            width: 99vw;
+            height: 45vh;
+            
+            display: flex;
+            align-items: stretch;
+            justify-content: left;
+            flex-direction: column;
+        }
+
+        .cmd{
+            position: relative;
+            display: block;
+            /* height: 600px; */
+            height: 40vh;
+            width: 100%;
+            border: 1px solid #000000;
+            border-radius: 4px;
+            overflow: hidden;
+            
+            box-shadow: 0px 8px 18px #4b1d3f;
+        }
+
+        /*
+        * 1. Set position
+        * 2. Set dimension
+        * 3. Style
+        */
+        .title-bar{
+            
+            /* 1 */
+            position: relative;
+            top: 0;
+            left: 0;
+            right: 0;
+            /* 2 */
+            width: 100%;
+            height: 40px;
+            /* 3 */
+            display: block;
+            color: #FFFFFF;
+            line-height: 40px;
+            font-weight: 600;
+            background-color: #242424;
+            text-align: left;
+            border-bottom: 1px solid white;
+            padding-left: 5px;
+        }
+
+        .rtl_editor_textarea{
+            position: relative;
+            top: 0px;
+            padding: 12px;
+            text-align: right;
+            direction: rtl;
+            resize: none;
+            width: 100%;
+            height: calc(100%);
+            background-color: #4b1d3f;
+            border: none;
+            color: #FFFFFF;
+            margin: 0px;
+            font-size: 1.1rem;
+        }
+
+    </style>
+    <!-- Loader and code for initializing the editor -->
+    <!-- Also defines a 'getCode' function to retrieve the code -->
+    <!-- TODO: figure out how to load this w/ webpack -->
+    <script src="./lib/monaco-editor/min/vs/loader.js"></script>
+    <script src="./src/Editor.js"></script>
+
+    <script src="./main.js"></script>
+<script>
+
+    var runner;
+
+    function init()
+    {        
+        let drawingBoard = document.getElementById('drawing')
+        // if (!isRTL(variant))
+        // {
+            let editorParent = document.getElementById('editorContainer')
+            initEditor(editorParent)
+        // }
+        // else
+        // {
+        //     switchToRTLEditor()
+        // }
+        // runner = main.initApp(drawingBoard,startX,startY,startAngle,showMsg)
+        main.initApp(drawingBoard)
+        // main.testSVGDrawing(drawingBoard);
+    }
+
+    // function isRTL(_variant)
+    // {
+    //     return _variant.toLowerCase() == 'hebrew'
+    // } 
+    
+    // function switchToRTLEditor()
+    // {
+    //     document.getElementById('editorContainer').style.display = 'none'
+    //     document.getElementById('rtlEditorContainer').style.display = 'block'
+    // }
+
+    function getCodeFromEditor()
+    {
+        return getCode(); //retrievs it from the monaco editor - defined in Editor.js
+    }
+    function parseAndExecute()
+    {
+        try
+        {
+            clearError()
+            let code = getCodeFromEditor();
+            let model = main.parseCode(code);
+            // runner.run(program);
+            main.presentModel(model)
+        }
+        catch (err)
+        {
+            showError(err.toString())
+        }
+    }
+
+    function showMsg(msg)
+    {
+        let m = msg || '';//TODO: clean input message - escape html
+        console.log(m)
+        document.getElementById('cons').innerHTML += m + "<br/>"
+    }
+
+    function showError(msg)
+    {
+        console.error(msg || '')
+        document.getElementById("error").innerText = `${msg || ""}`
+    }
+    function clearError()
+    {
+        document.getElementById("error").innerText = ""
+    }
+
+    function clearConsole()
+    {
+        document.getElementById('cons').innerText = ''
+    }
+
+    function reset()
+    {
+        try
+        {   
+            main.resetState();
+            clearError()
+            clearConsole();
+        }
+        catch (err)
+        {
+            showError(err.toString())
+        }
+    }
+
+    function clearDrawing()
+    {
+        runner.empty();
+    }
+
+</script>
+</head>
+
+<body onload="init()">
+
+    <div id="drawing" class="drawingArea"></div>
+    <hr/>
+    <div class="wrapper">
+        <div class="title-bar" id="titleBar">Program</div>
+        <div class="cmd" id="editorContainer">
+        </div>
+        <!-- <div class="cmd" id="rtlEditorContainer" style="display: none;">
+            <textarea id="rtlEditor" class="rtl_editor_textarea"></textarea>
+        </div> -->
+    </div>
+    <button onclick="parseAndExecute()"> Execute </button>
+    <button onclick="reset()">Reset</button>
+        <hr/>
+    <div id="cons" class="consoleText" ></div>
+    <span id="error" class="errorText" ></span>
+    
+</body>
+</html>
