@@ -128,31 +128,13 @@
 
     function init()
     {        
-        let drawingBoard = document.getElementById('drawing')
-        // if (!isRTL(variant))
-        // {
-            let editorParent = document.getElementById('editorContainer')
-            initEditor(editorParent)
-        // }
-        // else
-        // {
-        //     switchToRTLEditor()
-        // }
-        // runner = main.initApp(drawingBoard,startX,startY,startAngle,showMsg)
+        let drawingBoard = document.getElementById('drawing');
+        let editorParent = document.getElementById('editorContainer')
+        initEditor(editorParent)
+ 
         main.initApp(drawingBoard)
-        // main.testSVGDrawing(drawingBoard);
+        
     }
-
-    // function isRTL(_variant)
-    // {
-    //     return _variant.toLowerCase() == 'hebrew'
-    // } 
-    
-    // function switchToRTLEditor()
-    // {
-    //     document.getElementById('editorContainer').style.display = 'none'
-    //     document.getElementById('rtlEditorContainer').style.display = 'block'
-    // }
 
     function getCodeFromEditor()
     {
