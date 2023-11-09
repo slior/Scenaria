@@ -32,20 +32,6 @@ function presentModel(model)
     .then(g => drawGraph(draw,g))
 }
 
-
-// function resetState()
-// {
-//     if (programRunner)
-//     {
-//         let newState = new VMState(initialCursorCoords.x,initialCursorCoords.y,initialCursorCoords.angle)
-//         programRunner.resetTo(newState);
-//     }
-//     else
-//     {
-//         console.error("ERROR: application not initialized")
-//     }
-// }
-
 function parseCode(programCode)
 {
     // let parser = createParser(variant)

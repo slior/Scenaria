@@ -52,7 +52,11 @@ async function layoutModel(model)
 
     let graph = {
         id : (model.name || "graph"),
-        layoutOptions: { 'elk.algorithm': 'layered', 'edgeRouting' : 'ORTHOGONAL' },
+        layoutOptions: { 'elk.algorithm': 'layered', 
+                         'elk.edgeRouting' : 'ORTHOGONAL', 
+                         'elk.layered.layering.strategy' : 'INTERACTIVE',
+                         'elk.layered.nodePlacement.strategy' : 'NETWORK_SIMPLEX'
+                    },
         children: nodes,
         edges: edges
     }
@@ -81,18 +85,25 @@ function drawGraph(draw,graph)
 
     //draw lines
     graph.edges.forEach(edge => {
-        edge.sections.forEach(section => {
-            let line = draw.polyline( [[section.startPoint.x,section.startPoint.y],
-                            [section.endPoint.x,section.endPoint.y]])
-            line.stroke({width: 1, color : 'black'})
-        })
-
+        drawEdgeLine(draw,edge)
         if (edge.type == 'dataflow')
         {
             let lastSection = edge.sections[edge.sections.length-1]
             let direction = arrowHeadDirectionFrom(lastSection)
             drawArrowHead(draw,lastSection.endPoint.x,lastSection.endPoint.y,direction)
         }
+    })
+}
+
+function drawEdgeLine(draw,edge)
+{
+    edge.sections.forEach(section => {
+        let bends = section.bendPoints || []
+        var points = [[section.startPoint.x,section.startPoint.y]]
+                      .concat(bends.map(p => [p.x,p.y]))
+        points.push([section.endPoint.x,section.endPoint.y])
+        return draw.polyline(points)
+                   .stroke({width: 1, color : 'black'}).fill('none')
     })
 }
 
@@ -107,6 +118,7 @@ function arrowHeadDirectionFrom(edgeSection)
     let x2 = edgeSection.endPoint.x
     let y2 = edgeSection.endPoint.y
 
+    //TODO: this is too simplistic. need finer direction. based on clock hand angles?
     let ret = HEAD_DIRECTION.N
     switch (true)
     {
