@@ -2,7 +2,7 @@
 const ELK = require('elkjs')
 const elk = new ELK()
 
-const { EDGE_TYPE, ACTOR_TYPE } = require('./SystemModel')
+const { EDGE_TYPE, ACTOR_TYPE, CHANNEL_TYPE } = require('./SystemModel')
 
 const DRAW_MARGIN_HEIGHT = 10;
 const DRAW_TEXT_HEIGHT = 30;
@@ -73,7 +73,7 @@ function graphNodeRepresentsAnActor(node)
 
 /**
  * Using the given SVG object, draws the given graph
- * @param {SVG} draw The SVG.js container object.
+ * @param {SVG} draw The SVG.js container object, with SVG.js API.
  * @param {Graph} graph The graph object, as returned from layout model
  *  
  */
@@ -86,7 +86,7 @@ function drawGraph(draw,graph)
         if (graphNodeRepresentsAnActor(child))
             drawActor(draw,child,child)
         else
-            drawChannel(draw,child,child)
+            drawChannel(draw,child,graph)
     })
 
     //draw lines
@@ -195,16 +195,83 @@ function drawActor(draw,actor,actorView)
     g.move(actorView.x,actorView.y)
 }
 
-function drawChannel(draw,channelView)
+function drawChannel(draw,channel,graph)
 {
     let g = draw.group()
-    let radius = channelView.radius || 20
+    let radius = channel.radius || 20
     let c = g.circle(radius)
     c.fill('#ffffff')
     c.stroke('black')
-    c.x(channelView.x) //move sets corner of circle, so we use cx,cy instead.
-    c.y(channelView.y)
+    c.x(channel.x)
+    c.y(channel.y)
+    if (channel.type == CHANNEL_TYPE.REQ_RES)
+        drawReqResDecoration(draw,channel,graph)
+}
 
+function drawReqResDecoration(draw,channel,graph)
+{
+    let incomingEdges = findEdgesByTarget(graph,channel)
+    if (incomingEdges.length != 1) throw new Error(`Invalid number of incoming edges for channel ${JSON.stringify(channel)}: ${incomingEdges.length}`)
+    let outgoingEdges = findEdgesBySource(graph,channel)
+    if (outgoingEdges.length != 1) throw new Error(`Invalid number of outgoing edges for channel ${JSON.stringify(channel)}: ${outgoingEdges.length}`)
+
+    let incomingEdge = incomingEdges[0]
+    let outgoingEdge = outgoingEdges[0]
+    let inX = incomingEdge.sections[0].endPoint.x
+    let inY = incomingEdge.sections[0].endPoint.y
+    let outX = outgoingEdge.sections[0].startPoint.x
+    let outY = outgoingEdge.sections[0].startPoint.y
+
+    var labelX = channel.x
+    var labelY = channel.y
+    var text = 'R'
+    switch (true)
+    {   //direction of channel is determined by the incoming and outgoing edge.
+        // this serves to determine the location of the label decoration + the text, specifically the arrow drawn (a unicode character)
+        case (inY == outY) && (inX < outX) : //point right
+            labelY -= 20;
+            text += '\u25B6' 
+            break;
+        case (inY == outY) && (inX > outX) : //point left
+            labelY -= 20;
+            text = '\u25C0 R' //note: we're overwriting the text here completely
+            break;
+        case (inY < outY) && (inX == outX) : //point down
+            labelX -= 15;
+            text += '\n\u25BC'
+            break;
+        case (inY > outY) && (inX == outX) : //point up
+            labelX -= 15;
+            text += '\n\u25B2'
+            break;
+    }
+
+    let textEl = draw.text(text)
+    textEl.size(8)
+    textEl.x(labelX)
+    textEl.y(labelY)
+}
+
+/**
+ * Find all edges that are outgoing from the given node in the given graph
+ * @param {Graph} graph The graph object created for layout/drawing purposes
+ * @param {Node} node A node in the graph, representing either an actor or a channel
+ * @returns The list of edges where one of the sources is the given node.
+ */
+function findEdgesBySource(graph,node)
+{
+    return graph.edges.filter(e => e.sources.includes(node.id))
+}
+
+/**
+ * Find all edges that are incoming to the given node in the given graph
+ * @param {Graph} graph The graph object created for layout/drawing purposes
+ * @param {Node} node A node in the graph, representing either an actor or a channel
+ * @returns The list of edges where one of the targets is the given node
+ */
+function findEdgesByTarget(graph,node)
+{
+    return graph.edges.filter(e => e.targets.includes(node.id))
 }
 
 module.exports = {

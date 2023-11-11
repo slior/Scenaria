@@ -20,7 +20,8 @@
     "channels" : [
         {
             "from" : "c",
-            "to" : "s"
+            "to" : "s",
+            "type": "req_res"
         }
     ],
     "data_flows" : [
