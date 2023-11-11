@@ -2,6 +2,8 @@
 const ELK = require('elkjs')
 const elk = new ELK()
 
+const { EDGE_TYPE, ACTOR_TYPE } = require('./SystemModel')
+
 const DRAW_MARGIN_HEIGHT = 10;
 const DRAW_TEXT_HEIGHT = 30;
 const DRAW_CHAR_WIDTH = 10;
@@ -46,7 +48,7 @@ async function layoutModel(model)
             id : f.from + "_" + f.to,
             sources : [f.from],
             targets : [f.to],
-            type : 'dataflow' //TODO: should be a constant
+            type : EDGE_TYPE.DATA_FLOW
         }
     }))
 
@@ -64,6 +66,11 @@ async function layoutModel(model)
     return await elk.layout(graph)
 }
 
+function graphNodeRepresentsAnActor(node)
+{
+    return node.id && (node.id.indexOf('-') < 0)
+}
+
 /**
  * Using the given SVG object, draws the given graph
  * @param {SVG} draw The SVG.js container object.
@@ -76,17 +83,16 @@ function drawGraph(draw,graph)
     graph.children.forEach(child => {
         child.fillColor = '#ffffff'
         child.lineColor = 'black'
-        if (child.id.indexOf('-') < 0) //it's an actor
-        {
+        if (graphNodeRepresentsAnActor(child))
             drawActor(draw,child,child)
-        }
-        else drawChannel(draw,child,child)
+        else
+            drawChannel(draw,child,child)
     })
 
     //draw lines
     graph.edges.forEach(edge => {
         drawEdgeLine(draw,edge)
-        if (edge.type == 'dataflow')
+        if (edge.type == EDGE_TYPE.DATA_FLOW)
         {
             let lastSection = edge.sections[edge.sections.length-1]
             let direction = arrowHeadDirectionFrom(lastSection)
@@ -107,6 +113,7 @@ function drawEdgeLine(draw,edge)
     })
 }
 
+//Since edges are orthogonal, the arrow heads can be in one of 4 directions
 const HEAD_DIRECTION = {
     W : "W", N : "N", E : "E", S : "S"
 }
@@ -178,7 +185,7 @@ function drawActor(draw,actor,actorView)
 {
     let g = draw.group();
     let r = g.rect(actorView.width,actorView.height).fill(actorView.fillColor).attr('stroke',actorView.lineColor)
-    if (actor.type == 'store') //TODO: should be constant string
+    if (actor.type == ACTOR_TYPE.STORE)
         r.radius(30)
     else
         r.radius(2)
@@ -188,7 +195,7 @@ function drawActor(draw,actor,actorView)
     g.move(actorView.x,actorView.y)
 }
 
-function drawChannel(draw,channel, channelView)
+function drawChannel(draw,channelView)
 {
     let g = draw.group()
     let radius = channelView.radius || 20
