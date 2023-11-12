@@ -146,10 +146,12 @@ function arrowHeadDirectionFrom(edgeSection)
     return ret;
 }
 
+const ARROW_W = 10; //constants for now but should really be derived from layout - how much room it has.
+const ARROW_H = 15;
+
 function drawArrowHead(draw,x,y,direction)
 {
-    const ARROW_W = 10; //constants for now but should really be derived from layout - how much room it has.
-    const ARROW_H = 15;
+    
     //point 1 is the tip - given as parameter.
     //point 2 is the bottom right corner, but turned according to direction
     //point 3 is the bottom left corner, also turned.
@@ -214,17 +216,102 @@ function drawChannel(draw,channel,graph)
     c.y(channel.y)
     if (channel.type == CHANNEL_TYPE.REQ_RES)
         drawReqResDecoration(draw,channel,graph)
+    else if (channel.type == CHANNEL_TYPE.ASYNC)
+        drawAsyncChannelDecoration(draw,channel,graph)
+}
+
+function drawAsyncChannelDecoration(draw,channel,graph)
+{
+    drawAsyncArrowhead(draw,channelIncomingEdge(graph,channel))
+    drawAsyncArrowhead(draw,channelOutgoingEdge(graph,channel))
+}
+
+function determineEdgeEndDirection(edge)
+{
+    let hasBends = edge.sections[0].bendPoints && edge.sections[0].bendPoints.length > 0
+    let lastBendPoint = hasBends ? 
+                            edge.sections[0].bendPoints[edge.sections[0].bendPoints.length-1] :
+                            null
+    let startX = lastBendPoint ? 
+                    lastBendPoint.x :
+                    edge.sections[0].startPoint.x
+    let startY = lastBendPoint ? 
+                    lastBendPoint.y : edge.sections[0].startPoint.y
+    let endX = edge.sections[0].endPoint.x
+    let endY = edge.sections[0].endPoint.y
+
+    if (startX == endX )
+        return startY > endY ?  HEAD_DIRECTION.N : HEAD_DIRECTION.S
+    else if (startY == endY)
+        return startX > endX ? HEAD_DIRECTION.W : HEAD_DIRECTION.E
+}
+
+/**
+ * Draw an async arrow head at the end of the given edge.
+ * Will determine the direction according to the last bend point (or start point) of the edge.
+ * 
+ * @param {SVG} draw The SVG object to use for drawing, with SVG.js API.
+ * @param {GraphEdge} edge 
+ * @see {determineEdgeEndDirection}
+ */
+function drawAsyncArrowhead(draw,edge)
+{
+    let x = edge.sections[0].endPoint.x
+    let y = edge.sections[0].endPoint.y
+    let direction = determineEdgeEndDirection(edge)
+    let height = ARROW_H
+    let point1 = { x : x, y : y}
+    let point2 = {}
+    let point3 = {}
+    switch (direction)
+    {
+        case HEAD_DIRECTION.N : 
+            point2.x = x + ARROW_W/2
+            point2.y = y + height
+            point3.x = x
+            point3.y = y + height
+            break;
+        case HEAD_DIRECTION.E : 
+            point2.x = x - height
+            point2.y = y + ARROW_W/2
+            point3.x = x - height
+            point3.y = y
+            break;
+        case HEAD_DIRECTION.S : 
+            point2.x = x - ARROW_W/2
+            point2.y = y - height
+            point3.x = x
+            point3.y = y - ARROW_H
+            break;
+        case HEAD_DIRECTION.W : 
+            point2.x = x + height
+            point2.y = y - ARROW_W/2
+            point3.x = x + height
+            point3.y = y
+            break;
+    }
+    let polylineCoords = `${point1.x},${point1.y} ${point2.x},${point2.y} ${point3.x},${point3.y}`
+    draw.polygon(polylineCoords).fill('black').stroke({width : 1})
+}
+
+function channelIncomingEdge(graph,channel)
+{
+    let incomingEdges = findEdgesByTarget(graph,channel)
+    if (incomingEdges.length != 1) throw new Error(`Invalid number of incoming edges for channel ${JSON.stringify(channel)}: ${incomingEdges.length}`)
+    return incomingEdges[0];
+}
+
+function channelOutgoingEdge(graph,channel)
+{
+    let outgoingEdges = findEdgesBySource(graph,channel)
+    if (outgoingEdges.length != 1) throw new Error(`Invalid number of outgoing edges for channel ${JSON.stringify(channel)}: ${outgoingEdges.length}`)
+    return outgoingEdges[0];
 }
 
 function drawReqResDecoration(draw,channel,graph)
 {
-    let incomingEdges = findEdgesByTarget(graph,channel)
-    if (incomingEdges.length != 1) throw new Error(`Invalid number of incoming edges for channel ${JSON.stringify(channel)}: ${incomingEdges.length}`)
-    let outgoingEdges = findEdgesBySource(graph,channel)
-    if (outgoingEdges.length != 1) throw new Error(`Invalid number of outgoing edges for channel ${JSON.stringify(channel)}: ${outgoingEdges.length}`)
-
-    let incomingEdge = incomingEdges[0]
-    let outgoingEdge = outgoingEdges[0]
+    let incomingEdge = channelIncomingEdge(graph,channel);
+    let outgoingEdge = channelOutgoingEdge(graph,channel)
     let inX = incomingEdge.sections[0].endPoint.x
     let inY = incomingEdge.sections[0].endPoint.y
     let outX = outgoingEdge.sections[0].startPoint.x

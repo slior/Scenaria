@@ -1,0 +1,44 @@
+{
+    "name" : "Sample2",
+    "actors" : [
+        {
+            "type" : "agent",
+            "caption" : "Client",
+            "id" : "c"
+        },
+        {
+            "type" : "agent",
+            "caption" : "Server",
+            "id" : "s"
+        }, 
+        {
+            "type" : "store", 
+            "caption" : "App Data",
+            "id" : "ad"
+        },
+        {
+            "type" : "agent",
+            "caption" : "3rd Party",
+            "id" : "tp"
+        }
+    ],
+    "channels" : [
+        {
+            "from" : "c",
+            "to" : "s",
+            "type": "req_res"
+        },
+        {
+            "from" : "s",
+            "to" : "tp",
+            "type": "async"
+        }
+    ],
+    "data_flows" : [
+        {
+            "type" : "read",
+            "from" : "ad",
+            "to" : "s"
+        }
+    ]
+}  

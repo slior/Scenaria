@@ -9,7 +9,8 @@ const ACTOR_TYPE = {
 }
 
 const CHANNEL_TYPE = {
-    REQ_RES : 'req_res'
+    REQ_RES : 'req_res',
+    ASYNC : 'async'
 }
 
 module.exports = {
