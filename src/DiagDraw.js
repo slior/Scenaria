@@ -25,32 +25,9 @@ function channelID(channel)
 async function layoutModel(model)
 {
     //create graph structure for layout library
-    let nodes = model.actors.map(a => {
-        return Object.assign({},a,{
-            height : DRAW_MARGIN_HEIGHT*2 + DRAW_TEXT_HEIGHT,
-            width : DRAW_CHAR_WIDTH * a.caption.length + 2 * DRAW_MARGIN_WIDTH
-        })
-    }).concat(model.channels.map(c => {
-        return Object.assign({},c, {
-            id : channelID(c), 
-            width : DRAW_CHANNEL_RADIUS,
-            height : DRAW_CHANNEL_RADIUS
-        })
-    }))
+    let nodes = graphNodesFor(model)
 
-    let edges = model.channels.flatMap(channel => {
-        return [
-            {id : channel.from + "_" + channelID(channel), sources : [channel.from], targets : [channelID(channel)], type : "channel"},
-            {id : channelID(channel) + "_" + channel.to, sources : [channelID(channel)], targets : [channel.to], type : "channel"}
-        ]
-    }).concat(model.data_flows.map(f => {
-        return {
-            id : f.from + "_" + f.to,
-            sources : [f.from],
-            targets : [f.to],
-            type : EDGE_TYPE.DATA_FLOW
-        }
-    }))
+    let edges = graphEdgesFor(model)
 
     let graph = {
         id : (model.name || "graph"),
@@ -64,6 +41,37 @@ async function layoutModel(model)
     }
     //run layout and return result
     return await elk.layout(graph)
+}
+
+function graphEdgesFor(model) {
+    return model.channels.flatMap(channel => {
+        return [
+            { id: channel.from + "_" + channelID(channel), sources: [channel.from], targets: [channelID(channel)], type: "channel" },
+            { id: channelID(channel) + "_" + channel.to, sources: [channelID(channel)], targets: [channel.to], type: "channel" }
+        ];
+    }).concat(model.data_flows.map(f => {
+        return {
+            id: f.from + "_" + f.to,
+            sources: [f.from],
+            targets: [f.to],
+            type: EDGE_TYPE.DATA_FLOW
+        };
+    }));
+}
+
+function graphNodesFor(model) {
+    return model.actors.map(a => {
+        return Object.assign({}, a, {
+            height: DRAW_MARGIN_HEIGHT * 2 + DRAW_TEXT_HEIGHT,
+            width: DRAW_CHAR_WIDTH * a.caption.length + 2 * DRAW_MARGIN_WIDTH
+        });
+    }).concat(model.channels.map(c => {
+        return Object.assign({}, c, {
+            id: channelID(c),
+            width: DRAW_CHANNEL_RADIUS,
+            height: DRAW_CHANNEL_RADIUS
+        });
+    }));
 }
 
 function graphNodeRepresentsAnActor(node)
