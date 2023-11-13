@@ -12,7 +12,7 @@ const DRAW_CHANNEL_RADIUS = 20;
 
 function channelID(channel)
 {
-    return channel.from + "-" + channel.to
+    return `${channel.from}-${channel.to}-${channel.type.toString()}` 
 }
 
 /**
