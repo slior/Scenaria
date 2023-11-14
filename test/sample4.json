@@ -1,0 +1,74 @@
+{
+    "name" : "Sample2",
+    "actors" : [
+        {
+            "type" : "user",
+            "caption" : "Shopper",
+            "id" : "s"
+        },
+        {
+            "type" : "agent",
+            "caption" : "Shop UI",
+            "id" : "su"
+        }, 
+        {
+            "type" : "agent", 
+            "caption" : "Shop Server",
+            "id" : "ss"
+        },
+        {
+            "type" : "agent",
+            "caption" : "Inventory",
+            "id" : "i"
+        },
+        {
+            "type" : "agent",
+            "caption" : "Shopping Cart",
+            "id" : "sc"
+        },
+        {
+            "type" : "store",
+            "caption" : "Shopping Cart Data",
+            "id" : "scd"
+        }
+    ],
+    "channels" : [
+        {
+            "from" : "s",
+            "to" : "su",
+            "type": "req_res"
+        },
+        {
+            "from" : "su",
+            "to" : "ss",
+            "type": "req_res"
+        },
+        {
+            "from" : "ss",
+            "to" : "i",
+            "type": "req_res"
+        },
+        {
+            "from" : "ss",
+            "to" : "sc",
+            "type": "req_res"
+        },
+        {
+            "from" : "ss",
+            "to" : "i",
+            "type": "async"
+        }
+    ],
+    "data_flows" : [
+        {
+            "type" : "read",
+            "from" : "sc",
+            "to" : "scd"
+        },
+        {
+            "type" : "read",
+            "from" : "scd",
+            "to" : "sc"
+        }
+    ]
+}  

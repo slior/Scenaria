@@ -5,7 +5,8 @@ const EDGE_TYPE = {
 
 const ACTOR_TYPE = {
     AGENT : 'agent',
-    STORE : 'store'
+    STORE : 'store',
+    USER : 'user'
 }
 
 const CHANNEL_TYPE = {

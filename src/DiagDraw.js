@@ -9,6 +9,7 @@ const DRAW_TEXT_HEIGHT = 30;
 const DRAW_CHAR_WIDTH = 10;
 const DRAW_MARGIN_WIDTH = 20;
 const DRAW_CHANNEL_RADIUS = 20;
+const USER_ACTOR_CAPTION_Y_ADJUSTMENT = 35;
 
 function channelID(channel)
 {
@@ -194,15 +195,41 @@ function drawArrowHead(draw,x,y,direction)
 function drawActor(draw,actor,actorView)
 {
     let g = draw.group();
-    let r = g.rect(actorView.width,actorView.height).fill(actorView.fillColor).attr('stroke',actorView.lineColor)
-    if (actor.type == ACTOR_TYPE.STORE)
-        r.radius(30)
+    if (actor.type == ACTOR_TYPE.USER)
+    {
+        let u = drawUser(g)
+        // TODO: this whole size adjustment is a workaround.
+        // the proper way to do this is to draw the user with proper path in the first place.
+        u.width(u.width() * 0.1)
+        u.height(u.height() * 0.1)
+        actorView.x += u.width() * 10 - actorView.x
+        /// end of workaround
+        let t = g.text(actorView.caption)
+        t.cx(u.cx())
+        t.cy(u.cy() - USER_ACTOR_CAPTION_Y_ADJUSTMENT)
+        g.cx(actorView.x)
+        g.cy(actorView.y)
+    }
     else
-        r.radius(2)
-    let t = g.text(actor.caption)
-    t.cx(r.cx())
-    t.cy(r.cy())
-    g.move(actorView.x,actorView.y)
+    {
+        let r = g.rect(actorView.width,actorView.height).fill(actorView.fillColor).attr('stroke',actorView.lineColor)
+        if (actor.type == ACTOR_TYPE.STORE)
+            r.radius(30)
+        else
+            r.radius(2)
+        let t = g.text(actor.caption)
+        t.cx(r.cx())
+        t.cy(r.cy())
+        g.move(actorView.x,actorView.y)
+    }
+}
+
+function drawUser(container)
+{
+    let g = container.group();
+    let p1 = g.path("M181.95,62.7c0,34.6,28.1,62.7,62.7,62.7s62.7-28.1,62.7-62.7S279.25,0,244.65,0S181.95,28.1,181.95,62.7z M244.65,24.5 c21.1,0,38.2,17.1,38.2,38.2s-17.1,38.2-38.2,38.2s-38.2-17.1-38.2-38.2S223.55,24.5,244.65,24.5z")
+    let p2 = g.path("M196.25,138.5c-34.3,0-62.2,27.9-62.2,62.2v79.7c0,23,12.9,44,32.8,54.7v104.7c0,27.3,22.2,49.5,49.5,49.5h56.6 c27.3,0,49.5-22.2,49.5-49.5V335c19.9-10.7,32.8-31.7,32.8-54.7v-79.7c0-34.3-27.9-62.2-62.2-62.2h-96.8V138.5z M330.75,200.6 v79.7c0,15.7-9.9,29.9-24.7,35.3c-4.8,1.8-8,6.4-8,11.5v112.6c0,13.8-11.2,25-25,25h-56.6c-13.8,0-25-11.2-25-25V327.2 c0-5.1-3.2-9.7-8-11.5c-14.8-5.4-24.7-19.6-24.7-35.3v-79.8c0-20.8,16.9-37.7,37.7-37.7h96.8 C313.85,163,330.75,179.9,330.75,200.6z")
+    return g;
 }
 
 function drawChannel(draw,channel,graph)
