@@ -102,11 +102,8 @@ function drawGraph(draw,graph)
     graph.edges.forEach(edge => {
         drawEdgeLine(draw,edge)
         if (edge.type == EDGE_TYPE.DATA_FLOW)
-        {
-            let lastSection = edge.sections[edge.sections.length-1]
-            let direction = arrowHeadDirectionFrom(lastSection)
-            drawArrowHead(draw,lastSection.endPoint.x,lastSection.endPoint.y,direction)
-        }
+            drawArrowHead(draw,edge)
+        
     })
 }
 
@@ -114,7 +111,7 @@ function drawEdgeLine(draw,edge)
 {
     edge.sections.forEach(section => {
         let bends = section.bendPoints || []
-        var points = [[section.startPoint.x,section.startPoint.y]]
+        var points = [[section.startPoint.x,section.startPoint.y]] //points are, in order: start point, bend points (if any), end point.
                       .concat(bends.map(p => [p.x,p.y]))
         points.push([section.endPoint.x,section.endPoint.y])
         return draw.polyline(points)
@@ -127,32 +124,14 @@ const HEAD_DIRECTION = {
     W : "W", N : "N", E : "E", S : "S"
 }
 
-function arrowHeadDirectionFrom(edgeSection)
-{
-    let x1 = edgeSection.startPoint.x
-    let y1 = edgeSection.startPoint.y
-    let x2 = edgeSection.endPoint.x
-    let y2 = edgeSection.endPoint.y
-
-    //TODO: this is too simplistic. need finer direction. based on clock hand angles?
-    let ret = HEAD_DIRECTION.N
-    switch (true)
-    {
-        case (x2 < x1) && (y2 == y1) : ret = HEAD_DIRECTION.W; break;
-        case (x2 == x1) && (y2 < y1) : ret = HEAD_DIRECTION.N; break;
-        case (x2 == x1) && (y2 > y1) : ret = HEAD_DIRECTION.S; break;
-        case (x2 > x1) && (y2 == y1) : ret = HEAD_DIRECTION.E; break;
-    }
-
-    return ret;
-}
-
 const ARROW_W = 10; //constants for now but should really be derived from layout - how much room it has.
-const ARROW_H = 15;
+const ARROW_H = 10;
 
-function drawArrowHead(draw,x,y,direction)
+function drawArrowHead(draw,edge)
 {
-    
+    let lastSection = edge.sections[edge.sections.length-1]
+    let x = lastSection.endPoint.x
+    let y = lastSection.endPoint.y
     //point 1 is the tip - given as parameter.
     //point 2 is the bottom right corner, but turned according to direction
     //point 3 is the bottom left corner, also turned.
@@ -160,6 +139,7 @@ function drawArrowHead(draw,x,y,direction)
     let point2 = {}
     let point3 = {}
 
+    let direction = determineEdgeEndDirection(edge)
     switch (direction)
     {
         case HEAD_DIRECTION.N : 
