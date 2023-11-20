@@ -108,7 +108,8 @@
     <script src="./main.js"></script>
 <script>
 
-    var runner;
+    var scenarioRunner;
+    var model;
 
     function init()
     {        
@@ -125,16 +126,18 @@
     {
         return getCode(); //retrievs it from the monaco editor - defined in Editor.js
     }
+
+
     function parseAndExecute()
     {
         try
         {
             clearError()
             let code = getCodeFromEditor();
-            let model = main.parseCode(code);
+            model = main.parseCode(code);
             main.presentModel(model)
-                .then(scenarioRunner => {
-                    scenarioRunner.runScenario(model.scenarios[0],showMsg)
+                .then(sr => {
+                    scenarioRunner = sr;
                 })
         }
         catch (err)
@@ -184,6 +187,13 @@
         runner.empty();
     }
 
+    function runScenario()
+    {
+        if (!scenarioRunner) throw new Error("Scenario runner not initialized")
+        if (!model) throw new Error("Model not initialized")
+        scenarioRunner.runScenario(model.scenarios[0],showMsg)
+    }
+
 </script>
 </head>
 
@@ -198,6 +208,7 @@
         
     </div>
     <button onclick="parseAndExecute()"> Execute </button>
+    <button onclick="runScenario()"> Run Scenario </button>
     <!-- <button onclick="reset()">Reset</button> -->
         <hr/>
     <div id="cons" class="consoleText" ></div>
