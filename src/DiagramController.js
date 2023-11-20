@@ -1,8 +1,6 @@
 
 
 const PREV_COLOR_KEY = 'prevColor'
-const CHANNEL_REQ_COLOR = '#8B008B' //TODO: these colors should not be here. They should be with the 'runStep' function, at the same semantical level
-const CHANNEL_RESPONSE_COLOR = '#A9A9A9'
 
 class DiagramController
 {
@@ -63,7 +61,5 @@ class DiagramController
 }
 
 module.exports = {
-    DiagramController,
-    CHANNEL_REQ_COLOR, 
-    CHANNEL_RESPONSE_COLOR
+    DiagramController
 }

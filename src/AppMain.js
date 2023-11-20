@@ -7,7 +7,8 @@
 const assert = require('assert')
 const { SVG } = require('@svgdotjs/svg.js')
 const {layoutModel,drawGraph } = require('./DiagDraw')
-const { DiagramController, CHANNEL_REQ_COLOR, CHANNEL_RESPONSE_COLOR } = require('./DiagramController')
+const { DiagramController } = require('./DiagramController')
+const { ScenarioRunner } = require('./ScenarioRunner')
 
 
 var programRunner = null;
@@ -32,45 +33,10 @@ function presentModel(model)
     return layoutModel(model)
             .then(g => drawGraph(draw,g))
             .then(svgElements =>{
-                let diagramController = new DiagramController(svgElements)
-                return diagramController
+                return new ScenarioRunner(new DiagramController(svgElements))
             })
 }
 
-function runScenario(diagramController,scenario,userMsgCallback)
-{
-    if (!diagramController) throw new Error("Diagram not drawn")
-    if (!scenario) throw new Error("Invalid scenario")
-
-    userMsgCallback(`Running scenario ${scenario.name}`)
-    
-    runStep(scenario.steps,0,diagramController,userMsgCallback)
-}
-
-function runStep(allSteps,index,diagramController,userMsgCallback)
-{
-    userMsgCallback(`Running step: ${JSON.stringify(allSteps[index])}`)
-    let step = allSteps[index]
-    switch(step.type)
-    {
-        case "req" : 
-            diagramController.highlight(step.channel, CHANNEL_REQ_COLOR)
-            break;
-        case 'res' : 
-            diagramController.highlight(step.channel, CHANNEL_RESPONSE_COLOR)
-            break;
-    }
-
-    setTimeout(() => {
-        diagramController.deHighlight(step.channel)
-    },800)
-
-    if (index < allSteps.length-1)
-        setTimeout(() => {
-            runStep(allSteps,index+1,diagramController,userMsgCallback)
-        },1500)
-
-}
 
 function parseCode(programCode)
 {
@@ -85,6 +51,5 @@ module.exports = {
     parseCode,
     // resetState,
     // getLanguageKeywords,
-    presentModel,
-    runScenario
+    presentModel
 }

@@ -133,8 +133,8 @@
             let code = getCodeFromEditor();
             let model = main.parseCode(code);
             main.presentModel(model)
-                .then(diagramController => { 
-                    main.runScenario(diagramController,model.scenarios[0],showMsg) //For now, just run first scenario. Later it should be a choice.
+                .then(scenarioRunner => {
+                    scenarioRunner.runScenario(model.scenarios[0],showMsg)
                 })
         }
         catch (err)
