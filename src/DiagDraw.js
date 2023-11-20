@@ -80,6 +80,18 @@ function graphNodeRepresentsAnActor(node)
     return node.id && (node.id.indexOf('-') < 0)
 }
 
+function rememberSVGElementForID(index,id,svgEl)
+{
+    if (!index) throw new Error("no index to use")
+    if (!id) throw new Error("Invalid ID for graph element")
+    if (!svgEl) throw new Error("Invalid svg element to index")
+
+    if (!index[id])
+        index[id] = []
+
+    index[id].push(svgEl)
+}
+
 /**
  * Using the given SVG object, draws the given graph
  * @param {SVG} draw The SVG.js container object, with SVG.js API.
@@ -89,34 +101,46 @@ function graphNodeRepresentsAnActor(node)
 function drawGraph(draw,graph)
 {
     console.log(graph)
+    let svgElements = {}
     graph.children.forEach(child => {
         child.fillColor = '#ffffff'
         child.lineColor = 'black'
         if (graphNodeRepresentsAnActor(child))
-            drawActor(draw,child,child)
+        {
+            let svgElement = drawActor(draw,child,child)
+            rememberSVGElementForID(svgElements,child.id,svgElement)
+        }
         else
-            drawChannel(draw,child,graph)
+        {
+            let svgElement = drawChannel(draw,child,graph)
+            rememberSVGElementForID(svgElements,child.id,svgElement)
+
+        }
     })
 
     //draw lines
     graph.edges.forEach(edge => {
-        drawEdgeLine(draw,edge)
+        let edgeSVGElement = drawEdgeLine(draw,edge)
+        rememberSVGElementForID(svgElements,edge.id,edgeSVGElement)
         if (edge.type == EDGE_TYPE.DATA_FLOW)
-            drawArrowHead(draw,edge)
+        {
+            let svgArrow = drawArrowHead(draw,edge)
+            rememberSVGElementForID(svgElements,edge.id,svgArrow)
+        }
         
     })
+    return svgElements
 }
 
 function drawEdgeLine(draw,edge)
 {
-    edge.sections.forEach(section => {
-        let bends = section.bendPoints || []
-        var points = [[section.startPoint.x,section.startPoint.y]] //points are, in order: start point, bend points (if any), end point.
-                      .concat(bends.map(p => [p.x,p.y]))
-        points.push([section.endPoint.x,section.endPoint.y])
-        return draw.polyline(points)
-                   .stroke({width: 1, color : 'black'}).fill('none')
-    })
+    let section = edge.sections[0];
+    let bends = section.bendPoints || []
+    var points = [[section.startPoint.x,section.startPoint.y]] //points are, in order: start point, bend points (if any), end point.
+                    .concat(bends.map(p => [p.x,p.y]))
+    points.push([section.endPoint.x,section.endPoint.y])
+    return draw.polyline(points)
+                .stroke({width: 1, color : 'black'}).fill('none')
 }
 
 //Since edges are orthogonal, the arrow heads can be in one of 4 directions
@@ -169,7 +193,7 @@ function drawArrowHead(draw,edge)
     }
 
     let polylineCoords = `${point1.x},${point1.y} ${point2.x},${point2.y} ${point3.x},${point3.y}`
-    draw.polygon(polylineCoords).fill('black').stroke({width : 1})
+    return draw.polygon(polylineCoords).fill('black').stroke({width : 1})
 }
 
 function drawActor(draw,actor,actorView)
@@ -197,6 +221,8 @@ function drawActor(draw,actor,actorView)
         t.cy(r.cy())
         g.move(actorView.x,actorView.y)
     }
+    actor.drawing = g;
+    return g;
 }
 
 function drawUser(container)
@@ -219,9 +245,11 @@ function drawChannel(draw,channel,graph)
     c.x(channel.x)
     c.y(channel.y)
     if (channel.type == CHANNEL_TYPE.REQ_RES)
-        drawReqResDecoration(draw,channel,graph)
+        drawReqResDecoration(g,channel,graph)
     else if (channel.type == CHANNEL_TYPE.ASYNC)
-        drawAsyncChannelDecoration(draw,channel,graph)
+        drawAsyncChannelDecoration(g,channel,graph)
+    channel.drawing = g
+    return g;
 }
 
 function drawAsyncChannelDecoration(draw,channel,graph)

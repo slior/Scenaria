@@ -98,22 +98,6 @@
             padding-left: 5px;
         }
 
-        .rtl_editor_textarea{
-            position: relative;
-            top: 0px;
-            padding: 12px;
-            text-align: right;
-            direction: rtl;
-            resize: none;
-            width: 100%;
-            height: calc(100%);
-            background-color: #4b1d3f;
-            border: none;
-            color: #FFFFFF;
-            margin: 0px;
-            font-size: 1.1rem;
-        }
-
     </style>
     <!-- Loader and code for initializing the editor -->
     <!-- Also defines a 'getCode' function to retrieve the code -->
@@ -148,8 +132,10 @@
             clearError()
             let code = getCodeFromEditor();
             let model = main.parseCode(code);
-            // runner.run(program);
             main.presentModel(model)
+                .then(diagramController => { 
+                    main.runScenario(diagramController,model.scenarios[0],showMsg) //For now, just run first scenario. Later it should be a choice.
+                })
         }
         catch (err)
         {
@@ -209,12 +195,10 @@
         <div class="title-bar" id="titleBar">Program</div>
         <div class="cmd" id="editorContainer">
         </div>
-        <!-- <div class="cmd" id="rtlEditorContainer" style="display: none;">
-            <textarea id="rtlEditor" class="rtl_editor_textarea"></textarea>
-        </div> -->
+        
     </div>
     <button onclick="parseAndExecute()"> Execute </button>
-    <button onclick="reset()">Reset</button>
+    <!-- <button onclick="reset()">Reset</button> -->
         <hr/>
     <div id="cons" class="consoleText" ></div>
     <span id="error" class="errorText" ></span>
