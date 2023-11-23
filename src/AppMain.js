@@ -33,7 +33,7 @@ function presentModel(model)
     return layoutModel(model)
             .then(g => drawGraph(draw,g))
             .then(svgElements =>{
-                return new ScenarioRunner(new DiagramController(svgElements))
+                return new ScenarioRunner(new DiagramController(svgElements,draw))
             })
 }
 

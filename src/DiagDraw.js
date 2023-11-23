@@ -2,7 +2,7 @@
 const ELK = require('elkjs')
 const elk = new ELK()
 
-const { EDGE_TYPE, ACTOR_TYPE, CHANNEL_TYPE } = require('./SystemModel')
+const { EDGE_TYPE, ACTOR_TYPE, CHANNEL_TYPE,channelID } = require('./SystemModel')
 
 const DRAW_MARGIN_HEIGHT = 10;
 const DRAW_TEXT_HEIGHT = 30;
@@ -11,10 +11,7 @@ const DRAW_MARGIN_WIDTH = 20;
 const DRAW_CHANNEL_RADIUS = 20;
 const USER_ACTOR_CAPTION_Y_ADJUSTMENT = 35;
 
-function channelID(channel)
-{
-    return `${channel.from}-${channel.to}-${channel.type.toString()}` 
-}
+
 
 /**
  * Given a system model object, layout the different actors and stores.
@@ -44,11 +41,40 @@ async function layoutModel(model)
     return await elk.layout(graph)
 }
 
+const CHANNEL_EDGE_INCOMING_DELIM = ">>"
+const CHANNEL_EDGE_OUTGOING_DELIM = "<<"
+
+function incomingChannelEdgeID(channel)
+{
+    return channel.from + CHANNEL_EDGE_INCOMING_DELIM + channelID(channel)
+}
+
+function outgoingChannelEdgeID(channel)
+{
+    return channelID(channel) + CHANNEL_EDGE_OUTGOING_DELIM + channel.to
+}
+
+function channelIDFromEdgeID(edgeID)
+{
+    var channelID = '';
+    switch (true)
+    {
+        case edgeID.indexOf(CHANNEL_EDGE_INCOMING_DELIM) > 0 : 
+            channelID = edgeID.split(CHANNEL_EDGE_INCOMING_DELIM)[1]
+            break;
+        case edgeID.indexOf(CHANNEL_EDGE_OUTGOING_DELIM) > 0 : 
+            channelID = edgeID.split(CHANNEL_EDGE_OUTGOING_DELIM)[0]
+            break;
+        //return empty string by default
+    }
+    return channelID
+}
+
 function graphEdgesFor(model) {
     return model.channels.flatMap(channel => {
         return [
-            { id: channel.from + "_" + channelID(channel), sources: [channel.from], targets: [channelID(channel)], type: "channel" },
-            { id: channelID(channel) + "_" + channel.to, sources: [channelID(channel)], targets: [channel.to], type: "channel" }
+                { id: incomingChannelEdgeID(channel), sources: [channel.from], targets: [channelID(channel)], type: "channel" },
+                { id: outgoingChannelEdgeID(channel), sources: [channelID(channel)], targets: [channel.to], type: "channel" }
         ];
     }).concat(model.data_flows.map(f => {
         return {
@@ -105,27 +131,23 @@ function drawGraph(draw,graph)
     graph.children.forEach(child => {
         child.fillColor = '#ffffff'
         child.lineColor = 'black'
-        if (graphNodeRepresentsAnActor(child))
-        {
-            let svgElement = drawActor(draw,child,child)
-            rememberSVGElementForID(svgElements,child.id,svgElement)
-        }
-        else
-        {
-            let svgElement = drawChannel(draw,child,graph)
-            rememberSVGElementForID(svgElements,child.id,svgElement)
-
-        }
+        let svgElement = graphNodeRepresentsAnActor(child) ? 
+                            drawActor(draw,child,child) : 
+                            drawChannel(draw,child,graph)
+        rememberSVGElementForID(svgElements,child.id,svgElement)
     })
 
     //draw lines
     graph.edges.forEach(edge => {
         let edgeSVGElement = drawEdgeLine(draw,edge)
-        rememberSVGElementForID(svgElements,edge.id,edgeSVGElement)
         if (edge.type == EDGE_TYPE.DATA_FLOW)
         {
-            let svgArrow = drawArrowHead(draw,edge)
-            rememberSVGElementForID(svgElements,edge.id,svgArrow)
+            rememberSVGElementForID(svgElements,edge.id,edgeSVGElement)
+            rememberSVGElementForID(svgElements,edge.id,drawArrowHead(draw,edge))
+        }
+        else if (edge.type == EDGE_TYPE.CHANNEL)
+        {
+            rememberSVGElementForID(svgElements,channelIDFromEdgeID(edge.id),edgeSVGElement)
         }
         
     })

@@ -24,12 +24,13 @@ class ScenarioRunner
 
     _runStep(allSteps,index,userMsgCallback)
     {
-        userMsgCallback(`Running step: ${JSON.stringify(allSteps[index])}`)
+        userMsgCallback(`Running step: ${allSteps[index].message || "--"}`)
         let step = allSteps[index]
         switch(step.type)
         {
             case "req" : 
                 this._diagramController.highlight(step.channel, CHANNEL_REQUEST_COLOR)
+                this._diagramController.showMessageOnChannel(step.channel,step.message)
                 break;
             case 'res' : 
                 this._diagramController.highlight(step.channel, CHANNEL_RESPONSE_COLOR)
@@ -38,6 +39,7 @@ class ScenarioRunner
     
         setTimeout(() => {
             this._diagramController.deHighlight(step.channel)
+            this._diagramController.removeMessageFromChannel(step.channel)
         },RESET_HIGHLIGHT_TIME)
     
         if (index < allSteps.length-1)

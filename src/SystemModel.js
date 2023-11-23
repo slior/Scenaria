@@ -1,6 +1,7 @@
 
 const EDGE_TYPE = { 
-    DATA_FLOW : 'dataflow'
+    DATA_FLOW : 'dataflow',
+    CHANNEL : 'channel'
 }
 
 const ACTOR_TYPE = {
@@ -14,8 +15,14 @@ const CHANNEL_TYPE = {
     ASYNC : 'async'
 }
 
+function channelID(channel)
+{
+    return `${channel.from}-${channel.to}-${channel.type.toString()}` 
+}
+
 module.exports = {
     EDGE_TYPE,
     ACTOR_TYPE,
-    CHANNEL_TYPE
+    CHANNEL_TYPE,
+    channelID
 }
