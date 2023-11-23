@@ -10,8 +10,6 @@ const {layoutModel,drawGraph } = require('./DiagDraw')
 const { DiagramController } = require('./DiagramController')
 const { ScenarioRunner } = require('./ScenarioRunner')
 
-
-var programRunner = null;
 var drawingContainer = null;
 
 function initApp(_drawingContainer)
@@ -24,11 +22,17 @@ function initApp(_drawingContainer)
 const createSVGImpl = (drawingElement) => 
     SVG().addTo(drawingElement).addClass("drawingSVG")
 
+var draw = null
 
+function clearDiagram()
+{
+    draw.clear()
+    drawingContainer.removeChild(draw.node)
+}
 
 function presentModel(model)
 {
-    let draw = createSVGImpl(drawingContainer)
+     draw = createSVGImpl(drawingContainer)
 
     return layoutModel(model)
             .then(g => drawGraph(draw,g))
@@ -51,5 +55,6 @@ module.exports = {
     parseCode,
     // resetState,
     // getLanguageKeywords,
-    presentModel
+    presentModel,
+    clearDiagram
 }

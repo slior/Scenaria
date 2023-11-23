@@ -126,6 +126,7 @@ function rememberSVGElementForID(index,id,svgEl)
  */
 function drawGraph(draw,graph)
 {
+    if (!draw) throw new Error("Invalid SVG drawing container when drawing a graph")
     console.log(graph)
     let svgElements = {}
     graph.children.forEach(child => {

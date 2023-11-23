@@ -127,7 +127,6 @@
         return getCode(); //retrievs it from the monaco editor - defined in Editor.js
     }
 
-
     function parseAndDraw()
     {
         try
@@ -172,7 +171,9 @@
     {
         try
         {   
-            main.resetState();
+            main.clearDiagram()
+            scenarioRunner = null;
+            model = null;
             clearError()
             clearConsole();
         }
@@ -205,8 +206,8 @@
         <div class="title-bar" id="titleBar">Program</div>
         <div class="cmd" id="editorContainer">
         </div>
-        
     </div>
+    <button onclick="reset()"> Reset </button>
     <button onclick="parseAndDraw()"> Draw </button>
     <button onclick="runScenario()"> Run Scenario </button>
     <!-- <button onclick="reset()">Reset</button> -->
