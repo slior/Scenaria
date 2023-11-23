@@ -2,8 +2,8 @@
 const CHANNEL_REQUEST_COLOR = '#8B008B'
 const CHANNEL_RESPONSE_COLOR = '#A9A9A9'
 
-const RESET_HIGHLIGHT_TIME = 800
-const NEXT_STEP_TIME = RESET_HIGHLIGHT_TIME + 700
+const RESET_STEP_RENDER_TIME = 800
+const NEXT_STEP_TIME = RESET_STEP_RENDER_TIME + 700
 
 class ScenarioRunner
 {
@@ -26,21 +26,11 @@ class ScenarioRunner
     {
         userMsgCallback(`Running step: ${allSteps[index].message || "--"}`)
         let step = allSteps[index]
-        switch(step.type)
-        {
-            case "req" : 
-                this._diagramController.highlight(step.channel, CHANNEL_REQUEST_COLOR)
-                this._diagramController.showMessageOnChannel(step.channel,step.message)
-                break;
-            case 'res' : 
-                this._diagramController.highlight(step.channel, CHANNEL_RESPONSE_COLOR)
-                break;
-        }
+        this._renderStep(step)
     
         setTimeout(() => {
-            this._diagramController.deHighlight(step.channel)
-            this._diagramController.removeMessageFromChannel(step.channel)
-        },RESET_HIGHLIGHT_TIME)
+            this._unRenderStep(step)
+        },RESET_STEP_RENDER_TIME)
     
         if (index < allSteps.length-1)
             setTimeout(() => {
@@ -49,6 +39,25 @@ class ScenarioRunner
     
     }
 
+
+    _unRenderStep(step) 
+    {
+        this._diagramController.deHighlight(step.channel)
+        this._diagramController.removeMessageFromChannel(step.channel)
+    }
+
+    _renderStep(step)
+    {
+        switch (step.type) {
+            case "req":
+                this._diagramController.highlight(step.channel, CHANNEL_REQUEST_COLOR)
+                this._diagramController.showMessageOnChannel(step.channel, step.message)
+                break
+            case 'res':
+                this._diagramController.highlight(step.channel, CHANNEL_RESPONSE_COLOR)
+                break
+        }
+    }
 }
 
 module.exports = {
