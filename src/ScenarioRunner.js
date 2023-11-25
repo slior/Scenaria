@@ -24,8 +24,8 @@ class ScenarioRunner
 
     _runStep(allSteps,index,userMsgCallback)
     {
-        userMsgCallback(`Running step: ${allSteps[index].message || "--"}`)
         let step = allSteps[index]
+        userMsgCallback(`${step.message || "--"}`)
         this._renderStep(step)
     
         setTimeout(() => {
@@ -51,12 +51,13 @@ class ScenarioRunner
         switch (step.type) {
             case "req":
                 this._diagramController.highlight(step.channel, CHANNEL_REQUEST_COLOR)
-                this._diagramController.showMessageOnChannel(step.channel, step.message)
                 break
             case 'res':
                 this._diagramController.highlight(step.channel, CHANNEL_RESPONSE_COLOR)
                 break
         }
+        if (step.message)
+            this._diagramController.showMessageOnChannel(step.channel, step.message)
     }
 }
 
