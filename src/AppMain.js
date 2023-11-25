@@ -11,6 +11,9 @@ const { DiagramController } = require('./DiagramController')
 const { ScenarioRunner } = require('./ScenarioRunner')
 
 var drawingContainer = null;
+var topLevelSVG = null;
+var scenarioRunner = null;
+var model = null;
 
 function initApp(_drawingContainer)
 {
@@ -22,25 +25,35 @@ function initApp(_drawingContainer)
 const createSVGImpl = (drawingElement) => 
     SVG().addTo(drawingElement).addClass("drawingSVG")
 
-var draw = null
+
 
 function clearDiagram()
 {
-    draw.clear()
-    drawingContainer.removeChild(draw.node)
+    topLevelSVG.clear()
+    drawingContainer.removeChild(topLevelSVG.node)
 }
 
 function presentModel(model)
 {
-     draw = createSVGImpl(drawingContainer)
+     topLevelSVG = createSVGImpl(drawingContainer)
 
     return layoutModel(model)
-            .then(g => drawGraph(draw,g))
-            .then(svgElements =>{
-                return new ScenarioRunner(new DiagramController(svgElements,draw))
+            .then(g => drawGraph(topLevelSVG,g))
+            .then(svgElements => {
+                scenarioRunner = new ScenarioRunner(new DiagramController(svgElements,topLevelSVG))
+                return scenarioRunner
             })
 }
 
+function runScenario(scenarioInd, usrMsgCallback)
+{
+    if (!model) throw new Error("Model not initialized when running scenarion")
+    if (!scenarioRunner) throw new Error ("Scenario runner not initialized")
+    
+    let scenario = model.scenarios[scenarioInd]
+    if (!scenario) throw new Error(`Invalid scenario to run: ${scenarioInd}`)
+    scenarioRunner.runScenario(scenario,usrMsgCallback)
+}
 
 function parseCode(programCode)
 {
@@ -50,11 +63,31 @@ function parseCode(programCode)
     return JSON.parse(programCode); //for now, no code to parse - we get JSON code and return it.
 }
 
+/**
+ * Given code representing the model and scenarios, parse it and present it on the initialized diagram container.
+ * @param {String} code The code for the model
+ * @returns A promise with the ScenarioRunner instance.
+ */
+function parseAndPresent(code)
+{
+    model = parseCode(code)
+    return presentModel(model)
+}
+
+/**
+ * Reset the existing application state.
+ * Also clear the diagram from the initialized drawing container.
+ */
+function reset()
+{
+    clearDiagram()
+    scenarioRunner = null;
+    model = null;
+}
+
 module.exports = {
     initApp,
-    parseCode,
-    // resetState,
-    // getLanguageKeywords,
-    presentModel,
-    clearDiagram
+    runScenario,
+    parseAndPresent,
+    reset
 }

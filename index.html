@@ -108,9 +108,6 @@
     <script src="./main.js"></script>
 <script>
 
-    var scenarioRunner;
-    var model;
-
     function init()
     {        
         let drawingBoard = document.getElementById('drawing');
@@ -133,11 +130,8 @@
         {
             clearError()
             let code = getCodeFromEditor();
-            model = main.parseCode(code);
-            main.presentModel(model)
-                .then(sr => {
-                    scenarioRunner = sr;
-                })
+            main.parseAndPresent(code)
+                .then(_ => { showMsg("Done.")})
         }
         catch (err)
         {
@@ -171,9 +165,7 @@
     {
         try
         {   
-            main.clearDiagram()
-            scenarioRunner = null;
-            model = null;
+            main.reset();
             clearError()
             clearConsole();
         }
@@ -190,9 +182,7 @@
 
     function runScenario()
     {
-        if (!scenarioRunner) throw new Error("Scenario runner not initialized")
-        if (!model) throw new Error("Model not initialized")
-        scenarioRunner.runScenario(model.scenarios[0],showMsg)
+        main.runScenario(0,showMsg)
     }
 
 </script>
@@ -210,7 +200,6 @@
     <button onclick="reset()"> Reset </button>
     <button onclick="parseAndDraw()"> Draw </button>
     <button onclick="runScenario()"> Run Scenario </button>
-    <!-- <button onclick="reset()">Reset</button> -->
         <hr/>
     <div id="cons" class="consoleText" ></div>
     <span id="error" class="errorText" ></span>
