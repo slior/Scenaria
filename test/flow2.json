@@ -1,0 +1,139 @@
+{
+    "name" : "Sample4",
+    "actors" : [
+        {
+            "type" : "user",
+            "caption" : "Shopper",
+            "id" : "s"
+        },
+        {
+            "type" : "agent",
+            "caption" : "Shop UI",
+            "id" : "su"
+        }, 
+        {
+            "type" : "agent", 
+            "caption" : "Shop Server",
+            "id" : "ss"
+        },
+        {
+            "type" : "agent",
+            "caption" : "Inventory",
+            "id" : "i"
+        },
+        {
+            "type" : "agent",
+            "caption" : "Shopping Cart",
+            "id" : "sc"
+        },
+        {
+            "type" : "store",
+            "caption" : "Shopping Cart Data",
+            "id" : "scd"
+        }
+    ],
+    "channels" : [
+        {
+            "from" : "s",
+            "to" : "su",
+            "type": "req_res"
+        },
+        {
+            "from" : "su",
+            "to" : "ss",
+            "type": "req_res"
+        },
+        {
+            "from" : "ss",
+            "to" : "i",
+            "type": "req_res"
+        },
+        {
+            "from" : "ss",
+            "to" : "sc",
+            "type": "req_res"
+        },
+        {
+            "from" : "ss",
+            "to" : "i",
+            "type": "async"
+        }
+    ],
+    "data_flows" : [
+        {
+            "type" : "read",
+            "from" : "sc",
+            "to" : "scd"
+        },
+        {
+            "type" : "read",
+            "from" : "scd",
+            "to" : "sc"
+        }
+    ],
+    "scenarios" :  [{
+            "name" : "Add Item to Cart",
+            "steps" : [
+                {
+                    "type" : "req",
+                    "channel" : "s-su-req_res",
+                    "message" : "Add to Cart(item)"
+                },
+                {
+                    "type" : "req",
+                    "channel" : "su-ss-req_res",
+                    "message" : "Add to Cart(item)"
+                },
+                {
+                    "type" : "req",
+                    "channel" : "ss-i-req_res",
+                    "message" : "Is in stock (item)?"
+                },
+                {
+                    "type" : "res",
+                    "channel" : "ss-i-req_res",
+                    "message" : "yes"
+                },
+                {
+                    "type" : "req",
+                    "channel" : "ss-sc-req_res",
+                    "message" : "add(item)"
+                }
+            ]
+        },
+        {
+            "name" : "Add Item to Cart - Not in stock",
+            "steps" : [
+                {
+                    "type" : "req",
+                    "channel" : "s-su-req_res",
+                    "message" : "Add to Cart(item)"
+                },
+                {
+                    "type" : "req",
+                    "channel" : "su-ss-req_res",
+                    "message" : "Add to Cart(item)"
+                },
+                {
+                    "type" : "req",
+                    "channel" : "ss-i-req_res",
+                    "message" : "Is in stock (item)?"
+                },
+                {
+                    "type" : "res",
+                    "channel" : "ss-i-req_res",
+                    "message" : "no"
+                },
+                {
+                    "type" : "res",
+                    "channel" : "su-ss-req_res",
+                    "message" : "failure"
+                },
+                {
+                    "type" : "res",
+                    "channel" : "s-su-req_res",
+                    "message" : "Out of stock"
+                }
+            ]
+        }]
+    } 

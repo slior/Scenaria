@@ -108,15 +108,16 @@
     <script src="./main.js"></script>
 <script>
 
+    var scenarioSelection = null;
+
     function init()
     {        
         let drawingBoard = document.getElementById('drawing');
         let editorParent = document.getElementById('editorContainer')
         initEditor(editorParent)
+        scenarioSelection = document.getElementById('scenarioSelect');
         
         main.initApp(drawingBoard)
-
-        
     }
 
     function getCodeFromEditor()
@@ -131,12 +132,35 @@
             clearError()
             let code = getCodeFromEditor();
             main.parseAndPresent(code)
-                .then(_ => { showMsg("Done.")})
+                .then(model => {
+                    setScenariosToSelect(model.scenarios)
+                    showMsg("Done.")
+                })
         }
         catch (err)
         {
             showError(err.toString())
         }
+    }
+    
+    function setScenariosToSelect(scenarios)
+    {
+        if (!scenarios) throw new Error("No scenarios when setting scenarios selection")
+        clearScenarioSelection();
+
+        if (scenarioSelection)
+            scenarios.forEach((scenario,ind) => {
+                let opt = document.createElement("option");
+                opt.value = ind;
+                opt.innerHTML = scenario.name || `Scenario ${ind}`;
+                scenarioSelection.append(opt);
+            })
+    }
+
+    function clearScenarioSelection()
+    {
+        while (scenarioSelection.options.length > 0) 
+            scenarioSelection.remove(0)
     }
 
     function showMsg(msg)
@@ -168,6 +192,7 @@
             main.reset();
             clearError()
             clearConsole();
+            clearScenarioSelection();
         }
         catch (err)
         {
@@ -182,7 +207,7 @@
 
     function runScenario()
     {
-        main.runScenario(0,showMsg)
+        main.runScenario(scenarioSelection.value,showMsg)
     }
 
 </script>
@@ -200,6 +225,7 @@
     <button onclick="reset()"> Reset </button>
     <button onclick="parseAndDraw()"> Draw </button>
     <button onclick="runScenario()"> Run Scenario </button>
+    <select id="scenarioSelect"></select>
         <hr/>
     <div id="cons" class="consoleText" ></div>
     <span id="error" class="errorText" ></span>

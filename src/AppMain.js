@@ -41,7 +41,7 @@ function presentModel(model)
             .then(g => drawGraph(topLevelSVG,g))
             .then(svgElements => {
                 scenarioRunner = new ScenarioRunner(new DiagramController(svgElements,topLevelSVG))
-                return scenarioRunner
+                return model
             })
 }
 
@@ -66,7 +66,7 @@ function parseCode(programCode)
 /**
  * Given code representing the model and scenarios, parse it and present it on the initialized diagram container.
  * @param {String} code The code for the model
- * @returns A promise with the ScenarioRunner instance.
+ * @returns A promise with the parsed model.
  */
 function parseAndPresent(code)
 {
