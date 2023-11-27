@@ -9,10 +9,11 @@ const { SVG } = require('@svgdotjs/svg.js')
 const {layoutModel,drawGraph } = require('./DiagDraw')
 const { DiagramController } = require('./DiagramController')
 const { ScenarioRunner } = require('./ScenarioRunner')
+const { ScenarioStepper } = require('./ScenarioStepper') 
 
 var drawingContainer = null;
 var topLevelSVG = null;
-var scenarioRunner = null;
+var diagramController = null;
 var model = null;
 
 function initApp(_drawingContainer)
@@ -40,19 +41,57 @@ function presentModel(model)
     return layoutModel(model)
             .then(g => drawGraph(topLevelSVG,g))
             .then(svgElements => {
-                scenarioRunner = new ScenarioRunner(new DiagramController(svgElements,topLevelSVG))
+                diagramController = new DiagramController(svgElements,topLevelSVG)
                 return model
             })
 }
 
 function runScenario(scenarioInd, usrMsgCallback)
 {
-    if (!model) throw new Error("Model not initialized when running scenarion")
-    if (!scenarioRunner) throw new Error ("Scenario runner not initialized")
-    
-    let scenario = model.scenarios[scenarioInd]
-    if (!scenario) throw new Error(`Invalid scenario to run: ${scenarioInd}`)
+    if (!diagramController) throw new Error("Diagram not initialized/drawn")
+
+    if (scenarioStepper != null) 
+    { //in case we ran a stepper before this, erase the last step and forget it.
+        scenarioStepper.erasePreviousStep();
+        scenarioStepper = null;
+    }
+    let scenario = resolveScenario(scenarioInd)
+    let scenarioRunner = new ScenarioRunner(diagramController)
     scenarioRunner.runScenario(scenario,usrMsgCallback)
+}
+
+var scenarioStepper = null;
+
+function getScenarioStepper(scenarioInd)
+{
+    
+    if (scenarioStepper == null || scenarioStepper.scenarioIndex != scenarioInd)
+    {
+        if (scenarioStepper != null) scenarioStepper.erasePreviousStep();
+        console.log(`New scenario stepper for scenario ${scenarioInd}`)
+        scenarioStepper = new ScenarioStepper(scenarioInd,resolveScenario(scenarioInd),diagramController)
+    }
+    return scenarioStepper
+}
+
+function scenarioBack(scenarioInd,usrMsgCallback)
+{
+    let stepper = getScenarioStepper(scenarioInd)
+    stepper.prevStep(usrMsgCallback)
+}
+
+function scenarioNext(scenarioInd,usrMsgCallback)
+{
+    let stepper = getScenarioStepper(scenarioInd)
+    stepper.nextStep(usrMsgCallback)
+}
+
+function resolveScenario(ind)
+{
+    if (!model) throw new Error("Model not initialized when running scenarion")
+    let scenario = model.scenarios[ind]
+    if (!scenario) throw new Error(`Invalid scenario to run: ${scenarioInd}`)
+    return scenario;
 }
 
 function parseCode(programCode)
@@ -89,5 +128,7 @@ module.exports = {
     initApp,
     runScenario,
     parseAndPresent,
-    reset
+    reset,
+    scenarioBack,
+    scenarioNext
 }
