@@ -37,7 +37,7 @@
         }
 
         .drawingArea {
-            height : 38vh;
+            height : 30vh;
             width:100%;
             border:1px solid black;
             overflow-y:scroll;
@@ -45,7 +45,7 @@
         }
 
         .drawingSVG {
-            height : 1000px;
+            height : 800px;
             width : 100%;
         }
 
@@ -224,8 +224,9 @@
     </div>
     <button onclick="reset()"> Reset </button>
     <button onclick="parseAndDraw()"> Draw </button>
-    <button onclick="runScenario()"> Run Scenario </button>
+    <br/><br/>
     <select id="scenarioSelect"></select>
+    <button onclick="runScenario()"> Run Scenario </button>
         <hr/>
     <div id="cons" class="consoleText" ></div>
     <span id="error" class="errorText" ></span>
