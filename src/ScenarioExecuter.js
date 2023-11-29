@@ -13,6 +13,9 @@ class ScenarioExecuter
         this._lastStepIndex = -1;
     }
 
+    /**
+     * The index of the last step that run by this executer.
+     */
     get lastStepIndex() { return this._lastStepIndex }
 
     _runStep(allSteps,index,userMsgCallback)
