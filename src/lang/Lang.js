@@ -1,6 +1,6 @@
 const _ohm = require('ohm-js')
 const ohm = _ohm.default || _ohm; //workaround to allow importing using common js in node (for testing), and packing w/ webpack.
-const { Comment, Actor, Program, TextLiteral, Store } = require('./IR')
+const { Comment, Actor, Program, TextLiteral, Store, DataFlowWrite } = require('./IR')
 
 
 function createGrammarNS()
@@ -25,10 +25,22 @@ function createParser()
     const lang = resolveGrammar();
     let irBuilder = lang.createSemantics();
 
+    let agentsParsed = {}
+    let storesParsed = {}
+
+    function isValidWriteFlow(agentID,storeID)
+    {
+        let isValidAgent = agentsParsed[agentID] instanceof Actor
+        let isValidStore = storesParsed[storeID] instanceof Store
+
+        return isValidAgent && isValidStore
+    }
+
     irBuilder.addOperation("asIR()", {
 
         Program(programElements) {
-            return [new Program(programElements.asIR())]
+            let p = new Program(programElements.asIR())
+            return [p]
         },
 
         Statement(c) {
@@ -56,13 +68,23 @@ function createParser()
         },
 
         ActorDef(_, caption, __, id) {
-            return [new Actor(id.asIR()[0],
-                              caption.asIR()[0].text)]
+            let a = new Actor(id.asIR()[0],caption.asIR()[0].text)
+            agentsParsed[a.id] = a
+            return [a]
         },
 
         StoreDef(_, caption, __, id) {
-            return [new Store(  id.asIR()[0],
-                                caption.asIR()[0].text)]
+            let s = new Store(  id.asIR()[0],caption.asIR()[0].text)
+            storesParsed[s.id] = s
+            return [s]
+        },
+
+        DataFlowWrite(agentID,_,storeID) {
+            let aid = agentID.asIR()[0]
+            let sid = storeID.asIR()[0]
+            if (!isValidWriteFlow(aid,sid))
+                throw new Error(`Invalid write data flow: ${aid} --> ${sid}`)
+            return [new DataFlowWrite(agentsParsed[aid],storesParsed[sid])]
         },
 
         TextLiteral(_,s,__) {

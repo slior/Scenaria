@@ -44,6 +44,18 @@ class Store
     get caption() { return this._caption}
 }
 
+class DataFlowWrite
+{
+    constructor(__agent, __store)
+    {
+        this._agent = __agent;
+        this._store = __store;
+    }
+
+    get agent() { return this._agent }
+    get store() { return this._store }
+}
+
 class Block
 {
     constructor(_stmts)
@@ -70,5 +82,6 @@ module.exports = {
     Actor,
     Program,
     TextLiteral,
-    Store
+    Store,
+    DataFlowWrite
 }

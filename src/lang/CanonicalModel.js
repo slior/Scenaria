@@ -1,5 +1,5 @@
 
-const {Actor,Store} = require("./IR")
+const {Actor,Store, DataFlowWrite} = require("./IR")
 const {ACTOR_TYPE} = require("../SystemModel")
 
 /**
@@ -26,11 +26,18 @@ function toCanonicalModel(program)
                                             }})
                 )
     
+    let dataFlows = program.statements.filter(s => s instanceof DataFlowWrite)
+                                      .map(dfw => { return {
+                                          type : "write",
+                                          from : dfw.agent.id,
+                                          to : dfw.store.id
+                                       }})
+    
     return {
         "name" : "",
         actors : actors,
         channels : [],
-        data_flows : [],
+        data_flows : dataFlows,
         scenarios : []
     }
 
