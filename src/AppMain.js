@@ -1,6 +1,7 @@
 
 // const { VMState } = require("./VMState.js")
-// const { createParser,getLanguageKeywords } = require("./Lang")
+const { createParser } = require("./lang/Lang")
+const { toCanonicalModel } = require("./lang/CanonicalModel")
 // const { ProgramRunner } = require("./ProgramRunner")
 // const {assertIsNum } = require("./util")
 
@@ -96,10 +97,10 @@ function resolveScenario(ind)
 
 function parseCode(programCode)
 {
-    // let parser = createParser(variant)
-    // let program = parser(programCode);
-    // return program;
-    return JSON.parse(programCode); //for now, no code to parse - we get JSON code and return it.
+    let parser = createParser()
+    let program = parser(programCode);
+    return program;
+    // return JSON.parse(programCode); //for now, no code to parse - we get JSON code and return it.
 }
 
 /**
@@ -110,7 +111,8 @@ function parseCode(programCode)
 function parseAndPresent(code)
 {
     model = parseCode(code)
-    return presentModel(model)
+    console.log(`Parsed code: ${JSON.stringify(model)}`)
+    return presentModel(toCanonicalModel(model))
 }
 
 /**
