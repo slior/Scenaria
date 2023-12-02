@@ -56,6 +56,19 @@ class DataFlowWrite
     get store() { return this._store }
 }
 
+class DataFlowRead
+{
+    constructor(__agent, __store)
+    {
+        this._agent = __agent;
+        this._store = __store;
+    }
+
+    get agent() { return this._agent }
+    get store() { return this._store }
+}   
+
+
 class Block
 {
     constructor(_stmts)
@@ -83,5 +96,6 @@ module.exports = {
     Program,
     TextLiteral,
     Store,
-    DataFlowWrite
+    DataFlowWrite,
+    DataFlowRead
 }

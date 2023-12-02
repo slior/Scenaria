@@ -1,5 +1,5 @@
 
-const {Actor,Store, DataFlowWrite} = require("./IR")
+const {Actor,Store, DataFlowWrite, DataFlowRead} = require("./IR")
 const {ACTOR_TYPE} = require("../SystemModel")
 
 /**
@@ -32,6 +32,13 @@ function toCanonicalModel(program)
                                           from : dfw.agent.id,
                                           to : dfw.store.id
                                        }})
+                    .concat(program.statements.filter(s => s instanceof DataFlowRead)
+                                                .map(dfr => { return {
+                                                    type : "read",
+                                                    from: dfr.store.id,
+                                                    to : dfr.agent.id
+                                                }})
+                    )
     
     return {
         "name" : "",

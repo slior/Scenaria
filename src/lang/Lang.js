@@ -1,6 +1,7 @@
 const _ohm = require('ohm-js')
 const ohm = _ohm.default || _ohm; //workaround to allow importing using common js in node (for testing), and packing w/ webpack.
-const { Comment, Actor, Program, TextLiteral, Store, DataFlowWrite } = require('./IR')
+const { Comment, Actor, Program, TextLiteral, Store, 
+        DataFlowWrite, DataFlowRead } = require('./IR')
 
 
 function createGrammarNS()
@@ -28,7 +29,7 @@ function createParser()
     let agentsParsed = {}
     let storesParsed = {}
 
-    function isValidWriteFlow(agentID,storeID)
+    function isValidDataFlow(agentID,storeID)
     {
         let isValidAgent = agentsParsed[agentID] instanceof Actor
         let isValidStore = storesParsed[storeID] instanceof Store
@@ -82,9 +83,17 @@ function createParser()
         DataFlowWrite(agentID,_,storeID) {
             let aid = agentID.asIR()[0]
             let sid = storeID.asIR()[0]
-            if (!isValidWriteFlow(aid,sid))
+            if (!isValidDataFlow(aid,sid))
                 throw new Error(`Invalid write data flow: ${aid} --> ${sid}`)
             return [new DataFlowWrite(agentsParsed[aid],storesParsed[sid])]
+        },
+
+        DataFlowRead(agentID,_,storeID) {
+            let aid = agentID.asIR()[0]
+            let sid = storeID.asIR()[0]
+            if (!isValidDataFlow(aid,sid))
+                throw new Error(`Invalid read data flow: ${aid} <-- ${sid}`)
+            return [new DataFlowRead(agentsParsed[aid],storesParsed[sid])]
         },
 
         TextLiteral(_,s,__) {
