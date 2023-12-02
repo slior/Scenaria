@@ -1,5 +1,5 @@
 
-const {Actor} = require("./IR")
+const {Actor,Store} = require("./IR")
 const {ACTOR_TYPE} = require("../SystemModel")
 
 /**
@@ -17,6 +17,15 @@ function toCanonicalModel(program)
                                         caption : a.caption,
                                         id : a.id
                                     }})
+                
+                .concat( program.statements.filter(st => st instanceof Store)
+                                            .map(s => { return {
+                                                type : ACTOR_TYPE.STORE,
+                                                caption : s.caption,
+                                                id : s.id
+                                            }})
+                )
+    
     return {
         "name" : "",
         actors : actors,

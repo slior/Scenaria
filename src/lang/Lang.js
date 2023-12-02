@@ -1,6 +1,6 @@
 const _ohm = require('ohm-js')
 const ohm = _ohm.default || _ohm; //workaround to allow importing using common js in node (for testing), and packing w/ webpack.
-const { Comment, Actor, Program, TextLiteral } = require('./IR')
+const { Comment, Actor, Program, TextLiteral, Store } = require('./IR')
 
 
 function createGrammarNS()
@@ -58,6 +58,11 @@ function createParser()
         ActorDef(_, caption, __, id) {
             return [new Actor(id.asIR()[0],
                               caption.asIR()[0].text)]
+        },
+
+        StoreDef(_, caption, __, id) {
+            return [new Store(  id.asIR()[0],
+                                caption.asIR()[0].text)]
         },
 
         TextLiteral(_,s,__) {

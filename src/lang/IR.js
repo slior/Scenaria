@@ -32,6 +32,18 @@ class Actor
     get caption() { return this._caption}
 }
 
+class Store
+{
+    constructor(__id,__caption)
+    {
+        this._id = __id;
+        this._caption = __caption
+    }
+
+    get id() { return this._id}
+    get caption() { return this._caption}
+}
+
 class Block
 {
     constructor(_stmts)
@@ -57,5 +69,6 @@ module.exports = {
     Comment,
     Actor,
     Program,
-    TextLiteral
+    TextLiteral,
+    Store
 }
