@@ -10,6 +10,11 @@ const ACTOR_TYPE = {
     USER : 'user'
 }
 
+const DATA_FLOW_TYPE = {
+    READ : 'read',
+    WRITE : 'write'
+}
+
 const CHANNEL_TYPE = {
     REQ_RES : 'req_res',
     ASYNC : 'async'
@@ -24,5 +29,6 @@ module.exports = {
     EDGE_TYPE,
     ACTOR_TYPE,
     CHANNEL_TYPE,
-    channelID
+    channelID,
+    DATA_FLOW_TYPE
 }

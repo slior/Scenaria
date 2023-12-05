@@ -130,6 +130,7 @@
         try
         {
             clearError()
+            main.reset()
             let code = getCodeFromEditor();
             main.parseAndPresent(code)
                 .then(model => {

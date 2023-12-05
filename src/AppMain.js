@@ -31,8 +31,11 @@ const createSVGImpl = (drawingElement) =>
 
 function clearDiagram()
 {
-    topLevelSVG.clear()
-    drawingContainer.removeChild(topLevelSVG.node)
+    if (topLevelSVG) //if this wasn't initialized - nothing to clear.
+    {
+        topLevelSVG.clear()
+        drawingContainer.removeChild(topLevelSVG.node)
+    }
 }
 
 function presentModel(model)
@@ -112,7 +115,7 @@ function parseAndPresent(code)
 {
     model = parseCode(code)
     console.log(`Parsed code: ${JSON.stringify(model)}`)
-    return presentModel(toCanonicalModel(model))
+    return presentModel(model)
 }
 
 /**

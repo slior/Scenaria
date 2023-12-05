@@ -1,7 +1,7 @@
 const _ohm = require('ohm-js')
 const ohm = _ohm.default || _ohm; //workaround to allow importing using common js in node (for testing), and packing w/ webpack.
-const { Comment, Actor, Program, TextLiteral, Store, 
-        DataFlowWrite, DataFlowRead } = require('./IR')
+
+const { ACTOR_TYPE, DATA_FLOW_TYPE } = require('../SystemModel')
 
 
 function createGrammarNS()
@@ -31,8 +31,9 @@ function createParser()
 
     function isValidDataFlow(agentID,storeID)
     {
-        let isValidAgent = agentsParsed[agentID] instanceof Actor
-        let isValidStore = storesParsed[storeID] instanceof Store
+
+        let isValidAgent = (agentsParsed[agentID] && agentsParsed[agentID].type) == ACTOR_TYPE.AGENT
+        let isValidStore = (storesParsed[storeID] && storesParsed[storeID].type) == ACTOR_TYPE.STORE
 
         return isValidAgent && isValidStore
     }
@@ -40,7 +41,18 @@ function createParser()
     irBuilder.addOperation("asIR()", {
 
         Program(programElements) {
-            let p = new Program(programElements.asIR())
+
+            let definedElements = programElements.asIR();
+            let actors = definedElements.filter(el => Object.values(ACTOR_TYPE).includes(el.type))
+            let dataFlows = definedElements.filter(el => Object.values(DATA_FLOW_TYPE).includes(el.type)) //TODO: these values should be enumerated
+            let p = {
+                "name" : "",
+                actors : actors,
+                channels : [],
+                data_flows : dataFlows,
+                scenarios : []
+            }
+            
             return [p]
         },
 
@@ -65,17 +77,17 @@ function createParser()
         },
 
         comment(_,text) {
-            return [new Comment(text.sourceString)]
+            return [text.sourceString]
         },
 
         ActorDef(_, caption, __, id) {
-            let a = new Actor(id.asIR()[0],caption.asIR()[0].text)
+            let a = { type : ACTOR_TYPE.AGENT, id : id.asIR()[0], caption : caption.asIR()[0]}
             agentsParsed[a.id] = a
             return [a]
         },
 
         StoreDef(_, caption, __, id) {
-            let s = new Store(  id.asIR()[0],caption.asIR()[0].text)
+            let s = {type : ACTOR_TYPE.STORE, id : id.asIR()[0], caption : caption.asIR()[0] }
             storesParsed[s.id] = s
             return [s]
         },
@@ -85,7 +97,7 @@ function createParser()
             let sid = storeID.asIR()[0]
             if (!isValidDataFlow(aid,sid))
                 throw new Error(`Invalid write data flow: ${aid} --> ${sid}`)
-            return [new DataFlowWrite(agentsParsed[aid],storesParsed[sid])]
+            return [{type : DATA_FLOW_TYPE.WRITE, from : aid, to : sid}]
         },
 
         DataFlowRead(agentID,_,storeID) {
@@ -93,11 +105,11 @@ function createParser()
             let sid = storeID.asIR()[0]
             if (!isValidDataFlow(aid,sid))
                 throw new Error(`Invalid read data flow: ${aid} <-- ${sid}`)
-            return [new DataFlowRead(agentsParsed[aid],storesParsed[sid])]
+            return [{type : DATA_FLOW_TYPE.READ, from: sid, to: aid}]
         },
 
         TextLiteral(_,s,__) {
-            return [new TextLiteral(s.sourceString)]
+            return [s.sourceString]
         },
         
         full_ident(firstChar,restOfChars) {
