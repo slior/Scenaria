@@ -1,7 +1,7 @@
 const _ohm = require('ohm-js')
 const ohm = _ohm.default || _ohm; //workaround to allow importing using common js in node (for testing), and packing w/ webpack.
 
-const { ACTOR_TYPE, DATA_FLOW_TYPE } = require('../SystemModel')
+const { ACTOR_TYPE, DATA_FLOW_TYPE, CHANNEL_TYPE } = require('../SystemModel')
 
 
 function createGrammarNS()
@@ -38,17 +38,26 @@ function createParser()
         return isValidAgent && isValidStore
     }
 
+    function isValidChannel(fromID,toID)
+    {
+        let isValidFrom = [ACTOR_TYPE.AGENT,ACTOR_TYPE.USER].includes((agentsParsed[fromID] && agentsParsed[fromID].type))
+        let isValidTo = [ACTOR_TYPE.AGENT,ACTOR_TYPE.USER].includes((agentsParsed[toID] && agentsParsed[toID].type))
+
+        return isValidFrom && isValidTo
+    }
+
     irBuilder.addOperation("asIR()", {
 
         Program(programElements) {
 
             let definedElements = programElements.asIR();
             let actors = definedElements.filter(el => Object.values(ACTOR_TYPE).includes(el.type))
-            let dataFlows = definedElements.filter(el => Object.values(DATA_FLOW_TYPE).includes(el.type)) //TODO: these values should be enumerated
+            let dataFlows = definedElements.filter(el => Object.values(DATA_FLOW_TYPE).includes(el.type))
+            let channels = definedElements.filter(el => Object.values(CHANNEL_TYPE).includes(el.type))
             let p = {
                 "name" : "",
                 actors : actors,
-                channels : [],
+                channels : channels,
                 data_flows : dataFlows,
                 scenarios : []
             }
@@ -98,6 +107,24 @@ function createParser()
             return [u]
         },
 
+        ReqResChannel(_, maybeText, __) {
+            let channelText = maybeText.children.length > 0 ? 
+                                maybeText.sourceString
+                                : "";
+            return [channelText]
+
+        },
+
+        SyncCall(fromID,channel,toID) {
+            let from = fromID.asIR()[0]
+            let to = toID.asIR()[0]
+            let channelText = channel.asIR()[0]
+            if (!isValidChannel(from,to))
+                throw new Error(`Invalid channel definition: ${from} -(${channelText})-> ${to}`)
+            //should avoid more than one channel between same actors?
+            return [{type : CHANNEL_TYPE.REQ_RES,from : from, to : to, text : channelText }]
+        },
+
         DataFlowWrite(agentID,_,storeID) {
             let aid = agentID.asIR()[0]
             let sid = storeID.asIR()[0]
@@ -138,7 +165,7 @@ function createParser()
     return (programText) => {
         let m = lang.match(programText);
         if (m.succeeded())
-            return irBuilder(m).asIR()[0]; //the single element should be the Program
+            return irBuilder(m).asIR()[0]; //the single element should be the model
         else
             throw new Error(`Failed to parse program: ${m.message}`)
     }
