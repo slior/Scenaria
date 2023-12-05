@@ -92,6 +92,12 @@ function createParser()
             return [s]
         },
 
+        UserDef(_,caption,__,id) {
+            let u = {type : ACTOR_TYPE.USER, id : id.asIR()[0], caption : caption.asIR()[0] }
+            agentsParsed[u.id] = u;
+            return [u]
+        },
+
         DataFlowWrite(agentID,_,storeID) {
             let aid = agentID.asIR()[0]
             let sid = storeID.asIR()[0]
