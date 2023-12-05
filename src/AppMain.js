@@ -1,9 +1,5 @@
 
-// const { VMState } = require("./VMState.js")
 const { createParser } = require("./lang/Lang")
-const { toCanonicalModel } = require("./lang/CanonicalModel")
-// const { ProgramRunner } = require("./ProgramRunner")
-// const {assertIsNum } = require("./util")
 
 const assert = require('assert')
 const { SVG } = require('@svgdotjs/svg.js')
