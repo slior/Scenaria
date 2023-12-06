@@ -17,7 +17,7 @@ Scenaria {
 
      ///---------- Statements
      
-     Statement = ActorDef | StoreDef | UserDef | SyncCall | DataFlowWrite | DataFlowRead
+     Statement = ActorDef | StoreDef | UserDef | SyncCall | AsynchCall | DataFlowWrite | DataFlowRead
      
      ActorDef = actor TextLiteral as ident
      StoreDef = store TextLiteral as ident
@@ -25,6 +25,9 @@ Scenaria {
      
      ReqResChannel = "-(" TextLiteral? ")->"
      SyncCall = ident ReqResChannel ident
+
+     AsynchChannel = "-(" TextLiteral? ")-\\"
+     AsynchCall = ident AsynchChannel ident
      
      DataFlowWrite = ident "-->" ident
      DataFlowRead = ident "<--" ident

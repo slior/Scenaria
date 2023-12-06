@@ -1,0 +1,9 @@
+user 'Shopper' as u;
+actor 'Cart Service' as cs;
+actor 'Order Service' as os;
+store 'Cart Data' as cd;
+
+u -()-> cs;
+cs --> cd;
+cs <-- cd;
+cs -()-\ os;

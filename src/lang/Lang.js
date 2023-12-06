@@ -121,8 +121,25 @@ function createParser()
             let channelText = channel.asIR()[0]
             if (!isValidChannel(from,to))
                 throw new Error(`Invalid channel definition: ${from} -(${channelText})-> ${to}`)
-            //should avoid more than one channel between same actors?
+            //should avoid more than one channel between same agents?
             return [{type : CHANNEL_TYPE.REQ_RES,from : from, to : to, text : channelText }]
+        },
+
+        AsynchChannel(_, maybeText, __) {
+            let channelText = maybeText.children.length > 0 ? 
+                                maybeText.sourceString
+                                : "";
+            return [channelText]
+        },
+
+        AsynchCall(fromID,channel,toID) {
+            let from = fromID.asIR()[0]
+            let to = toID.asIR()[0]
+            let channelText = channel.asIR()[0]
+            if (!isValidChannel(from,to))
+                throw new Error(`Invalid channel definition: ${from} -(${channelText})-\ ${to}`)
+
+            return [{type : CHANNEL_TYPE.ASYNC, from : from, to : to, text : channelText}]
         },
 
         DataFlowWrite(agentID,_,storeID) {
