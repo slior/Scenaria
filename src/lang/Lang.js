@@ -182,6 +182,20 @@ function createParser()
             return [step]
         },
 
+        AsynchCallStep(fromID, _, message,__,toID) {
+            let from = fromID.asIR()[0]
+            let to = toID.asIR()[0]
+            let msgText = message.asIR()[0]
+
+            //lazily define the channel object if not defined, and then return the step object
+            let channel = newChannel(CHANNEL_TYPE.ASYNC,from,to)
+            if (!channelDefined(channel))
+                rememberChannel(channel)
+
+            let step = newStep(channelsParsed[channel.id],SCENARIO_STEP_TYPE.REQ,msgText)
+            return [step]
+        },
+
         DataFlowWrite(agentID,_,storeID) {
             let aid = agentID.asIR()[0]
             let sid = storeID.asIR()[0]
