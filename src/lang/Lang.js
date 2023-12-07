@@ -196,6 +196,18 @@ function createParser()
             return [step]
         },
 
+        SyncResponse(callerID,_,msg,__,responderID) {
+            let caller = callerID.asIR()[0]
+            let msgText = msg.asIR()[0]
+            let responder = responderID.asIR()[0]
+
+            let channel = newChannel(CHANNEL_TYPE.REQ_RES,caller,responder)
+            if (!channelDefined) throw new Error(`Channel undefined for response step: ${caller} -(${msgText}-< ${responder})`)
+
+            let step = newStep(channelsParsed[channel.id],SCENARIO_STEP_TYPE.RES,msgText)
+            return [step]
+        },
+
         DataFlowWrite(agentID,_,storeID) {
             let aid = agentID.asIR()[0]
             let sid = storeID.asIR()[0]
