@@ -17,7 +17,7 @@ Scenaria {
 
      ///---------- Statements
      
-     Statement = ActorDef | StoreDef | UserDef | SyncCall | AsynchCall | DataFlowWrite | DataFlowRead
+     Statement = ActorDef | StoreDef | UserDef | SyncCall | AsynchCall | DataFlowWrite | DataFlowRead | Scenario
      
      ActorDef = actor TextLiteral as ident
      StoreDef = store TextLiteral as ident
@@ -31,6 +31,18 @@ Scenaria {
      
      DataFlowWrite = ident "-->" ident
      DataFlowRead = ident "<--" ident
+
+     Scenario = TextLiteral "{" Step* "}"
+     
+     Step = SyncCallStep | AsynchCallStep | SyncResponse | DataWrite | DataRead
+     
+     SyncCallStep = ident "-(" TextLiteral ")->" ident
+     AsynchCallStep = ident "-(" TextLiteral ")-\\" ident
+     
+     DataWrite = ident "-" TextLiteral "->" ident
+     DataRead = ident "<-" TextLiteral "-" ident
+     
+     SyncResponse = ident "--(" TextLiteral ")--<" ident
      
      textCharacter = alnum | space
      TextLiteral = "'" textCharacter* "'"

@@ -1,7 +1,7 @@
 const _ohm = require('ohm-js')
 const ohm = _ohm.default || _ohm; //workaround to allow importing using common js in node (for testing), and packing w/ webpack.
 
-const { ACTOR_TYPE, DATA_FLOW_TYPE, CHANNEL_TYPE } = require('../SystemModel')
+const { ACTOR_TYPE, DATA_FLOW_TYPE, CHANNEL_TYPE, newChannel, newStep, SCENARIO_STEP_TYPE } = require('../SystemModel')
 
 
 function createGrammarNS()
@@ -28,6 +28,7 @@ function createParser()
 
     let agentsParsed = {}
     let storesParsed = {}
+    let channelsParsed = {}
 
     function isValidDataFlow(agentID,storeID)
     {
@@ -46,6 +47,18 @@ function createParser()
         return isValidFrom && isValidTo
     }
 
+    function rememberChannel(channelObj)
+    {
+        channelsParsed[channelObj.id] = channelObj
+    }
+
+    function channelDefined(channelObj)
+    {
+        return typeof(channelsParsed[channelObj.id]) != 'undefined'
+    }
+    
+    function isScenario(o) { return o.steps !== undefined }
+
     irBuilder.addOperation("asIR()", {
 
         Program(programElements) {
@@ -53,13 +66,16 @@ function createParser()
             let definedElements = programElements.asIR();
             let actors = definedElements.filter(el => Object.values(ACTOR_TYPE).includes(el.type))
             let dataFlows = definedElements.filter(el => Object.values(DATA_FLOW_TYPE).includes(el.type))
-            let channels = definedElements.filter(el => Object.values(CHANNEL_TYPE).includes(el.type))
+            let channels = Object.values(channelsParsed)
+
+            let scenarios = definedElements.filter(el => isScenario(el))
+
             let p = {
                 "name" : "",
                 actors : actors,
                 channels : channels,
                 data_flows : dataFlows,
-                scenarios : []
+                scenarios : scenarios
             }
             
             return [p]
@@ -115,14 +131,16 @@ function createParser()
 
         },
 
-        SyncCall(fromID,channel,toID) {
+        SyncCall(fromID,channelT,toID) {
             let from = fromID.asIR()[0]
             let to = toID.asIR()[0]
-            let channelText = channel.asIR()[0]
+            let channelText = channelT.asIR()[0]
             if (!isValidChannel(from,to))
                 throw new Error(`Invalid channel definition: ${from} -(${channelText})-> ${to}`)
             //should avoid more than one channel between same agents?
-            return [{type : CHANNEL_TYPE.REQ_RES,from : from, to : to, text : channelText }]
+            let channel = newChannel(CHANNEL_TYPE.REQ_RES,from,to,channelText)
+            rememberChannel(channel)
+            return [channel]
         },
 
         AsynchChannel(_, maybeText, __) {
@@ -132,14 +150,36 @@ function createParser()
             return [channelText]
         },
 
-        AsynchCall(fromID,channel,toID) {
+        AsynchCall(fromID,channelT,toID) {
             let from = fromID.asIR()[0]
             let to = toID.asIR()[0]
-            let channelText = channel.asIR()[0]
+            let channelText = channelT.asIR()[0]
             if (!isValidChannel(from,to))
                 throw new Error(`Invalid channel definition: ${from} -(${channelText})-\ ${to}`)
 
-            return [{type : CHANNEL_TYPE.ASYNC, from : from, to : to, text : channelText}]
+            let channel = newChannel(CHANNEL_TYPE.REQ_RES,from,to,channelText)
+            rememberChannel(channel)
+            return [channel]
+    
+        },
+
+        Scenario(name,_,steps,__) {
+            let _steps = steps.children.flatMap(s => s.asIR())
+            return [{name : name.asIR()[0], steps : _steps}]
+        },
+
+        SyncCallStep(fromID, _, message, __ , toID) {
+            let from = fromID.asIR()[0]
+            let to = toID.asIR()[0]
+            let msgText = message.asIR()[0]
+
+            //lazily define the channel object if not defined, and then return the step object
+            let channel = newChannel(CHANNEL_TYPE.REQ_RES,from,to)
+            if (!channelDefined(channel))
+                rememberChannel(channel)
+
+            let step = newStep(channelsParsed[channel.id],SCENARIO_STEP_TYPE.REQ,msgText)
+            return [step]
         },
 
         DataFlowWrite(agentID,_,storeID) {
