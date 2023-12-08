@@ -1,6 +1,8 @@
 const CHANNEL_REQUEST_COLOR = '#8B008B'
 const CHANNEL_RESPONSE_COLOR = '#A9A9A9'
+const DATA_WRITE_COLOR = CHANNEL_REQUEST_COLOR
 
+const { SCENARIO_STEP_TYPE }  = require('./SystemModel')
 /**
  * Base class for scenario execution and display
  */
@@ -31,22 +33,39 @@ class ScenarioExecuter
 
     _unRenderStep(step) 
     {
-        this._diagramController.deHighlight(step.channel)
-        this._diagramController.removeMessageFromChannel(step.channel)
+        switch (step.type)
+        {
+            case SCENARIO_STEP_TYPE.REQ:
+            case SCENARIO_STEP_TYPE.RES:
+                this._diagramController.deHighlight(step.channel)
+                this._diagramController.removeMessageFromChannel(step.channel)
+                break;
+            case SCENARIO_STEP_TYPE.DATA_WRITE:
+                this._diagramController.deHighlight(step.dataflow)
+                this._diagramController.removeMessageFromDataFlow(step.dataflow)
+                break;
+        }
     }
 
     _renderStep(step)
     {
         switch (step.type) {
-            case "req":
+            case SCENARIO_STEP_TYPE.REQ:
                 this._diagramController.highlight(step.channel, CHANNEL_REQUEST_COLOR)
+                if (step.message)
+                    this._diagramController.showMessageOnChannel(step.channel, step.message)
                 break
-            case 'res':
+            case SCENARIO_STEP_TYPE.RES:
                 this._diagramController.highlight(step.channel, CHANNEL_RESPONSE_COLOR)
+                if (step.message)
+                    this._diagramController.showMessageOnChannel(step.channel, step.message)
                 break
+            case SCENARIO_STEP_TYPE.DATA_WRITE : 
+                this._diagramController.highlight(step.dataflow,DATA_WRITE_COLOR)
+                if (step.message)
+                    this._diagramController.showMessageOnDataFlow(step.dataflow,step.message)
+                break;
         }
-        if (step.message)
-            this._diagramController.showMessageOnChannel(step.channel, step.message)
     }
 }
 

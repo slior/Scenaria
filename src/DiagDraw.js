@@ -2,7 +2,7 @@
 const ELK = require('elkjs')
 const elk = new ELK()
 
-const { EDGE_TYPE, ACTOR_TYPE, CHANNEL_TYPE,channelID } = require('./SystemModel')
+const { EDGE_TYPE, ACTOR_TYPE, CHANNEL_TYPE,channelID,flowID } = require('./SystemModel')
 
 const DRAW_MARGIN_HEIGHT = 10;
 const DRAW_TEXT_HEIGHT = 30;
@@ -78,7 +78,7 @@ function graphEdgesFor(model) {
         ];
     }).concat(model.data_flows.map(f => {
         return {
-            id: f.from + "_" + f.to,
+            id : flowID(f.type,f.from,f.to),
             sources: [f.from],
             targets: [f.to],
             type: EDGE_TYPE.DATA_FLOW

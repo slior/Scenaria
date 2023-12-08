@@ -64,9 +64,30 @@ class DiagramController
 
     }
 
+    showMessageOnDataFlow(dataFlowID,message)
+    {
+        let svgElements = this.svgElements[dataFlowID]
+        
+        let h = DRAW_MARGIN_HEIGHT * 2 + DRAW_TEXT_HEIGHT;
+        let w = DRAW_CHAR_WIDTH * message.length + 2 * DRAW_MARGIN_WIDTH
+        let msgbox = this._drawMsgBox(message,w,h,this.drawingContainer)
+        this._setAux(dataFlowID,msgbox) //remember the message box for the channel
+
+        let line = svgElements.find(e => e.node.nodeName == 'polyline')
+        msgbox.cx(line.cx())
+        msgbox.cy(line.cy())
+    }
+
     removeMessageFromChannel(channelID)
     {
         let msgBox = this._getAux(channelID)
+        if (msgBox)
+            msgBox.remove()
+    }
+
+    removeMessageFromDataFlow(flowID)
+    {
+        let msgBox = this._getAux(flowID)
         if (msgBox)
             msgBox.remove()
     }

@@ -22,7 +22,8 @@ const CHANNEL_TYPE = {
 
 const SCENARIO_STEP_TYPE = {
     REQ : 'req',
-    RES : 'res'
+    RES : 'res',
+    DATA_WRITE : 'data_write'
 }
 const NULL_MESSAGE = '--'
 
@@ -44,10 +45,34 @@ function newChannel(type,from,to,channelText = "")
 function newStep(channel,type,message)
 {
     if (!channel || !channel.id) throw new Error(`Invalid channel definition for step: ${JSON.stringify(channel)}`)
-    if (!Object.values(SCENARIO_STEP_TYPE).includes(type)) throw new Error(`Invalid step type: ${type}`)
+    if (!Object.values(SCENARIO_STEP_TYPE).includes(type)) throw new Error(`Invalid channel step type: ${type}`) //TODO: check specifically for channel step types?
 
     return { type : type, message : (message || NULL_MESSAGE), channel : channel.id}
 
+}
+
+function newDataFlowStep(dataFlow, type, message)
+{
+    if (!dataFlow || !dataFlow.id) throw new Error(`Invalid data flow for data flow step: ${JSON.stringify(dataFlow)}`)
+    if (!Object.values(SCENARIO_STEP_TYPE).includes(type)) throw new Error(`Invalid data flow type for step: ${type}`) //TODO: check specifically for data step types?
+
+    return { type : type, dataflow: dataFlow.id, message : (message || NULL_MESSAGE)}
+}
+
+function flowID(type,from,to,message)
+{
+    return `${type}-${from}-${to}`
+}
+
+function newDataFlow(type,from,to,message = "")
+{
+    if (!Object.values(DATA_FLOW_TYPE).includes(type)) throw new Error(`Invalid data flow type: ${type}`)
+    if (!from) throw new Error(`Invalid from actor id when creating data flow`)
+    if (!to) throw new Error(`Invalid to actor id when creating data flow`)
+
+    let ret = { type : type, from : from, to : to, text : (message || NULL_MESSAGE)}
+    ret.id = flowID(type,from,to,message)
+    return ret;
 }
 
 module.exports = {
@@ -58,5 +83,8 @@ module.exports = {
     DATA_FLOW_TYPE,
     newChannel,
     newStep,
-    SCENARIO_STEP_TYPE
+    SCENARIO_STEP_TYPE,
+    newDataFlow,
+    newDataFlowStep,
+    flowID
 }

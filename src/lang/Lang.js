@@ -1,7 +1,9 @@
 const _ohm = require('ohm-js')
 const ohm = _ohm.default || _ohm; //workaround to allow importing using common js in node (for testing), and packing w/ webpack.
 
-const { ACTOR_TYPE, DATA_FLOW_TYPE, CHANNEL_TYPE, newChannel, newStep, SCENARIO_STEP_TYPE } = require('../SystemModel')
+const { ACTOR_TYPE, DATA_FLOW_TYPE, CHANNEL_TYPE,
+        newChannel, newStep, SCENARIO_STEP_TYPE,
+        newDataFlow, newDataFlowStep } = require('../SystemModel')
 
 
 function createGrammarNS()
@@ -29,6 +31,7 @@ function createParser()
     let agentsParsed = {}
     let storesParsed = {}
     let channelsParsed = {}
+    let flowsParsed = {}
 
     function isValidDataFlow(agentID,storeID)
     {
@@ -59,13 +62,18 @@ function createParser()
     
     function isScenario(o) { return o.steps !== undefined }
 
+    function rememberDataFlow(flowObj) { if (flowObj) flowsParsed[flowObj.id] = flowObj }
+    function flowDefined(flowObj) { return flowsParsed[flowObj.id] !== undefined }
+
+
     irBuilder.addOperation("asIR()", {
 
         Program(programElements) {
 
             let definedElements = programElements.asIR();
             let actors = definedElements.filter(el => Object.values(ACTOR_TYPE).includes(el.type))
-            let dataFlows = definedElements.filter(el => Object.values(DATA_FLOW_TYPE).includes(el.type))
+            // let dataFlows = definedElements.filter(el => Object.values(DATA_FLOW_TYPE).includes(el.type))
+            let dataFlows = Object.values(flowsParsed)
             let channels = Object.values(channelsParsed)
 
             let scenarios = definedElements.filter(el => isScenario(el))
@@ -208,12 +216,33 @@ function createParser()
             return [step]
         },
 
+        DataWrite(writerID,_,msg,__,storeID) {
+            let writer = writerID.asIR()[0]
+            let msgText = msg.asIR()[0]
+            let store = storeID.asIR()[0]
+
+            let dataFlow = newDataFlow(DATA_FLOW_TYPE.WRITE,writer,store)
+            if (!flowDefined(dataFlow))
+                rememberDataFlow(dataFlow)
+            
+            let step = newDataFlowStep(dataFlow, SCENARIO_STEP_TYPE.DATA_WRITE, msgText)
+            return [step]
+
+        },
+
+        //TODO: 
+        //  1. generate id for data flows id (newDataFlow in SystemModel)
+        //  2. generate edges (data flows) lazily in scenarios
+        //  3. support data writes/reads in scenario executer
         DataFlowWrite(agentID,_,storeID) {
             let aid = agentID.asIR()[0]
             let sid = storeID.asIR()[0]
             if (!isValidDataFlow(aid,sid))
                 throw new Error(`Invalid write data flow: ${aid} --> ${sid}`)
-            return [{type : DATA_FLOW_TYPE.WRITE, from : aid, to : sid}]
+            
+            let flow = newDataFlow(DATA_FLOW_TYPE.WRITE,aid,sid)
+            rememberDataFlow(flow)
+            return [flow]
         },
 
         DataFlowRead(agentID,_,storeID) {
@@ -221,7 +250,9 @@ function createParser()
             let sid = storeID.asIR()[0]
             if (!isValidDataFlow(aid,sid))
                 throw new Error(`Invalid read data flow: ${aid} <-- ${sid}`)
-            return [{type : DATA_FLOW_TYPE.READ, from: sid, to: aid}]
+            let flow = newDataFlow(DATA_FLOW_TYPE.READ,sid,aid)
+            rememberDataFlow(flow)
+            return [flow]
         },
 
         TextLiteral(_,s,__) {
