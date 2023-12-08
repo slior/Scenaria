@@ -230,10 +230,19 @@ function createParser()
 
         },
 
-        //TODO: 
-        //  1. generate id for data flows id (newDataFlow in SystemModel)
-        //  2. generate edges (data flows) lazily in scenarios
-        //  3. support data writes/reads in scenario executer
+        DataRead(readerID,_,msg,__,storeID) {
+            let reader = readerID.asIR()[0]
+            let msgText = msg.asIR()[0]
+            let store = storeID.asIR()[0]
+
+            let dataFlow = newDataFlow(DATA_FLOW_TYPE.READ,store,reader)
+            if (!flowDefined(dataFlow))
+                rememberDataFlow(dataFlow)
+            
+            let step = newDataFlowStep(dataFlow,SCENARIO_STEP_TYPE.DATA_READ,msgText)
+            return [step]
+        },
+
         DataFlowWrite(agentID,_,storeID) {
             let aid = agentID.asIR()[0]
             let sid = storeID.asIR()[0]

@@ -1,6 +1,6 @@
 const CHANNEL_REQUEST_COLOR = '#8B008B'
 const CHANNEL_RESPONSE_COLOR = '#A9A9A9'
-const DATA_WRITE_COLOR = CHANNEL_REQUEST_COLOR
+const DATA_FLOW_COLOR = CHANNEL_REQUEST_COLOR
 
 const { SCENARIO_STEP_TYPE }  = require('./SystemModel')
 /**
@@ -40,6 +40,7 @@ class ScenarioExecuter
                 this._diagramController.deHighlight(step.channel)
                 this._diagramController.removeMessageFromChannel(step.channel)
                 break;
+            case SCENARIO_STEP_TYPE.DATA_READ:
             case SCENARIO_STEP_TYPE.DATA_WRITE:
                 this._diagramController.deHighlight(step.dataflow)
                 this._diagramController.removeMessageFromDataFlow(step.dataflow)
@@ -60,8 +61,9 @@ class ScenarioExecuter
                 if (step.message)
                     this._diagramController.showMessageOnChannel(step.channel, step.message)
                 break
+            case SCENARIO_STEP_TYPE.DATA_READ : 
             case SCENARIO_STEP_TYPE.DATA_WRITE : 
-                this._diagramController.highlight(step.dataflow,DATA_WRITE_COLOR)
+                this._diagramController.highlight(step.dataflow,DATA_FLOW_COLOR)
                 if (step.message)
                     this._diagramController.showMessageOnDataFlow(step.dataflow,step.message)
                 break;

@@ -23,7 +23,8 @@ const CHANNEL_TYPE = {
 const SCENARIO_STEP_TYPE = {
     REQ : 'req',
     RES : 'res',
-    DATA_WRITE : 'data_write'
+    DATA_WRITE : 'data_write',
+    DATA_READ : 'data_read'
 }
 const NULL_MESSAGE = '--'
 
