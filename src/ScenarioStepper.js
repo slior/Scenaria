@@ -18,7 +18,6 @@ class ScenarioStepper extends ScenarioExecuter
         this._scenario = scenario;
     }
 
-
     get scenarioIndex() { return this._scenarioInd; }
 
     /**

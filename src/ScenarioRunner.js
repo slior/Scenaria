@@ -12,7 +12,6 @@ class ScenarioRunner extends ScenarioExecuter
     constructor(diagramController)
     {
         super(diagramController)
-
     }
 
     /**

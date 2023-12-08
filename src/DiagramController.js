@@ -52,10 +52,7 @@ class DiagramController
     {
         let svgElements = this.svgElements[channelID]
         
-        let h = DRAW_MARGIN_HEIGHT * 2 + DRAW_TEXT_HEIGHT;
-        let w = DRAW_CHAR_WIDTH * message.length + 2 * DRAW_MARGIN_WIDTH
-        let msgbox = this._drawMsgBox(message,w,h,this.drawingContainer)
-        this._setAux(channelID,msgbox) //remember the message box for the channel
+        let msgbox = this._drawMsgBoxForElement(channelID,message)
 
         let g = svgElements.find(e => e.node.nodeName == 'g')
         let circle = g.findOne('circle')
@@ -64,34 +61,56 @@ class DiagramController
 
     }
 
+    /**
+     * Shows a message box on the SVG elements corresponding to the elements for the given data flow id
+     * @param {String} dataFlowID The id of the data flow (model) element
+     * @param {String} message The message to show on the flow edge
+     */
     showMessageOnDataFlow(dataFlowID,message)
     {
         let svgElements = this.svgElements[dataFlowID]
         
-        let h = DRAW_MARGIN_HEIGHT * 2 + DRAW_TEXT_HEIGHT;
-        let w = DRAW_CHAR_WIDTH * message.length + 2 * DRAW_MARGIN_WIDTH
-        let msgbox = this._drawMsgBox(message,w,h,this.drawingContainer)
-        this._setAux(dataFlowID,msgbox) //remember the message box for the channel
+        let msgbox = this._drawMsgBoxForElement(dataFlowID,message)
 
         let line = svgElements.find(e => e.node.nodeName == 'polyline')
         msgbox.cx(line.cx())
         msgbox.cy(line.cy())
     }
 
+    _drawMsgBoxForElement(elementID,message)
+    {
+        let h = DRAW_MARGIN_HEIGHT * 2 + DRAW_TEXT_HEIGHT;
+        let w = DRAW_CHAR_WIDTH * message.length + 2 * DRAW_MARGIN_WIDTH
+        let msgbox = this._drawMsgBox(message,w,h,this.drawingContainer)
+        this._setAux(elementID,msgbox) //remember the message box for the element
+        return msgbox
+    }
+
+    /**
+     * If there's a message box on the element designated by the given id - remove it.
+     * @param {String} channelID The channel element id
+     */
     removeMessageFromChannel(channelID)
     {
-        let msgBox = this._getAux(channelID)
-        if (msgBox)
-            msgBox.remove()
+        this._removeMessageBoxForModelElement(channelID)
     }
+
+    /**
+     * If there's a message box on the element designated by the given id - remove it.
+     * @param {String} flowID The data flow element id
+     */
 
     removeMessageFromDataFlow(flowID)
     {
-        let msgBox = this._getAux(flowID)
+        this._removeMessageBoxForModelElement(flowID)
+    }
+
+    _removeMessageBoxForModelElement(elementID)
+    {
+        let msgBox = this._getAux(elementID)
         if (msgBox)
             msgBox.remove()
     }
-
     
     //we specify these as separate functions so we encapsulate the data structure used here.
     _setAux(key,value)

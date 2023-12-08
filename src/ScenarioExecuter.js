@@ -48,18 +48,20 @@ class ScenarioExecuter
         }
     }
 
+    _renderChannelStep(step)
+    {
+        let color = step.type == SCENARIO_STEP_TYPE.REQ ? CHANNEL_REQUEST_COLOR : CHANNEL_RESPONSE_COLOR
+        this._diagramController.highlight(step.channel,color)
+        if (step.message)
+            this._diagramController.showMessageOnChannel(step.channel,step.message)
+    }
+
     _renderStep(step)
     {
         switch (step.type) {
             case SCENARIO_STEP_TYPE.REQ:
-                this._diagramController.highlight(step.channel, CHANNEL_REQUEST_COLOR)
-                if (step.message)
-                    this._diagramController.showMessageOnChannel(step.channel, step.message)
-                break
             case SCENARIO_STEP_TYPE.RES:
-                this._diagramController.highlight(step.channel, CHANNEL_RESPONSE_COLOR)
-                if (step.message)
-                    this._diagramController.showMessageOnChannel(step.channel, step.message)
+                this._renderChannelStep(step)
                 break
             case SCENARIO_STEP_TYPE.DATA_READ : 
             case SCENARIO_STEP_TYPE.DATA_WRITE : 

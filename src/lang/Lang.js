@@ -3,7 +3,7 @@ const ohm = _ohm.default || _ohm; //workaround to allow importing using common j
 
 const { ACTOR_TYPE, DATA_FLOW_TYPE, CHANNEL_TYPE,
         newChannel, newStep, SCENARIO_STEP_TYPE,
-        newDataFlow, newDataFlowStep } = require('../SystemModel')
+        newDataFlow, newDataFlowStep, newActor } = require('../SystemModel')
 
 
 function createGrammarNS()
@@ -28,11 +28,13 @@ function createParser()
     const lang = resolveGrammar();
     let irBuilder = lang.createSemantics();
 
+    //maintain state of parsed elements
     let agentsParsed = {}
     let storesParsed = {}
     let channelsParsed = {}
     let flowsParsed = {}
 
+    //Helper functions for parsing
     function isValidDataFlow(type,from,to)
     {
         let agentID = type == DATA_FLOW_TYPE.READ ? to : from;
@@ -125,6 +127,7 @@ function createParser()
         return [flow]
     }
 
+    ///Definition of parsing itself - turning tokens into intermediate representation
     irBuilder.addOperation("asIR()", {
 
         Program(programElements) {
@@ -173,13 +176,13 @@ function createParser()
         },
 
         ActorDef(_, caption, __, id) {
-            let a = { type : ACTOR_TYPE.AGENT, id : id.asIR()[0], caption : caption.asIR()[0]}
+            let a = newActor(ACTOR_TYPE.AGENT,id.asIR()[0],caption.asIR()[0])
             rememberAgent(a)
             return [a]
         },
 
         StoreDef(_, caption, __, id) {
-            let s = {type : ACTOR_TYPE.STORE, id : id.asIR()[0], caption : caption.asIR()[0] }
+            let s = newActor(ACTOR_TYPE.STORE,id.asIR()[0], caption.asIR()[0])
             rememberStore(s)
             return [s]
         },
@@ -271,9 +274,6 @@ function createParser()
         _terminal() {
             return [this.sourceString]
         }
-
-        
-
     })
 
     return (programText) => {

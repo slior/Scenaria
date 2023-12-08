@@ -76,6 +76,11 @@ function newDataFlow(type,from,to,message = "")
     return ret;
 }
 
+function newActor(type,id,caption)
+{
+    return { type : type, id : id, caption : caption }
+}
+
 module.exports = {
     EDGE_TYPE,
     ACTOR_TYPE,
@@ -87,5 +92,6 @@ module.exports = {
     SCENARIO_STEP_TYPE,
     newDataFlow,
     newDataFlowStep,
-    flowID
+    flowID,
+    newActor
 }
