@@ -33,8 +33,10 @@ function createParser()
     let channelsParsed = {}
     let flowsParsed = {}
 
-    function isValidDataFlow(agentID,storeID)
+    function isValidDataFlow(type,from,to)
     {
+        let agentID = type == DATA_FLOW_TYPE.READ ? to : from;
+        let storeID = type == DATA_FLOW_TYPE.READ ? from : to;
 
         let isValidAgent = (agentsParsed[agentID] && agentsParsed[agentID].type) == ACTOR_TYPE.AGENT
         let isValidStore = (storesParsed[storeID] && storesParsed[storeID].type) == ACTOR_TYPE.STORE
@@ -50,29 +52,86 @@ function createParser()
         return isValidFrom && isValidTo
     }
 
-    function rememberChannel(channelObj)
-    {
-        channelsParsed[channelObj.id] = channelObj
-    }
+    function rememberAgent(agentObj) { agentsParsed[agentObj.id] = agentObj }
+    function rememberStore(storeObj) { storesParsed[storeObj.id] = storeObj }
 
+    function rememberChannel(channelObj) { channelsParsed[channelObj.id] = channelObj }
     function channelDefined(channelObj)
-    {
-        return typeof(channelsParsed[channelObj.id]) != 'undefined'
+    { //it's defined if we already saw that channel, and it's of the same type.
+        return typeof(channelsParsed[channelObj.id]) != 'undefined' 
+                && channelObj.type == channelsParsed[channelObj.id].type
     }
     
     function isScenario(o) { return o.steps !== undefined }
 
     function rememberDataFlow(flowObj) { if (flowObj) flowsParsed[flowObj.id] = flowObj }
-    function flowDefined(flowObj) { return flowsParsed[flowObj.id] !== undefined }
+    function flowDefined(flowObj) 
+    { 
+        return flowsParsed[flowObj.id] !== undefined 
+                && flowObj.type == flowsParsed[flowObj.id].type
+    }
 
+    function parseChannel(type,fromID, toID, channelT)
+    {
+        let from = fromID.asIR()[0]
+        let to = toID.asIR()[0]
+        let channelText = channelT.asIR()[0]
+        if (!isValidChannel(from,to))
+            throw new Error(`Invalid channel definition: ${from} -(${channelText})- ${to}`)
+        //should avoid more than one channel between same agents?
+        let channel = newChannel(type,from,to,channelText)
+        rememberChannel(channel)
+        return [channel]
+    }
+
+    function parseChannelStep(channelType,stepType,fromID,toID,msg)
+    {
+        let from = fromID.asIR()[0]
+        let to = toID.asIR()[0]
+        let msgText = msg.asIR()[0]
+
+        //lazily define the channel object if not defined, and then return the step object
+        let channel = newChannel(channelType,from,to)
+        if (!channelDefined(channel))
+            rememberChannel(channel)
+
+        let step = newStep(channelsParsed[channel.id],stepType,msgText)
+        return [step]
+    }
+
+    function parseFlowStep(dataFlowType,stepType,fromID,toID,msg)
+    {
+        let from = fromID.asIR()[0]
+        let msgText = msg.asIR()[0]
+        let to = toID.asIR()[0]
+
+        let dataFlow = newDataFlow(dataFlowType,from,to)
+        if (!flowDefined(dataFlow))
+            rememberDataFlow(dataFlow)
+        
+        let step = newDataFlowStep(dataFlow, stepType, msgText)
+        return [step]
+    }
+
+    function parseDataFlow(dataFlowType,fromID,toID)
+    {
+        let from = fromID.asIR()[0]
+        let to = toID.asIR()[0]
+        if (!isValidDataFlow(dataFlowType,from,to))
+            throw new Error(`Invalid data flow: ${from} -- ${to}`)
+        
+        let flow = newDataFlow(dataFlowType,from,to)
+        rememberDataFlow(flow)
+        return [flow]
+    }
 
     irBuilder.addOperation("asIR()", {
 
         Program(programElements) {
 
             let definedElements = programElements.asIR();
-            let actors = definedElements.filter(el => Object.values(ACTOR_TYPE).includes(el.type))
-            // let dataFlows = definedElements.filter(el => Object.values(DATA_FLOW_TYPE).includes(el.type))
+            let actors = Object.values(agentsParsed)
+                        .concat(Object.values(storesParsed))
             let dataFlows = Object.values(flowsParsed)
             let channels = Object.values(channelsParsed)
 
@@ -115,19 +174,19 @@ function createParser()
 
         ActorDef(_, caption, __, id) {
             let a = { type : ACTOR_TYPE.AGENT, id : id.asIR()[0], caption : caption.asIR()[0]}
-            agentsParsed[a.id] = a
+            rememberAgent(a)
             return [a]
         },
 
         StoreDef(_, caption, __, id) {
             let s = {type : ACTOR_TYPE.STORE, id : id.asIR()[0], caption : caption.asIR()[0] }
-            storesParsed[s.id] = s
+            rememberStore(s)
             return [s]
         },
 
         UserDef(_,caption,__,id) {
             let u = {type : ACTOR_TYPE.USER, id : id.asIR()[0], caption : caption.asIR()[0] }
-            agentsParsed[u.id] = u;
+            rememberAgent(u)
             return [u]
         },
 
@@ -140,15 +199,7 @@ function createParser()
         },
 
         SyncCall(fromID,channelT,toID) {
-            let from = fromID.asIR()[0]
-            let to = toID.asIR()[0]
-            let channelText = channelT.asIR()[0]
-            if (!isValidChannel(from,to))
-                throw new Error(`Invalid channel definition: ${from} -(${channelText})-> ${to}`)
-            //should avoid more than one channel between same agents?
-            let channel = newChannel(CHANNEL_TYPE.REQ_RES,from,to,channelText)
-            rememberChannel(channel)
-            return [channel]
+            return parseChannel(CHANNEL_TYPE.REQ_RES,fromID,toID,channelT)
         },
 
         AsynchChannel(_, maybeText, __) {
@@ -159,16 +210,7 @@ function createParser()
         },
 
         AsynchCall(fromID,channelT,toID) {
-            let from = fromID.asIR()[0]
-            let to = toID.asIR()[0]
-            let channelText = channelT.asIR()[0]
-            if (!isValidChannel(from,to))
-                throw new Error(`Invalid channel definition: ${from} -(${channelText})-\ ${to}`)
-
-            let channel = newChannel(CHANNEL_TYPE.REQ_RES,from,to,channelText)
-            rememberChannel(channel)
-            return [channel]
-    
+            return parseChannel(CHANNEL_TYPE.ASYNC,fromID,toID,channelT)
         },
 
         Scenario(name,_,steps,__) {
@@ -177,31 +219,11 @@ function createParser()
         },
 
         SyncCallStep(fromID, _, message, __ , toID) {
-            let from = fromID.asIR()[0]
-            let to = toID.asIR()[0]
-            let msgText = message.asIR()[0]
-
-            //lazily define the channel object if not defined, and then return the step object
-            let channel = newChannel(CHANNEL_TYPE.REQ_RES,from,to)
-            if (!channelDefined(channel))
-                rememberChannel(channel)
-
-            let step = newStep(channelsParsed[channel.id],SCENARIO_STEP_TYPE.REQ,msgText)
-            return [step]
+            return parseChannelStep(CHANNEL_TYPE.REQ_RES,SCENARIO_STEP_TYPE.REQ,fromID,toID,message)
         },
 
         AsynchCallStep(fromID, _, message,__,toID) {
-            let from = fromID.asIR()[0]
-            let to = toID.asIR()[0]
-            let msgText = message.asIR()[0]
-
-            //lazily define the channel object if not defined, and then return the step object
-            let channel = newChannel(CHANNEL_TYPE.ASYNC,from,to)
-            if (!channelDefined(channel))
-                rememberChannel(channel)
-
-            let step = newStep(channelsParsed[channel.id],SCENARIO_STEP_TYPE.REQ,msgText)
-            return [step]
+            return parseChannelStep(CHANNEL_TYPE.ASYNC,SCENARIO_STEP_TYPE.REQ,fromID,toID,message)
         },
 
         SyncResponse(callerID,_,msg,__,responderID) {
@@ -210,58 +232,27 @@ function createParser()
             let responder = responderID.asIR()[0]
 
             let channel = newChannel(CHANNEL_TYPE.REQ_RES,caller,responder)
-            if (!channelDefined) throw new Error(`Channel undefined for response step: ${caller} -(${msgText}-< ${responder})`)
+            if (!channelDefined(channel)) throw new Error(`Channel undefined for response step: ${caller} -(${msgText})-< ${responder}`)
 
             let step = newStep(channelsParsed[channel.id],SCENARIO_STEP_TYPE.RES,msgText)
             return [step]
         },
 
         DataWrite(writerID,_,msg,__,storeID) {
-            let writer = writerID.asIR()[0]
-            let msgText = msg.asIR()[0]
-            let store = storeID.asIR()[0]
-
-            let dataFlow = newDataFlow(DATA_FLOW_TYPE.WRITE,writer,store)
-            if (!flowDefined(dataFlow))
-                rememberDataFlow(dataFlow)
-            
-            let step = newDataFlowStep(dataFlow, SCENARIO_STEP_TYPE.DATA_WRITE, msgText)
-            return [step]
+            return parseFlowStep(DATA_FLOW_TYPE.WRITE,SCENARIO_STEP_TYPE.DATA_WRITE,writerID,storeID,msg)
 
         },
 
         DataRead(readerID,_,msg,__,storeID) {
-            let reader = readerID.asIR()[0]
-            let msgText = msg.asIR()[0]
-            let store = storeID.asIR()[0]
-
-            let dataFlow = newDataFlow(DATA_FLOW_TYPE.READ,store,reader)
-            if (!flowDefined(dataFlow))
-                rememberDataFlow(dataFlow)
-            
-            let step = newDataFlowStep(dataFlow,SCENARIO_STEP_TYPE.DATA_READ,msgText)
-            return [step]
+            return parseFlowStep(DATA_FLOW_TYPE.READ,SCENARIO_STEP_TYPE.DATA_READ,storeID,readerID,msg)
         },
 
         DataFlowWrite(agentID,_,storeID) {
-            let aid = agentID.asIR()[0]
-            let sid = storeID.asIR()[0]
-            if (!isValidDataFlow(aid,sid))
-                throw new Error(`Invalid write data flow: ${aid} --> ${sid}`)
-            
-            let flow = newDataFlow(DATA_FLOW_TYPE.WRITE,aid,sid)
-            rememberDataFlow(flow)
-            return [flow]
+            return parseDataFlow(DATA_FLOW_TYPE.WRITE,agentID,storeID)
         },
 
         DataFlowRead(agentID,_,storeID) {
-            let aid = agentID.asIR()[0]
-            let sid = storeID.asIR()[0]
-            if (!isValidDataFlow(aid,sid))
-                throw new Error(`Invalid read data flow: ${aid} <-- ${sid}`)
-            let flow = newDataFlow(DATA_FLOW_TYPE.READ,sid,aid)
-            rememberDataFlow(flow)
-            return [flow]
+            return parseDataFlow(DATA_FLOW_TYPE.READ,storeID,agentID)
         },
 
         TextLiteral(_,s,__) {

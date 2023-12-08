@@ -12,6 +12,7 @@ var drawingContainer = null;
 var topLevelSVG = null;
 var diagramController = null;
 var model = null;
+var scenarioStepper = null;
 
 function initApp(_drawingContainer)
 {
@@ -31,6 +32,7 @@ function clearDiagram()
     {
         topLevelSVG.clear()
         drawingContainer.removeChild(topLevelSVG.node)
+        topLevelSVG = null;
     }
 }
 
@@ -60,7 +62,7 @@ function runScenario(scenarioInd, usrMsgCallback)
     scenarioRunner.runScenario(scenario,usrMsgCallback)
 }
 
-var scenarioStepper = null;
+
 
 function getScenarioStepper(scenarioInd)
 {

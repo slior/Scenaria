@@ -1,0 +1,18 @@
+user 'Shopper' as u;
+actor 'Cart Service' as cs;
+actor 'Order Service' as os;
+store 'Cart Data' as cd;
+store 'Inventory' as i;
+
+'Add item happy' {
+    u -('add item')->cs
+
+    cs <- 'item data' - i
+
+    cs -('place order')-\os
+    
+    cs - 'item' -> cd
+
+
+    u --('added')--< cs
+};
