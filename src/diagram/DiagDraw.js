@@ -2,7 +2,7 @@
 const ELK = require('elkjs')
 const elk = new ELK()
 
-const { EDGE_TYPE, ACTOR_TYPE, CHANNEL_TYPE,channelID,flowID } = require('./SystemModel')
+const { EDGE_TYPE, ACTOR_TYPE, CHANNEL_TYPE,channelID,flowID } = require('../SystemModel')
 
 const DRAW_MARGIN_HEIGHT = 10;
 const DRAW_TEXT_HEIGHT = 30;

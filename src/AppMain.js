@@ -3,8 +3,8 @@ const { createParser } = require("./lang/Lang")
 
 const assert = require('assert')
 const { SVG } = require('@svgdotjs/svg.js')
-const {layoutModel,drawGraph } = require('./DiagDraw')
-const { DiagramController } = require('./DiagramController')
+const {layoutModel,drawGraph } = require('./diagram/DiagDraw')
+const { DiagramController } = require('./diagram/DiagramController')
 const { ScenarioRunner } = require('./ScenarioRunner')
 const { ScenarioStepper } = require('./ScenarioStepper') 
 
