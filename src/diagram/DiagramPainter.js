@@ -233,11 +233,21 @@ class DiagramPainter
         return outgoingEdges[0];
     }
 
+    /**
+     * Find all edges that are incoming to the given node
+     * @param {Node} graphNode A node in the graph, representing either an actor or a channel
+     * @returns The list of edges where one of the targets is the given node
+     */
     _findEdgesByTarget(graphNode)
     {
         return this._graph.edges.filter(e => e.targets.includes(graphNode.id))
     }
 
+    /**
+     * Find all edges that are outgoing from the given node
+     * @param {Node} graphNode A node in the graph, representing either an actor or a channel
+     * @returns The list of edges where one of the sources is the given node.
+     */
     _findEdgesBySource(graphNode)
     {
         return this._graph.edges.filter(e => e.sources.includes(graphNode.id))
@@ -249,6 +259,14 @@ class DiagramPainter
         this._drawAsyncArrowhead(container,this._channelOutgoingEdge(channel))
     }
 
+    /**
+     * Draw an async arrow head at the end of the given edge.
+     * Will determine the direction according to the last bend point (or start point) of the edge.
+     * 
+     * @param {SVG} container The SVG container object to use for drawing, with SVG.js API.
+     * @param {GraphEdge} edge The edge to draw the arrow for, the graph node.
+     * @see {_determineEdgeEndDirection}
+     */
     _drawAsyncArrowhead(container,edge)
     {
         let x = edge.sections[0].endPoint.x

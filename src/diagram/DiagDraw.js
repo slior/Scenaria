@@ -2,7 +2,7 @@
 const ELK = require('elkjs')
 const elk = new ELK()
 
-const { EDGE_TYPE, ACTOR_TYPE, CHANNEL_TYPE,channelID,flowID } = require('../SystemModel')
+const { EDGE_TYPE,channelID,flowID } = require('../SystemModel')
 const { DiagramPainter } = require("./DiagramPainter")
 
 const DRAW_MARGIN_HEIGHT = 10;
@@ -10,7 +10,6 @@ const DRAW_TEXT_HEIGHT = 30;
 const DRAW_CHAR_WIDTH = 10;
 const DRAW_MARGIN_WIDTH = 20;
 const DRAW_CHANNEL_RADIUS = 20;
-
 
 
 /**
@@ -174,42 +173,6 @@ function rerouteEdge(edge,point,graphNode,svgEl)
      2. draw the edge again
      */
 }
-
-
-//Since edges are orthogonal, the arrow heads can be in one of 4 directions
-const HEAD_DIRECTION = {
-    W : "W", N : "N", E : "E", S : "S"
-}
-
-/**
- * Draw an async arrow head at the end of the given edge.
- * Will determine the direction according to the last bend point (or start point) of the edge.
- * 
- * @param {SVG} draw The SVG object to use for drawing, with SVG.js API.
- * @param {GraphEdge} edge 
- * @see {determineEdgeEndDirection}
- */
-
-
-
-
-
-
-
-/**
- * Find all edges that are outgoing from the given node in the given graph
- * @param {Graph} graph The graph object created for layout/drawing purposes
- * @param {Node} node A node in the graph, representing either an actor or a channel
- * @returns The list of edges where one of the sources is the given node.
- */
-
-
-// /**
-//  * Find all edges that are incoming to the given node in the given graph
-//  * @param {Graph} graph The graph object created for layout/drawing purposes
-//  * @param {Node} node A node in the graph, representing either an actor or a channel
-//  * @returns The list of edges where one of the targets is the given node
-//  */
 
 
 class SVGEventHandler
