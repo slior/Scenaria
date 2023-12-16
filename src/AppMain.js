@@ -42,8 +42,8 @@ function presentModel(model)
 
     return layoutModel(model)
             .then(g => drawGraph(topLevelSVG,g))
-            .then(svgElements => {
-                diagramController = new DiagramController(svgElements,topLevelSVG)
+            .then(diagramPainter => {
+                diagramController = new DiagramController(diagramPainter.svgElements,topLevelSVG)
                 return model
             })
 }

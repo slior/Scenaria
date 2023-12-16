@@ -3,13 +3,13 @@ const ELK = require('elkjs')
 const elk = new ELK()
 
 const { EDGE_TYPE, ACTOR_TYPE, CHANNEL_TYPE,channelID,flowID } = require('../SystemModel')
+const { DiagramPainter } = require("./DiagramPainter")
 
 const DRAW_MARGIN_HEIGHT = 10;
 const DRAW_TEXT_HEIGHT = 30;
 const DRAW_CHAR_WIDTH = 10;
 const DRAW_MARGIN_WIDTH = 20;
 const DRAW_CHANNEL_RADIUS = 20;
-const USER_ACTOR_CAPTION_Y_ADJUSTMENT = 35;
 
 
 
@@ -54,22 +54,6 @@ function outgoingChannelEdgeID(channel)
     return channelID(channel) + CHANNEL_EDGE_OUTGOING_DELIM + channel.to
 }
 
-function channelIDFromEdgeID(edgeID)
-{
-    var channelID = '';
-    switch (true)
-    {
-        case edgeID.indexOf(CHANNEL_EDGE_INCOMING_DELIM) > 0 : 
-            channelID = edgeID.split(CHANNEL_EDGE_INCOMING_DELIM)[1]
-            break;
-        case edgeID.indexOf(CHANNEL_EDGE_OUTGOING_DELIM) > 0 : 
-            channelID = edgeID.split(CHANNEL_EDGE_OUTGOING_DELIM)[0]
-            break;
-        //return empty string by default
-    }
-    return channelID
-}
-
 function graphEdgesFor(model) {
     return model.channels.flatMap(channel => {
         return [
@@ -106,199 +90,95 @@ function graphNodeRepresentsAnActor(node)
     return node.id && (node.id.indexOf('-') < 0)
 }
 
-function rememberSVGElementForID(index,id,svgEl)
-{
-    if (!index) throw new Error("no index to use")
-    if (!id) throw new Error("Invalid ID for graph element")
-    if (!svgEl) throw new Error("Invalid svg element to index")
 
-    if (!index[id])
-        index[id] = []
-
-    index[id].push(svgEl)
-}
 
 /**
  * Using the given SVG object, draws the given graph
  * @param {SVG} draw The SVG.js container object, with SVG.js API.
  * @param {Graph} graph The graph object, as returned from layout model
- *  
+ * @returns A mapping of the model ids to the relevant svg elements for that model
  */
 function drawGraph(draw,graph)
 {
     if (!draw) throw new Error("Invalid SVG drawing container when drawing a graph")
     console.log(graph)
-    let svgElements = {}
+
+    let painter = new DiagramPainter(draw,graph)
     graph.children.forEach(child => {
-        child.fillColor = '#ffffff'
-        child.lineColor = 'black'
-        let svgElement = graphNodeRepresentsAnActor(child) ? 
-                            drawActor(draw,child,child) : 
-                            drawChannel(draw,child,graph)
-        rememberSVGElementForID(svgElements,child.id,svgElement)
+        if (graphNodeRepresentsAnActor(child))
+            painter.drawActor(child)
+        else   
+            painter.drawChannel(child)
     })
 
     //draw lines
     graph.edges.forEach(edge => {
-        let edgeSVGElement = drawEdgeLine(draw,edge)
-        if (edge.type == EDGE_TYPE.DATA_FLOW)
-        {
-            rememberSVGElementForID(svgElements,edge.id,edgeSVGElement)
-            rememberSVGElementForID(svgElements,edge.id,drawArrowHead(draw,edge))
-        }
-        else if (edge.type == EDGE_TYPE.CHANNEL)
-        {
-            rememberSVGElementForID(svgElements,channelIDFromEdgeID(edge.id),edgeSVGElement)
-        }
-        
+        painter.drawEdge(edge)
     })
-    return svgElements
+    return painter
 }
 
-function drawEdgeLine(draw,edge)
+function redrawEdges(point, graphNode,graph, svgEl)
 {
-    let section = edge.sections[0];
-    let bends = section.bendPoints || []
-    var points = [[section.startPoint.x,section.startPoint.y]] //points are, in order: start point, bend points (if any), end point.
-                    .concat(bends.map(p => [p.x,p.y]))
-    points.push([section.endPoint.x,section.endPoint.y])
-    return draw.polyline(points)
-                .stroke({width: 1, color : 'black'}).fill('none')
+    /*
+    1. determine edges connected to the graph node.
+    2. for each edge in edges: reroute edge
+    */
+    let incomingEdges = graph.edges.filter(edge => edge.sources.includes(graphNode.id))
+    let outgoingEdges = graph.edges.filter(edge => edge.targets.includes(graphNode.id))
+
+    incomingEdges.forEach(e => { rerouteEdge(e,point,graphNode,svgEl) })
+    outgoingEdges.forEach(e => { rerouteEdge(e,point,graphNode,svgEl) })
 }
+
+function rerouteEdge(edge,point,graphNode,svgEl)
+{
+    //determine node connection point
+    let currentEdgeLastPoint = edge.endPoint
+    let nodeConnPoint = {
+        x : (svgEl.x() + (svgEl.x() > currentEdgeLastPoint.x ? 0: svgEl.width())),
+        y : (svgEl.y() + svgEl.height()/2)
+    }
+
+    //determine what's the starting point of the new edge - the last edge point or the starting point of the edge.
+    let bendPointCount = edge.sections[0].bendPoints && edge.sections[0].bendPoints.length
+    let hasBendPoints = bendPointCount > 0
+    let edgeReconnectPoint = hasBendPoints ? 
+                            edge.sections[0].bendPoints[bendPointCount-1] : 
+                            edge.sections[0].startPoint
+    let edgePoints = hasBendPoints ? 
+                    edge.sections[0].bendPoints.slice(0,bendPointCount-1) : 
+                    []
+    
+    let dx = nodeConnPoint.x - edgeReconnectPoint.x;
+    let dy = nodeConnPoint.y - edgeReconnectPoint.y;
+
+    //determine which sections to add, by adding relevant bend points.
+    if (dx != 0 && dy != 0)
+    { //1 vertical segment + 2 horizontal segments => 2 bend points
+        edgePoints.push({x : edgeReconnectPoint.x + (dx/2), y : edgeReconnectPoint.y})
+        edgePoints.push({x : edgeReconnectPoint.x + (dx/2), y : edgeReconnectPoint.y + dy})
+    }
+    if (dx != 0 || dy != 0) //if they're both 0, there's nothing to reconnect, otherwise, always add the node connection point
+        edgePoints.push(nodeConnPoint)
+    
+    //last point is the end point, anything before that is the new set of bend points
+    if (edgePoints.length > 1)
+        edge.bendPoints = edgePoints.slice(0,edgePoints.length-1)
+    if (edgePoints.length > 0)
+        edge.endPoint = edgePoints[edgePoints.length-1]
+
+    /*
+     Now redraw the edge
+     1. remove current line and arrow heads
+     2. draw the edge again
+     */
+}
+
 
 //Since edges are orthogonal, the arrow heads can be in one of 4 directions
 const HEAD_DIRECTION = {
     W : "W", N : "N", E : "E", S : "S"
-}
-
-const ARROW_W = 10; //constants for now but should really be derived from layout - how much room it has.
-const ARROW_H = 10;
-
-function drawArrowHead(draw,edge)
-{
-    let lastSection = edge.sections[edge.sections.length-1]
-    let x = lastSection.endPoint.x
-    let y = lastSection.endPoint.y
-    //point 1 is the tip - given as parameter.
-    //point 2 is the bottom right corner, but turned according to direction
-    //point 3 is the bottom left corner, also turned.
-    let point1 = { x : x, y : y}
-    let point2 = {}
-    let point3 = {}
-
-    let direction = determineEdgeEndDirection(edge)
-    switch (direction)
-    {
-        case HEAD_DIRECTION.N : 
-            point2.x = x + ARROW_W/2
-            point2.y = y + ARROW_H
-            point3.x = x - ARROW_W/2
-            point3.y = y + ARROW_H
-            break;
-        case HEAD_DIRECTION.E : 
-            point2.x = x - ARROW_H
-            point2.y = y + ARROW_W/2
-            point3.x = x - ARROW_H
-            point3.y = y - ARROW_W/2
-            break;
-        case HEAD_DIRECTION.S : 
-            point2.x = x - ARROW_W/2
-            point2.y = y - ARROW_H
-            point3.x = x + ARROW_W/2
-            point3.y = y - ARROW_H
-            break;
-        case HEAD_DIRECTION.W : 
-            point2.x = x + ARROW_H
-            point2.y = y - ARROW_W/2
-            point3.x = x + ARROW_H
-            point3.y = y + ARROW_W/2
-            break;
-    }
-
-    let polylineCoords = `${point1.x},${point1.y} ${point2.x},${point2.y} ${point3.x},${point3.y}`
-    return draw.polygon(polylineCoords).fill('black').stroke({width : 1})
-}
-
-function drawActor(draw,actor,actorView)
-{
-    let g = draw.group();
-    if (actor.type == ACTOR_TYPE.USER)
-    {
-        let u = drawUser(g)
-        let t = g.text(actorView.caption)
-        t.cx(u.cx())
-        t.cy(u.cy() - USER_ACTOR_CAPTION_Y_ADJUSTMENT)
-
-        g.cx(actorView.x)
-        g.cy(actorView.y)
-    }
-    else
-    {
-        let r = g.rect(actorView.width,actorView.height).fill(actorView.fillColor).attr('stroke',actorView.lineColor)
-        if (actor.type == ACTOR_TYPE.STORE)
-            r.radius(30)
-        else
-            r.radius(2)
-        let t = g.text(actor.caption)
-        t.cx(r.cx())
-        t.cy(r.cy())
-        g.move(actorView.x,actorView.y)
-    }
-    actor.drawing = g;
-    return g;
-}
-
-function drawUser(container)
-{
-    let g = container.group();
-  
-   let p1 = g.path("M16 7C16 9.20914 14.2091 11 12 11C9.79086 11 8 9.20914 8 7C8 4.79086 9.79086 3 12 3C14.2091 3 16 4.79086 16 7Z")
-                .attr('stroke-width','2')
-   let p2 = g.path("M12 14C8.13401 14 5 17.134 5 21H19C19 17.134 15.866 14 12 14Z").attr('stroke-width','2')
-    return g;
-}
-
-function drawChannel(draw,channel,graph)
-{
-    let g = draw.group()
-    let radius = channel.radius || 20
-    let c = g.circle(radius)
-    c.fill('#ffffff')
-    c.stroke('black')
-    c.x(channel.x)
-    c.y(channel.y)
-    if (channel.type == CHANNEL_TYPE.REQ_RES)
-        drawReqResDecoration(g,channel,graph)
-    else if (channel.type == CHANNEL_TYPE.ASYNC)
-        drawAsyncChannelDecoration(g,channel,graph)
-    channel.drawing = g
-    return g;
-}
-
-function drawAsyncChannelDecoration(draw,channel,graph)
-{
-    drawAsyncArrowhead(draw,channelIncomingEdge(graph,channel))
-    drawAsyncArrowhead(draw,channelOutgoingEdge(graph,channel))
-}
-
-function determineEdgeEndDirection(edge)
-{
-    let hasBends = edge.sections[0].bendPoints && edge.sections[0].bendPoints.length > 0
-    let lastBendPoint = hasBends ? 
-                            edge.sections[0].bendPoints[edge.sections[0].bendPoints.length-1] :
-                            null
-    let startX = lastBendPoint ? 
-                    lastBendPoint.x :
-                    edge.sections[0].startPoint.x
-    let startY = lastBendPoint ? 
-                    lastBendPoint.y : edge.sections[0].startPoint.y
-    let endX = edge.sections[0].endPoint.x
-    let endY = edge.sections[0].endPoint.y
-
-    if (startX == endX )
-        return startY > endY ?  HEAD_DIRECTION.N : HEAD_DIRECTION.S
-    else if (startY == endY)
-        return startX > endX ? HEAD_DIRECTION.W : HEAD_DIRECTION.E
 }
 
 /**
@@ -309,98 +189,12 @@ function determineEdgeEndDirection(edge)
  * @param {GraphEdge} edge 
  * @see {determineEdgeEndDirection}
  */
-function drawAsyncArrowhead(draw,edge)
-{
-    let x = edge.sections[0].endPoint.x
-    let y = edge.sections[0].endPoint.y
-    let direction = determineEdgeEndDirection(edge)
-    let height = ARROW_H
-    let point1 = { x : x, y : y}
-    let point2 = {}
-    let point3 = {}
-    switch (direction)
-    {
-        case HEAD_DIRECTION.N : 
-            point2.x = x + ARROW_W/2
-            point2.y = y + height
-            point3.x = x
-            point3.y = y + height
-            break;
-        case HEAD_DIRECTION.E : 
-            point2.x = x - height
-            point2.y = y + ARROW_W/2
-            point3.x = x - height
-            point3.y = y
-            break;
-        case HEAD_DIRECTION.S : 
-            point2.x = x - ARROW_W/2
-            point2.y = y - height
-            point3.x = x
-            point3.y = y - ARROW_H
-            break;
-        case HEAD_DIRECTION.W : 
-            point2.x = x + height
-            point2.y = y - ARROW_W/2
-            point3.x = x + height
-            point3.y = y
-            break;
-    }
-    let polylineCoords = `${point1.x},${point1.y} ${point2.x},${point2.y} ${point3.x},${point3.y}`
-    draw.polygon(polylineCoords).fill('black').stroke({width : 1})
-}
 
-function channelIncomingEdge(graph,channel)
-{
-    let incomingEdges = findEdgesByTarget(graph,channel)
-    if (incomingEdges.length != 1) throw new Error(`Invalid number of incoming edges for channel ${JSON.stringify(channel)}: ${incomingEdges.length}`)
-    return incomingEdges[0];
-}
 
-function channelOutgoingEdge(graph,channel)
-{
-    let outgoingEdges = findEdgesBySource(graph,channel)
-    if (outgoingEdges.length != 1) throw new Error(`Invalid number of outgoing edges for channel ${JSON.stringify(channel)}: ${outgoingEdges.length}`)
-    return outgoingEdges[0];
-}
 
-function drawReqResDecoration(draw,channel,graph)
-{
-    let incomingEdge = channelIncomingEdge(graph,channel);
-    let outgoingEdge = channelOutgoingEdge(graph,channel)
-    let inX = incomingEdge.sections[0].endPoint.x
-    let inY = incomingEdge.sections[0].endPoint.y
-    let outX = outgoingEdge.sections[0].startPoint.x
-    let outY = outgoingEdge.sections[0].startPoint.y
 
-    var labelX = channel.x
-    var labelY = channel.y
-    var text = 'R'
-    switch (true)
-    {   //direction of channel is determined by the incoming and outgoing edge.
-        // this serves to determine the location of the label decoration + the text, specifically the arrow drawn (a unicode character)
-        case (inY == outY) && (inX < outX) : //point right
-            labelY -= 20;
-            text += '\u25B6' 
-            break;
-        case (inY == outY) && (inX > outX) : //point left
-            labelY -= 20;
-            text = '\u25C0 R' //note: we're overwriting the text here completely
-            break;
-        case (inY < outY) && (inX == outX) : //point down
-            labelX -= 15;
-            text += '\n\u25BC'
-            break;
-        case (inY > outY) && (inX == outX) : //point up
-            labelX -= 15;
-            text += '\n\u25B2'
-            break;
-    }
 
-    let textEl = draw.text(text)
-    textEl.size(8)
-    textEl.x(labelX)
-    textEl.y(labelY)
-}
+
 
 /**
  * Find all edges that are outgoing from the given node in the given graph
@@ -408,20 +202,54 @@ function drawReqResDecoration(draw,channel,graph)
  * @param {Node} node A node in the graph, representing either an actor or a channel
  * @returns The list of edges where one of the sources is the given node.
  */
-function findEdgesBySource(graph,node)
-{
-    return graph.edges.filter(e => e.sources.includes(node.id))
-}
 
-/**
- * Find all edges that are incoming to the given node in the given graph
- * @param {Graph} graph The graph object created for layout/drawing purposes
- * @param {Node} node A node in the graph, representing either an actor or a channel
- * @returns The list of edges where one of the targets is the given node
- */
-function findEdgesByTarget(graph,node)
+
+// /**
+//  * Find all edges that are incoming to the given node in the given graph
+//  * @param {Graph} graph The graph object created for layout/drawing purposes
+//  * @param {Node} node A node in the graph, representing either an actor or a channel
+//  * @returns The list of edges where one of the targets is the given node
+//  */
+
+
+class SVGEventHandler
 {
-    return graph.edges.filter(e => e.targets.includes(node.id))
+    constructor(el, dropCB)
+    {
+        if (!el) throw new Error("invalid svg element")
+        this.element = el;
+        this.isDragging = false;
+        this.dropCallback = dropCB
+
+        this.element.on('mousedown',this.handleMouseDown.bind(this))
+        this.element.on('mousemove',this.handleMouseMove.bind(this))
+        this.element.on('mouseup',this.handleMouseUp.bind(this))
+    }
+
+    handleMouseDown(evt)
+    {
+        this.isDragging = true;
+        this.startPoint = { x : evt.x, y : evt.y }
+    }
+
+    handleMouseMove(evt)
+    {
+        if (this.isDragging)
+        {
+            const dx = evt.x - this.startPoint.x;
+            const dy = evt.y - this.startPoint.y;
+    
+            this.element.dmove(dx, dy);
+            this.startPoint = { x : evt.x, y : evt.y };
+        }
+    }
+
+    handleMouseUp(evt) 
+    {
+        this.isDragging = false;
+        if (this.dropCallback)
+            this.dropCallback({x : evt.x, y : evt.y})
+    }
 }
 
 module.exports = {
