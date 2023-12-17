@@ -4,6 +4,7 @@ const elk = new ELK()
 
 const { EDGE_TYPE,channelID,flowID } = require('../SystemModel')
 const { DiagramPainter } = require("./DiagramPainter")
+const { incomingChannelEdgeID, outgoingChannelEdgeID } = require('./DiagramModel')
 
 const DRAW_MARGIN_HEIGHT = 10;
 const DRAW_TEXT_HEIGHT = 30;
@@ -38,19 +39,6 @@ async function layoutModel(model)
     }
     //run layout and return result
     return await elk.layout(graph)
-}
-
-const CHANNEL_EDGE_INCOMING_DELIM = ">>"
-const CHANNEL_EDGE_OUTGOING_DELIM = "<<"
-
-function incomingChannelEdgeID(channel)
-{
-    return channel.from + CHANNEL_EDGE_INCOMING_DELIM + channelID(channel)
-}
-
-function outgoingChannelEdgeID(channel)
-{
-    return channelID(channel) + CHANNEL_EDGE_OUTGOING_DELIM + channel.to
 }
 
 function graphEdgesFor(model) {

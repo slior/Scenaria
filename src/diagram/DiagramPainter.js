@@ -1,5 +1,5 @@
-const { EDGE_TYPE, ACTOR_TYPE, CHANNEL_TYPE,channelID,flowID } = require('../SystemModel')
-
+const { EDGE_TYPE, ACTOR_TYPE, CHANNEL_TYPE,channelID } = require('../SystemModel')
+const { channelIDFromEdgeID } = require('./DiagramModel')
 const USER_ACTOR_CAPTION_Y_ADJUSTMENT = 35;
 
 //Since edges are orthogonal, the arrow heads can be in one of 4 directions
@@ -9,10 +9,6 @@ const HEAD_DIRECTION = {
 
 const ARROW_W = 10; //constants for now but should really be derived from layout - how much room it has.
 const ARROW_H = 10;
-
-const CHANNEL_EDGE_INCOMING_DELIM = ">>"
-const CHANNEL_EDGE_OUTGOING_DELIM = "<<"
-
 
 class DiagramPainter
 {
@@ -88,13 +84,10 @@ class DiagramPainter
         {
             this._rememberSVGElementForID(edge.id,edgeSVGElement)
             this._rememberSVGElementForID(edge.id,this._drawArrowHead(edge))
-            // rememberSVGElementForID(svgElements,edge.id,edgeSVGElement)
-            // rememberSVGElementForID(svgElements,edge.id,drawArrowHead(draw,edge))
         }
         else if (edge.type == EDGE_TYPE.CHANNEL)
         {
-            // rememberSVGElementForID(svgElements,channelIDFromEdgeID(edge.id),edgeSVGElement)
-            this._rememberSVGElementForID(this._channelIDFromEdgeID(edge.id),edgeSVGElement)
+            this._rememberSVGElementForID(channelIDFromEdgeID(edge.id),edgeSVGElement)
         }
     }
 
@@ -154,21 +147,6 @@ class DiagramPainter
         return this._svgDraw.polygon(polylineCoords).fill('black').stroke({width : 1})
     }
 
-    _channelIDFromEdgeID(edgeID)
-    {
-        var channelID = '';
-        switch (true)
-        {
-            case edgeID.indexOf(CHANNEL_EDGE_INCOMING_DELIM) > 0 : 
-                channelID = edgeID.split(CHANNEL_EDGE_INCOMING_DELIM)[1]
-                break;
-            case edgeID.indexOf(CHANNEL_EDGE_OUTGOING_DELIM) > 0 : 
-                channelID = edgeID.split(CHANNEL_EDGE_OUTGOING_DELIM)[0]
-                break;
-            //return empty string by default
-        }
-        return channelID
-    }
 
     _drawUser(container)
     {
