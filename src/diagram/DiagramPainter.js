@@ -1,5 +1,7 @@
 const { EDGE_TYPE, ACTOR_TYPE, CHANNEL_TYPE,channelID } = require('../SystemModel')
 const { channelIDFromEdgeID } = require('./DiagramModel')
+const { SVGEventHandler } = require('./SVGEventHandler')
+
 const USER_ACTOR_CAPTION_Y_ADJUSTMENT = 35;
 
 //Since edges are orthogonal, the arrow heads can be in one of 4 directions
@@ -53,9 +55,8 @@ class DiagramPainter
             g.move(graphEl.x,graphEl.y)
         }
         graphEl.drawing = g;
-        // new SVGEventHandler(g,(point) => { redrawEdges(point,actor,graph,g)} ,actor)
+        SVGEventHandler.attachTo(g,(point) => { this._redrawEdges(point,graphEl,g)})
         this._rememberSVGElementForID(graphEl.id,g)
-        // return g;
     }
 
     drawChannel(channel)
@@ -72,8 +73,7 @@ class DiagramPainter
         else if (channel.type == CHANNEL_TYPE.ASYNC)
             this._drawAsyncChannelDecoration(g,channel)
         channel.drawing = g
-        // new SVGEventHandler(g,(point) => { redrawEdges(point,channel,graph,g) },channel)
-        // return g;
+        SVGEventHandler.attachTo(g,(p) => { this._redrawEdges(p,channel,g)})
         this._rememberSVGElementForID(channel.id,g)
     }
 
@@ -98,8 +98,10 @@ class DiagramPainter
         var points = [[section.startPoint.x,section.startPoint.y]] //points are, in order: start point, bend points (if any), end point.
                         .concat(bends.map(p => [p.x,p.y]))
         points.push([section.endPoint.x,section.endPoint.y])
-        return this._svgDraw.polyline(points)
+        let svgEl = this._svgDraw.polyline(points)
                             .stroke({width: 1, color : 'black'}).fill('none')
+        svgEl.graphEl = edge;
+        return svgEl;
     }
 
     _drawArrowHead(edge)
@@ -313,6 +315,165 @@ class DiagramPainter
         if (!this._svgElements[id]) this.svgElements[id] = []
 
         this._svgElements[id].push(svgEl)
+    }
+
+    _redrawEdges(point, graphNode, svgEl)
+    {
+        /*
+        1. determine edges connected to the graph node.
+        2. for each edge in edges: reroute edge
+        */
+        let incomingEdges = this._graph.edges.filter(edge => edge.sources.includes(graphNode.id))
+        let outgoingEdges = this._graph.edges.filter(edge => edge.targets.includes(graphNode.id))
+
+        incomingEdges.forEach(e => { this._rerouteEdge(e,point,graphNode,svgEl) })
+        outgoingEdges.forEach(e => { this._rerouteEdge(e,point,graphNode,svgEl) })
+    }
+
+    _rerouteEdge(edge,point,graphNode,svgEl)
+    {
+        // 1. determine both graph elements to connect - one is given, the other should be found from the edge
+        let isIncoming = edge.targets.includes(graphNode.id)
+        let otherNode = this._findGraphNode(isIncoming ? edge.sources[0] : edge.targets[0]) //we assume there's only one source/target to an edge.
+        if (!otherNode) throw new Error("Invalid edge - couldn't find other node")
+        
+        // 2. determine points on the nodes to connect
+        let sourceX = isIncoming ? otherNode.x : svgEl.x();
+        let sourceY = isIncoming ? otherNode.y : svgEl.y();
+        let sourceH = isIncoming ? otherNode.height : svgEl.height();
+        let sourceW = isIncoming ? otherNode.width : svgEl.width();
+        let targetX = isIncoming ? svgEl.x() : otherNode.x;
+        let targetY = isIncoming ? svgEl.y() : otherNode.y;
+        let targetH = isIncoming ? svgEl.height() : otherNode.height;
+        let targetW = isIncoming ? svgEl.width() : otherNode.width;
+
+
+        let dx = targetX - sourceX;
+        let dy = targetY - sourceY;
+        let adx = Math.abs(dx)
+        let ady = Math.abs(dy)
+
+        let sourceFace = '';
+        let targetFace = '';
+        switch (true)
+        {
+            case (adx <= ady) && dy > 0 :  
+                sourceFace = HEAD_DIRECTION.S;
+                targetFace = HEAD_DIRECTION.N;
+                break;
+            case (adx > ady ) && dx > 0 :
+                sourceFace = HEAD_DIRECTION.E;
+                targetFace = HEAD_DIRECTION.W;
+                break;
+            case (adx > ady ) && dx <= 0 :
+                sourceFace = HEAD_DIRECTION.W;
+                targetFace = HEAD_DIRECTION.E;
+                break;
+            case (adx <= ady) && dy <= 0 : 
+                sourceFace = HEAD_DIRECTION.N;
+                targetFace = HEAD_DIRECTION.S;
+                break; 
+        }
+
+        let sourcePoint = translatePointByNodeFace({ x : sourceX, y : sourceY}, sourceFace,sourceH, sourceW)
+        let targetPoint = translatePointByNodeFace({ x : targetX, y : targetY},targetFace, targetH, targetW)
+
+
+        // 3. connect two points using simple 1-3 sections described by the bend points
+        let edgeSection = edge.sections[0]
+        let edgePoints = []
+        if (isIncoming)
+        {
+            let dx = targetPoint.x - sourcePoint.x;
+            let dy = targetPoint.y - sourcePoint.y;
+
+            //determine which sections to add, by adding relevant bend points.
+            if (dx != 0 && dy != 0)
+            { //1 vertical segment + 2 horizontal segments => 2 bend points
+                edgePoints.push({x : sourcePoint.x + (dx/2), y : sourcePoint.y})
+                edgePoints.push({x : sourcePoint.x + (dx/2), y : sourcePoint.y + dy})
+            }
+            if (dx != 0 || dy != 0) //if they're both 0, there's nothing to reconnect, otherwise, always add the node connection point
+                edgePoints.push(targetPoint)
+            
+            //last point is the end point, anything before that is the new set of bend points
+            //set these points to the edge
+            if (edgePoints.length > 1)
+                edgeSection.bendPoints = edgePoints.slice(0,edgePoints.length-1)
+
+            edgeSection.endPoint = targetPoint;
+            edgeSection.startPoint = sourcePoint;
+        }
+        else //it's an outgoing edge
+        {
+            let dx = targetPoint.x - sourcePoint.x;
+            let dy = targetPoint.y - sourcePoint.y;
+
+            if (dx != 0 && dy != 0)
+            { //1 vertical segment + 2 horizontal segments => 2 bend points
+                edgePoints.push({x : sourcePoint.x + (dx/2), y : sourcePoint.y})
+                edgePoints.push({x : sourcePoint.x + (dx/2), y : sourcePoint.y + dy})
+            }
+            if (dx != 0 || dy != 0) //if they're both 0, there's nothing to reconnect, otherwise, always add the node connection point
+                // edgePoints.push(edgeNewEndPoint)
+                edgePoints.push(targetPoint)
+
+            if (edgePoints.length > 1)
+                edgeSection.bendPoints = edgePoints.slice(0,edgePoints.length-1)
+
+            edgeSection.endPoint = targetPoint
+            edgeSection.startPoint = sourcePoint
+        }
+        console.log(`new edge: ${JSON.stringify(edge)}`)
+
+        //remember to update the graph node with the new x,y:
+        graphNode.x = svgEl.x()
+        graphNode.y = svgEl.y() ///TODO: put this in another method?
+        /*
+        Now redraw the edge
+        1. remove current line and arrow heads
+        2. draw the edge again
+        */
+       let edgeSVGElements = edge.type == EDGE_TYPE.DATA_FLOW ? 
+                                this.svgElements[edge.id] : 
+                                this.svgElements[channelIDFromEdgeID(edge.id)].filter(el => el.graphEl == edge) //only other option is CHANNEL
+       if (edgeSVGElements) 
+            edgeSVGElements.forEach(e => e.remove())
+
+       this.drawEdge(edge)
+    }
+
+    _findGraphNode(nodeID)
+    {
+        return this._graph.children.find(c => c.id == nodeID)
+    }
+}
+
+function translatePointByNodeFace(point,face,h,w)
+{
+    let x = point.x;
+    let y = point.y;
+    switch (face)
+    {
+        case HEAD_DIRECTION.S : 
+            x += w/2;
+            y += h;
+            break;
+        case HEAD_DIRECTION.N : 
+            x += w/2;
+            break;
+        case HEAD_DIRECTION.W : 
+            y += h/2;
+            break;
+        case HEAD_DIRECTION.E : 
+            x += w;
+            y += h/2
+            break;
+        default: throw new Error(`Invalid face: ${face}`)
+    }
+    return {
+        x : x,
+        y : y
     }
 }
 
