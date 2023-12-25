@@ -55,7 +55,7 @@ class DiagramPainter
             g.move(graphEl.x,graphEl.y)
         }
         graphEl.drawing = g;
-        SVGEventHandler.attachTo(g,(point) => { this._redrawEdges(point,graphEl,g)})
+        SVGEventHandler.attachTo(g,() => { this._redrawEdges(graphEl,g)})
         this._rememberSVGElementForID(graphEl.id,g)
     }
 
@@ -73,7 +73,7 @@ class DiagramPainter
         else if (channel.type == CHANNEL_TYPE.ASYNC)
             this._drawAsyncChannelDecoration(g,channel)
         channel.drawing = g
-        SVGEventHandler.attachTo(g,(p) => { this._redrawEdges(p,channel,g)})
+        SVGEventHandler.attachTo(g,() => { this._redrawEdges(channel,g)})
         this._rememberSVGElementForID(channel.id,g)
     }
 
@@ -317,7 +317,7 @@ class DiagramPainter
         this._svgElements[id].push(svgEl)
     }
 
-    _redrawEdges(point, graphNode, svgEl)
+    _redrawEdges(graphNode, svgEl)
     {
         /*
         1. determine edges connected to the graph node.

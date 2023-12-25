@@ -39,7 +39,7 @@ class SVGEventHandler
     {
         this.isDragging = false;
         if (this.dropCallback)
-            this.dropCallback({x : evt.x, y : evt.y})
+            this.dropCallback()
     }
 }
 
