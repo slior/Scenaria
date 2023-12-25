@@ -15,12 +15,15 @@ class SVGEventHandler
         this.element.on('mousedown',this.handleMouseDown.bind(this))
         this.element.on('mousemove',this.handleMouseMove.bind(this))
         this.element.on('mouseup',this.handleMouseUp.bind(this))
+        this.element.css({ cursor: 'grab' });
+        
     }
 
     handleMouseDown(evt)
     {
         this.isDragging = true;
         this.startPoint = { x : evt.x, y : evt.y }
+        this.element.css({ cursor: 'grabbing' });
     }
 
     handleMouseMove(evt)
@@ -38,6 +41,7 @@ class SVGEventHandler
     handleMouseUp(evt) 
     {
         this.isDragging = false;
+        this.element.css({ cursor: 'grab' });
         if (this.dropCallback)
             this.dropCallback()
     }
