@@ -326,127 +326,122 @@ class DiagramPainter
         let incomingEdges = this._graph.edges.filter(edge => edge.sources.includes(graphNode.id))
         let outgoingEdges = this._graph.edges.filter(edge => edge.targets.includes(graphNode.id))
 
-        incomingEdges.forEach(e => { this._rerouteEdge(e,point,graphNode,svgEl) })
-        outgoingEdges.forEach(e => { this._rerouteEdge(e,point,graphNode,svgEl) })
+        incomingEdges.forEach(e => { this._rerouteEdge(e,graphNode,svgEl) })
+        outgoingEdges.forEach(e => { this._rerouteEdge(e,graphNode,svgEl) })
     }
 
-    _rerouteEdge(edge,point,graphNode,svgEl)
+    _rerouteEdge(edge,graphNode,svgEl)
     {
-        // 1. determine both graph elements to connect - one is given, the other should be found from the edge
         let isIncoming = edge.targets.includes(graphNode.id)
+
         let otherNode = this._findGraphNode(isIncoming ? edge.sources[0] : edge.targets[0]) //we assume there's only one source/target to an edge.
         if (!otherNode) throw new Error("Invalid edge - couldn't find other node")
         
-        // 2. determine points on the nodes to connect
-        let sourceX = isIncoming ? otherNode.x : svgEl.x();
-        let sourceY = isIncoming ? otherNode.y : svgEl.y();
-        let sourceH = isIncoming ? otherNode.height : svgEl.height();
-        let sourceW = isIncoming ? otherNode.width : svgEl.width();
-        let targetX = isIncoming ? svgEl.x() : otherNode.x;
-        let targetY = isIncoming ? svgEl.y() : otherNode.y;
-        let targetH = isIncoming ? svgEl.height() : otherNode.height;
-        let targetW = isIncoming ? svgEl.width() : otherNode.width;
+        let { targetPoint, sourcePoint } = findEdgePoints(isIncoming, otherNode, svgEl);
 
-
-        let dx = targetX - sourceX;
-        let dy = targetY - sourceY;
-        let adx = Math.abs(dx)
-        let ady = Math.abs(dy)
-
-        let sourceFace = '';
-        let targetFace = '';
-        switch (true)
-        {
-            case (adx <= ady) && dy > 0 :  
-                sourceFace = HEAD_DIRECTION.S;
-                targetFace = HEAD_DIRECTION.N;
-                break;
-            case (adx > ady ) && dx > 0 :
-                sourceFace = HEAD_DIRECTION.E;
-                targetFace = HEAD_DIRECTION.W;
-                break;
-            case (adx > ady ) && dx <= 0 :
-                sourceFace = HEAD_DIRECTION.W;
-                targetFace = HEAD_DIRECTION.E;
-                break;
-            case (adx <= ady) && dy <= 0 : 
-                sourceFace = HEAD_DIRECTION.N;
-                targetFace = HEAD_DIRECTION.S;
-                break; 
-        }
-
-        let sourcePoint = translatePointByNodeFace({ x : sourceX, y : sourceY}, sourceFace,sourceH, sourceW)
-        let targetPoint = translatePointByNodeFace({ x : targetX, y : targetY},targetFace, targetH, targetW)
-
-
-        // 3. connect two points using simple 1-3 sections described by the bend points
-        let edgeSection = edge.sections[0]
-        let edgePoints = []
-        if (isIncoming)
-        {
-            let dx = targetPoint.x - sourcePoint.x;
-            let dy = targetPoint.y - sourcePoint.y;
-
-            //determine which sections to add, by adding relevant bend points.
-            if (dx != 0 && dy != 0)
-            { //1 vertical segment + 2 horizontal segments => 2 bend points
-                edgePoints.push({x : sourcePoint.x + (dx/2), y : sourcePoint.y})
-                edgePoints.push({x : sourcePoint.x + (dx/2), y : sourcePoint.y + dy})
-            }
-            if (dx != 0 || dy != 0) //if they're both 0, there's nothing to reconnect, otherwise, always add the node connection point
-                edgePoints.push(targetPoint)
-            
-            //last point is the end point, anything before that is the new set of bend points
-            //set these points to the edge
-            if (edgePoints.length > 1)
-                edgeSection.bendPoints = edgePoints.slice(0,edgePoints.length-1)
-
-            edgeSection.endPoint = targetPoint;
-            edgeSection.startPoint = sourcePoint;
-        }
-        else //it's an outgoing edge
-        {
-            let dx = targetPoint.x - sourcePoint.x;
-            let dy = targetPoint.y - sourcePoint.y;
-
-            if (dx != 0 && dy != 0)
-            { //1 vertical segment + 2 horizontal segments => 2 bend points
-                edgePoints.push({x : sourcePoint.x + (dx/2), y : sourcePoint.y})
-                edgePoints.push({x : sourcePoint.x + (dx/2), y : sourcePoint.y + dy})
-            }
-            if (dx != 0 || dy != 0) //if they're both 0, there's nothing to reconnect, otherwise, always add the node connection point
-                // edgePoints.push(edgeNewEndPoint)
-                edgePoints.push(targetPoint)
-
-            if (edgePoints.length > 1)
-                edgeSection.bendPoints = edgePoints.slice(0,edgePoints.length-1)
-
-            edgeSection.endPoint = targetPoint
-            edgeSection.startPoint = sourcePoint
-        }
+        reconstructEdge(edge, targetPoint, sourcePoint); //this will mutate the edge object
         console.log(`new edge: ${JSON.stringify(edge)}`)
 
-        //remember to update the graph node with the new x,y:
-        graphNode.x = svgEl.x()
-        graphNode.y = svgEl.y() ///TODO: put this in another method?
-        /*
-        Now redraw the edge
-        1. remove current line and arrow heads
-        2. draw the edge again
-        */
-       let edgeSVGElements = edge.type == EDGE_TYPE.DATA_FLOW ? 
-                                this.svgElements[edge.id] : 
-                                this.svgElements[channelIDFromEdgeID(edge.id)].filter(el => el.graphEl == edge) //only other option is CHANNEL
-       if (edgeSVGElements) 
-            edgeSVGElements.forEach(e => e.remove())
+        updateGraphNodePositionAttributes(graphNode, svgEl);
+        
+        this._redrawEdge(edge);
+    }
 
-       this.drawEdge(edge)
+    _redrawEdge(edge) 
+    {
+        let edgeSVGElements = edge.type == EDGE_TYPE.DATA_FLOW ?
+                                this.svgElements[edge.id] :
+                                this.svgElements[channelIDFromEdgeID(edge.id)].filter(el => el.graphEl == edge); //only other option is CHANNEL
+        if (edgeSVGElements)
+            edgeSVGElements.forEach(e => e.remove());
+        this.drawEdge(edge);
     }
 
     _findGraphNode(nodeID)
     {
         return this._graph.children.find(c => c.id == nodeID)
     }
+}
+
+function updateGraphNodePositionAttributes(graphNode, svgEl)
+{
+    graphNode.x = svgEl.x();
+    graphNode.y = svgEl.y();
+}
+
+/*
+    A very simplistic re-routing: simply connect the two given points with 1 or 3 segments, so the edge remains orthogonal.
+    Not taking into account any other elements, only horizontal partitioning of the edge.
+ */
+function reconstructEdge(edge, targetPoint, sourcePoint)
+{
+    let dx = targetPoint.x - sourcePoint.x;
+    let dy = targetPoint.y - sourcePoint.y;
+    
+    let newBendPoints = [];
+    //determine which sections to add, by adding relevant bend points.
+    if (dx != 0 && dy != 0)
+    { //1 vertical segment + 2 horizontal segments => 2 bend points
+        newBendPoints.push({ x: sourcePoint.x + (dx / 2), y: sourcePoint.y });
+        newBendPoints.push({ x: sourcePoint.x + (dx / 2), y: sourcePoint.y + dy });
+    }
+    
+    let edgeSection = edge.sections[0]
+    edgeSection.bendPoints = newBendPoints; //set it also if it's empty -> a straight edge.
+
+    edgeSection.endPoint = targetPoint;
+    edgeSection.startPoint = sourcePoint;
+}
+
+/**
+ * Find the points of the edge to be redrawn after a node has been moved
+ * 
+ * @param {Boolean} isIncoming is the edge incoming into the moved node (svgEl)
+ * @param {GraphNode} otherNode The graph node at the other end of the edge, with its x, y, width and height attributes
+ * @param {SVGElement} svgEl The SVG Element of the moved node, with its new position
+ * @returns An object with two points - targetPoint, sourcePoint (x,y) - for the source of the edge and the target of the edge.
+ */
+function findEdgePoints(isIncoming, otherNode, svgEl) 
+{
+    let sourceX = isIncoming ? otherNode.x : svgEl.x();
+    let sourceY = isIncoming ? otherNode.y : svgEl.y();
+    let sourceH = isIncoming ? otherNode.height : svgEl.height();
+    let sourceW = isIncoming ? otherNode.width : svgEl.width();
+    let targetX = isIncoming ? svgEl.x() : otherNode.x;
+    let targetY = isIncoming ? svgEl.y() : otherNode.y;
+    let targetH = isIncoming ? svgEl.height() : otherNode.height;
+    let targetW = isIncoming ? svgEl.width() : otherNode.width;
+
+    let dx = targetX - sourceX;
+    let dy = targetY - sourceY;
+    let adx = Math.abs(dx);
+    let ady = Math.abs(dy);
+
+    let sourceFace = '';
+    let targetFace = '';
+    switch (true) {
+        case (adx <= ady) && dy > 0:
+            sourceFace = HEAD_DIRECTION.S;
+            targetFace = HEAD_DIRECTION.N;
+            break;
+        case (adx > ady) && dx > 0:
+            sourceFace = HEAD_DIRECTION.E;
+            targetFace = HEAD_DIRECTION.W;
+            break;
+        case (adx > ady) && dx <= 0:
+            sourceFace = HEAD_DIRECTION.W;
+            targetFace = HEAD_DIRECTION.E;
+            break;
+        case (adx <= ady) && dy <= 0:
+            sourceFace = HEAD_DIRECTION.N;
+            targetFace = HEAD_DIRECTION.S;
+            break;
+    }
+
+    let sourcePoint = translatePointByNodeFace({ x: sourceX, y: sourceY }, sourceFace, sourceH, sourceW);
+    let targetPoint = translatePointByNodeFace({ x: targetX, y: targetY }, targetFace, targetH, targetW);
+
+    return { targetPoint, sourcePoint };
 }
 
 function translatePointByNodeFace(point,face,h,w)
