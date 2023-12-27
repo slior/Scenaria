@@ -72,7 +72,8 @@ class DiagramController
         
         let msgbox = this._drawMsgBoxForElement(dataFlowID,message)
 
-        let line = svgElements.find(e => e.node.nodeName == 'polyline')
+        let line = svgElements.find(el => el.graphEl.id == dataFlowID).findOne('polyline')
+        if (!line) throw new Error(`No line found for data flow ${dataFlowID}`)
         msgbox.cx(line.cx())
         msgbox.cy(line.cy())
     }
@@ -153,9 +154,12 @@ class DiagramController
     {
         svgEl.each((i,children) => {
             let el = children[i]
-            let prevColor = el.fill()
-            el.remember(PREV_COLOR_KEY,prevColor)
-            el.fill(color)
+            if (el.node.nodeName != 'polyline')
+            {
+                let prevColor = el.fill()
+                el.remember(PREV_COLOR_KEY,prevColor)
+                el.fill(color)
+            }
         },true) //true here -> recurse to sub svg elements.
     }
 

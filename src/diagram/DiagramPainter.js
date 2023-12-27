@@ -69,40 +69,47 @@ class DiagramPainter
         c.y(channel.y)
         if (channel.type == CHANNEL_TYPE.REQ_RES)
             this._drawReqResDecoration(g,channel)
-        else if (channel.type == CHANNEL_TYPE.ASYNC)
-            this._drawAsyncChannelDecoration(g,channel)
         SVGEventHandler.attachTo(g,() => { this._redrawEdges(channel,g)})
         this._rememberSVGElementForID(channel.id,g)
     }
 
     drawEdge(edge)
     {
-        let edgeSVGElement = this._drawEdgeLine(edge)
+        let g = this._svgDraw.group(edge.id)
+        this._drawEdgeLine(g,edge)
+
         if (edge.type == EDGE_TYPE.DATA_FLOW)
         {
-            this._rememberSVGElementForID(edge.id,edgeSVGElement)
-            this._rememberSVGElementForID(edge.id,this._drawArrowHead(edge))
+            this._drawArrowHead(g,edge)
+            this._rememberSVGElementForID(edge.id,g)
         }
         else if (edge.type == EDGE_TYPE.CHANNEL)
         {
-            this._rememberSVGElementForID(channelIDFromEdgeID(edge.id),edgeSVGElement)
+            let channelID = channelIDFromEdgeID(edge.id)
+            let channel =  this._findGraphNode(channelID)
+            if (channel && channel.type == CHANNEL_TYPE.ASYNC)
+            {
+                this._drawAsyncArrowhead(g,edge)
+            }
+            this._rememberSVGElementForID(channelID,g)
         }
+        g.graphEl = edge
     }
 
-    _drawEdgeLine(edge)
+    _drawEdgeLine(container,edge)
     {
         let section = edge.sections[0];
         let bends = section.bendPoints || []
         var points = [[section.startPoint.x,section.startPoint.y]] //points are, in order: start point, bend points (if any), end point.
                         .concat(bends.map(p => [p.x,p.y]))
         points.push([section.endPoint.x,section.endPoint.y])
-        let svgEl = this._svgDraw.polyline(points)
+        let svgEl = container.polyline(points)
                             .stroke({width: 1, color : 'black'}).fill('none')
         svgEl.graphEl = edge;
         return svgEl;
     }
 
-    _drawArrowHead(edge)
+    _drawArrowHead(container,edge)
     {
         let lastSection = edge.sections[edge.sections.length-1]
         let x = lastSection.endPoint.x
@@ -144,7 +151,7 @@ class DiagramPainter
         }
     
         let polylineCoords = `${point1.x},${point1.y} ${point2.x},${point2.y} ${point3.x},${point3.y}`
-        return this._svgDraw.polygon(polylineCoords).fill('black').stroke({width : 1})
+        return container.polygon(polylineCoords).fill('black').stroke({width : 1})
     }
 
 
@@ -231,11 +238,6 @@ class DiagramPainter
         return this._graph.edges.filter(e => e.sources.includes(graphNode.id))
     }
 
-    _drawAsyncChannelDecoration(container,channel)
-    {
-        this._drawAsyncArrowhead(container,this._channelIncomingEdge(channel))
-        this._drawAsyncArrowhead(container,this._channelOutgoingEdge(channel))
-    }
 
     /**
      * Draw an async arrow head at the end of the given edge.
@@ -350,6 +352,7 @@ class DiagramPainter
         let edgeSVGElements = edge.type == EDGE_TYPE.DATA_FLOW ?
                                 this.svgElements[edge.id] :
                                 this.svgElements[channelIDFromEdgeID(edge.id)].filter(el => el.graphEl == edge); //only other option is CHANNEL
+        
         if (edgeSVGElements)
             edgeSVGElements.forEach(e => e.remove());
         this.drawEdge(edge);
