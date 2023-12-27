@@ -7,12 +7,14 @@ const {layoutModel,drawGraph } = require('./diagram/DiagDraw')
 const { DiagramController } = require('./diagram/DiagramController')
 const { ScenarioRunner } = require('./ScenarioRunner')
 const { ScenarioStepper } = require('./ScenarioStepper') 
+const { State } = require('./state/State')
 
 var drawingContainer = null;
 var topLevelSVG = null;
 var diagramController = null;
 var model = null;
 var scenarioStepper = null;
+var graph = null;
 
 function initApp(_drawingContainer)
 {
@@ -41,7 +43,10 @@ function presentModel(model)
      topLevelSVG = createSVGImpl(drawingContainer)
 
     return layoutModel(model)
-            .then(g => drawGraph(topLevelSVG,g))
+            .then(g => { 
+                graph = g;
+                return drawGraph(topLevelSVG,g)
+            })
             .then(diagramPainter => {
                 diagramController = new DiagramController(diagramPainter.svgElements,topLevelSVG)
                 return model
@@ -125,6 +130,28 @@ function reset()
     clearDiagram()
     scenarioRunner = null;
     model = null;
+    graph = null;
+}
+
+function generateStateURLEncoding(code)
+{
+    assert(graph != null, "Invalid graph state when generating state representation")
+
+    return State.encode(graph,code)
+
+}
+
+function setStateFromURL(stateParamValue,codeCB)
+{
+    let state = State.fromBase64(stateParamValue)
+    model = parseCode(state.code)
+    codeCB(state.code)
+    graph = state.graph
+    if (!topLevelSVG)
+        topLevelSVG = createSVGImpl(drawingContainer)
+    let painter = drawGraph(topLevelSVG,graph)
+    diagramController = new DiagramController(painter.svgElements,topLevelSVG)
+    return model
 }
 
 module.exports = {
@@ -133,5 +160,7 @@ module.exports = {
     parseAndPresent,
     reset,
     scenarioBack,
-    scenarioNext
+    scenarioNext,
+    generateStateURLEncoding,
+    setStateFromURL
 }

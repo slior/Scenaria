@@ -77,7 +77,7 @@ var editor = null;
 //     })
 // }
 
-function initEditor(container)
+function initEditor(container, editorReadyCB)
 {
     require.config({ paths: { vs: './lib/monaco-editor/min/vs' } });
 
@@ -88,6 +88,8 @@ function initEditor(container)
             language: 'json',
             theme:'vs-dark'
         });
+        if (editorReadyCB)
+            editorReadyCB()
     });
 }
 
@@ -95,4 +97,10 @@ function getCode()
 {
     if (!editor) throw new Error("Editor not initialized")
     return editor.getValue()
+}
+
+function setCode(code)
+{
+    if (!editor) throw new Error("Editor not initialized")
+    editor.setValue(code)
 }

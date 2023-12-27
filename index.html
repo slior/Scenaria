@@ -110,15 +110,18 @@
 <script>
 
     var scenarioSelection = null;
+    const STATE_PARAM = 's'
 
     function init()
     {        
         let drawingBoard = document.getElementById('drawing');
         let editorParent = document.getElementById('editorContainer')
-        initEditor(editorParent)
         scenarioSelection = document.getElementById('scenarioSelect');
+        initEditor(editorParent,() => {
+            main.initApp(drawingBoard)
+            parseStateFromURL()
+        })
         
-        main.initApp(drawingBoard)
     }
 
     function getCodeFromEditor()
@@ -222,6 +225,30 @@
         main.scenarioNext(scenarioSelection.value,showMsg)
     }
 
+    function generateStateURL()
+    {
+        let state = main.generateStateURLEncoding(getCodeFromEditor())
+        let url = new URL(window.location.href)
+        url.searchParams.set(STATE_PARAM,state)
+
+        window.location.href = url.toString()
+    }
+
+    function parseStateFromURL()
+    {
+        let params = new URLSearchParams(window.location.search);
+        if (params.has(STATE_PARAM))
+        {
+            let model = main.setStateFromURL(params.get(STATE_PARAM),(code) => { setCode(code)})
+            setScenariosToSelect(model.scenarios)
+            showMsg("Model loaded.")
+        }
+        else
+        {
+            showMsg("No predefined state")
+        }
+    }
+
 </script>
 </head>
 
@@ -241,7 +268,9 @@
     <button onclick="runScenario()"> Run Scenario </button>
     <button onclick="stepBack()">&lt;</button>
     <button onclick="stepForward()">&gt;</button>
-        <hr/>
+        <hr />
+    <button onclick="generateStateURL()">Generate State URL</button>
+        <hr />
     <div id="cons" class="consoleText" ></div>
     <span id="error" class="errorText" ></span>
     

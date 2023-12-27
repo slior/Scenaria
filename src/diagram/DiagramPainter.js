@@ -54,7 +54,6 @@ class DiagramPainter
             t.cy(r.cy())
             g.move(graphEl.x,graphEl.y)
         }
-        graphEl.drawing = g;
         SVGEventHandler.attachTo(g,() => { this._redrawEdges(graphEl,g)})
         this._rememberSVGElementForID(graphEl.id,g)
     }
@@ -72,7 +71,6 @@ class DiagramPainter
             this._drawReqResDecoration(g,channel)
         else if (channel.type == CHANNEL_TYPE.ASYNC)
             this._drawAsyncChannelDecoration(g,channel)
-        channel.drawing = g
         SVGEventHandler.attachTo(g,() => { this._redrawEdges(channel,g)})
         this._rememberSVGElementForID(channel.id,g)
     }
