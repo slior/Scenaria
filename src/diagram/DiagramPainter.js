@@ -335,9 +335,9 @@ class DiagramPainter
         let otherNode = this._findGraphNode(isIncoming ? edge.sources[0] : edge.targets[0]) //we assume there's only one source/target to an edge.
         if (!otherNode) throw new Error("Invalid edge - couldn't find other node")
         
-        let { targetPoint, sourcePoint } = findEdgePoints(isIncoming, otherNode, svgEl);
+        let { targetPoint, sourcePoint,isVertical } = findEdgePoints(isIncoming, otherNode, svgEl);
 
-        reconstructEdge(edge, targetPoint, sourcePoint); //this will mutate the edge object
+        reconstructEdge(edge, targetPoint, sourcePoint,isVertical); //this will mutate the edge object
         console.log(`new edge: ${JSON.stringify(edge)}`)
 
         updateGraphNodePositionAttributes(graphNode, svgEl);
@@ -371,7 +371,7 @@ function updateGraphNodePositionAttributes(graphNode, svgEl)
     A very simplistic re-routing: simply connect the two given points with 1 or 3 segments, so the edge remains orthogonal.
     Not taking into account any other elements, only horizontal partitioning of the edge.
  */
-function reconstructEdge(edge, targetPoint, sourcePoint)
+function reconstructEdge(edge, targetPoint, sourcePoint, isVertical)
 {
     let dx = targetPoint.x - sourcePoint.x;
     let dy = targetPoint.y - sourcePoint.y;
@@ -379,9 +379,18 @@ function reconstructEdge(edge, targetPoint, sourcePoint)
     let newBendPoints = [];
     //determine which sections to add, by adding relevant bend points.
     if (dx != 0 && dy != 0)
-    { //1 vertical segment + 2 horizontal segments => 2 bend points
-        newBendPoints.push({ x: sourcePoint.x + (dx / 2), y: sourcePoint.y });
-        newBendPoints.push({ x: sourcePoint.x + (dx / 2), y: sourcePoint.y + dy });
+    { //3 segments => 2 bend points. The only question is how many horizontal and how many vertical
+        console.log(`new edge is vertical? - ${isVertical}`)
+        if (isVertical)
+        { //1 horizontal segment + 2 vertical ones
+            newBendPoints.push({ x: sourcePoint.x, y: sourcePoint.y + (dy/2) });
+            newBendPoints.push({ x: sourcePoint.x + dx, y: sourcePoint.y + (dy/2) });
+        }
+        else
+        { //1 vertical segment + 2 horizontal segments
+            newBendPoints.push({ x: sourcePoint.x + (dx / 2), y: sourcePoint.y });
+            newBendPoints.push({ x: sourcePoint.x + (dx / 2), y: sourcePoint.y + dy });
+        }
     }
     
     let edgeSection = edge.sections[0]
@@ -417,29 +426,34 @@ function findEdgePoints(isIncoming, otherNode, svgEl)
 
     let sourceFace = '';
     let targetFace = '';
+    let isVertical = false;
     switch (true) {
         case (adx <= ady) && dy > 0:
             sourceFace = HEAD_DIRECTION.S;
             targetFace = HEAD_DIRECTION.N;
+            isVertical = true;
             break;
         case (adx > ady) && dx > 0:
             sourceFace = HEAD_DIRECTION.E;
             targetFace = HEAD_DIRECTION.W;
+            isVertical = false;
             break;
         case (adx > ady) && dx <= 0:
             sourceFace = HEAD_DIRECTION.W;
             targetFace = HEAD_DIRECTION.E;
+            isVertical = false;
             break;
         case (adx <= ady) && dy <= 0:
             sourceFace = HEAD_DIRECTION.N;
             targetFace = HEAD_DIRECTION.S;
+            isVertical = true;
             break;
     }
 
     let sourcePoint = translatePointByNodeFace({ x: sourceX, y: sourceY }, sourceFace, sourceH, sourceW);
     let targetPoint = translatePointByNodeFace({ x: targetX, y: targetY }, targetFace, targetH, targetW);
 
-    return { targetPoint, sourcePoint };
+    return { targetPoint, sourcePoint, isVertical };
 }
 
 function translatePointByNodeFace(point,face,h,w)
