@@ -136,9 +136,10 @@
             clearError()
             main.reset()
             let code = getCodeFromEditor();
-            main.parseAndPresent(code)
+            main.parseAndPresent(code, () => { updateStateLink() })
                 .then(model => {
                     setScenariosToSelect(model.scenarios)
+                    updateStateLink()
                     showMsg("Done.")
                 })
         }
@@ -148,6 +149,19 @@
         }
     }
     
+    function updateStateLink()
+    {
+        let newURL = generateStateURL()
+        let shareLink = document.getElementById("shareLink")
+        shareLink.href = newURL
+    }
+
+    function resetStateLink()
+    {
+        let shareLink = document.getElementById("shareLink")
+        shareLink.href = noStateURL()
+    }
+
     function setScenariosToSelect(scenarios)
     {
         if (!scenarios) throw new Error("No scenarios when setting scenarios selection")
@@ -198,6 +212,7 @@
             clearError()
             clearConsole();
             clearScenarioSelection();
+            resetStateLink()
         }
         catch (err)
         {
@@ -231,7 +246,14 @@
         let url = new URL(window.location.href)
         url.searchParams.set(STATE_PARAM,state)
 
-        window.location.href = url.toString()
+        return url.toString();
+    }
+
+    function noStateURL()
+    {
+        let url = new URL(window.location.href)
+        url.searchParams.delete(STATE_PARAM)
+        return url
     }
 
     function parseStateFromURL()
@@ -239,8 +261,13 @@
         let params = new URLSearchParams(window.location.search);
         if (params.has(STATE_PARAM))
         {
-            let model = main.setStateFromURL(params.get(STATE_PARAM),(code) => { setCode(code)})
+            let model = main.setStateFromURL(
+                                params.get(STATE_PARAM),
+                                (code) => { setCode(code) }, 
+                                () => { updateStateLink() }
+                            )
             setScenariosToSelect(model.scenarios)
+            updateStateLink()
             showMsg("Model loaded.")
         }
         else
@@ -262,14 +289,13 @@
         </div>
     </div>
     <button onclick="reset()"> Reset </button>
-    <button onclick="parseAndDraw()"> Draw </button>
+    <button onclick="parseAndDraw()"> Apply </button>
+    &nbsp;&nbsp;<a id="shareLink">Share</a>
     <br/><br/>
     <select id="scenarioSelect" style="width:20%"></select>
     <button onclick="runScenario()"> Run Scenario </button>
     <button onclick="stepBack()">&lt;</button>
     <button onclick="stepForward()">&gt;</button>
-        <hr />
-    <button onclick="generateStateURL()">Generate State URL</button>
         <hr />
     <div id="cons" class="consoleText" ></div>
     <span id="error" class="errorText" ></span>

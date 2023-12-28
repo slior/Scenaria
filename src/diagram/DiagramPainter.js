@@ -14,7 +14,7 @@ const ARROW_H = 10;
 
 class DiagramPainter
 {
-    constructor(__svgDraw,__graph)
+    constructor(__svgDraw,__graph,__moveCB)
     {
         if (!__svgDraw) throw new Error("Invalid svg drawing object")
         if (!__graph) throw new Error("Invalid graph for diagram painter")
@@ -22,6 +22,7 @@ class DiagramPainter
         this._svgElements = {}
         this._svgDraw = __svgDraw
         this._graph = __graph
+        this._moveCB = __moveCB
     }
 
     get svgElements() { return this._svgElements }
@@ -54,7 +55,10 @@ class DiagramPainter
             t.cy(r.cy())
             g.move(graphEl.x,graphEl.y)
         }
-        SVGEventHandler.attachTo(g,() => { this._redrawEdges(graphEl,g)})
+        SVGEventHandler.attachTo(g,() => { 
+                                    this._redrawEdges(graphEl,g);
+                                    this._raiseNodeMoved();
+                                 })
         this._rememberSVGElementForID(graphEl.id,g)
     }
 
@@ -69,7 +73,10 @@ class DiagramPainter
         c.y(channel.y)
         if (channel.type == CHANNEL_TYPE.REQ_RES)
             this._drawReqResDecoration(g,channel)
-        SVGEventHandler.attachTo(g,() => { this._redrawEdges(channel,g)})
+        SVGEventHandler.attachTo(g,() => { 
+                                    this._redrawEdges(channel,g)
+                                    this._raiseNodeMoved()
+                                })
         this._rememberSVGElementForID(channel.id,g)
     }
 
@@ -361,6 +368,12 @@ class DiagramPainter
     _findGraphNode(nodeID)
     {
         return this._graph.children.find(c => c.id == nodeID)
+    }
+
+    _raiseNodeMoved()
+    {
+        if (this._moveCB)
+            this._moveCB()
     }
 }
 

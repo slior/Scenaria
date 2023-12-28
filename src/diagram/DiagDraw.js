@@ -83,14 +83,15 @@ function graphNodeRepresentsAnActor(node)
  * Using the given SVG object, draws the given graph
  * @param {SVG} draw The SVG.js container object, with SVG.js API.
  * @param {Graph} graph The graph object, as returned from layout model
+ * @param { () => void } moveCB An optional callback to be called when a node was moved
  * @returns A mapping of the model ids to the relevant svg elements for that model
  */
-function drawGraph(draw,graph)
+function drawGraph(draw,graph, moveCB = () => {})
 {
     if (!draw) throw new Error("Invalid SVG drawing container when drawing a graph")
     console.log(graph)
 
-    let painter = new DiagramPainter(draw,graph)
+    let painter = new DiagramPainter(draw,graph, moveCB)
     graph.children.forEach(child => {
         if (graphNodeRepresentsAnActor(child))
             painter.drawActor(child)

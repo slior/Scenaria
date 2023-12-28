@@ -38,14 +38,14 @@ function clearDiagram()
     }
 }
 
-function presentModel(model)
+function presentModel(model,moveCB)
 {
      topLevelSVG = createSVGImpl(drawingContainer)
 
     return layoutModel(model)
             .then(g => { 
                 graph = g;
-                return drawGraph(topLevelSVG,g)
+                return drawGraph(topLevelSVG,g,moveCB)
             })
             .then(diagramPainter => {
                 diagramController = new DiagramController(diagramPainter.svgElements,topLevelSVG)
@@ -112,13 +112,14 @@ function parseCode(programCode)
 /**
  * Given code representing the model and scenarios, parse it and present it on the initialized diagram container.
  * @param {String} code The code for the model
+ * @param {() => void} moveCB An optional callback to call when a node is moved
  * @returns A promise with the parsed model.
  */
-function parseAndPresent(code)
+function parseAndPresent(code,moveCB)
 {
     model = parseCode(code)
     console.log(`Parsed code: ${JSON.stringify(model)}`)
-    return presentModel(model)
+    return presentModel(model,moveCB)
 }
 
 /**
@@ -141,7 +142,7 @@ function generateStateURLEncoding(code)
 
 }
 
-function setStateFromURL(stateParamValue,codeCB)
+function setStateFromURL(stateParamValue,codeCB,moveCB)
 {
     let state = State.fromBase64(stateParamValue)
     model = parseCode(state.code)
@@ -149,7 +150,7 @@ function setStateFromURL(stateParamValue,codeCB)
     graph = state.graph
     if (!topLevelSVG)
         topLevelSVG = createSVGImpl(drawingContainer)
-    let painter = drawGraph(topLevelSVG,graph)
+    let painter = drawGraph(topLevelSVG,graph,moveCB)
     diagramController = new DiagramController(painter.svgElements,topLevelSVG)
     return model
 }
