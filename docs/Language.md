@@ -154,13 +154,13 @@ cs -('place order')-\os
 `message` is a text literal.
 
 **Data Write**  
-Syntax: ```<writer> - <data> -> <store>```
+Syntax: ```<writer> - <data> -> <store>```  
 Example: 
 ```
 cs - 'item' -> cd
 ```
 
-`writer` and `store` IDs.  
+`writer` and `store` are IDs.  
 `data` is a text literal.
 
 **Data Read**  
@@ -170,7 +170,7 @@ Example:
 cs <- 'item data' - i
 ```
 
-`reader` and `store` IDs.  
+`reader` and `store` are IDs.  
 `data` is a text literal.
 
 ---
@@ -193,7 +193,7 @@ A complete example for a scenario would be:
 
 ## A Complete Example
 
-The following example describes a very basic e-commerce shopping cart system with two scenario - one for failure and one for a "happy path".
+The following example describes a very basic e-commerce shopping cart system with two scenarios - one for failure and one for a "happy path".
 
 ```
 user 'Shopper' as u;
