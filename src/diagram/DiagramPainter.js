@@ -324,6 +324,12 @@ class DiagramPainter
         this._svgElements[id].push(svgEl)
     }
 
+    _forgetSVGElementsForID(id)
+    {
+        if (!id) throw new Error("Invalid ID for graph element")
+        this._svgElements[id] = []
+    }
+
     _redrawEdges(graphNode, svgEl)
     {
         /*
@@ -362,6 +368,7 @@ class DiagramPainter
         
         if (edgeSVGElements)
             edgeSVGElements.forEach(e => e.remove());
+        this._forgetSVGElementsForID(edge.id)
         this.drawEdge(edge);
     }
 
