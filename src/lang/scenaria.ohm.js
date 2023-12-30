@@ -46,10 +46,7 @@ Scenaria {
      
      textCharacter = alnum | space
      TextLiteral = "'" textCharacter* "'"
-     //Say = say TextExpr
-     TextExpr = TextExpr "++" TextLiteral --concat
-     | TextLiteral
-
+     
      ///----------- Other complementary definitions
      identStart = "_" | letter
      identChar = "_" | alnum
