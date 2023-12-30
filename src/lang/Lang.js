@@ -17,6 +17,11 @@ function loadGrammarSource()
     return grammarText;
 }
 
+function getLanguageKeywords()
+{
+    return Object.values(require(`./scenaria.ohm.js`).KEYWORDS)
+}
+
 function resolveGrammar()
 {
     let ns = createGrammarNS()
@@ -286,6 +291,7 @@ function createParser()
 }
 
 module.exports = {
-    createParser
+    createParser,
+    getLanguageKeywords
 }
 

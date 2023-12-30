@@ -1,5 +1,5 @@
 
-const { createParser } = require("./lang/Lang")
+const { createParser, getLanguageKeywords } = require("./lang/Lang")
 
 const assert = require('assert')
 const { SVG } = require('@svgdotjs/svg.js')
@@ -163,5 +163,6 @@ module.exports = {
     scenarioBack,
     scenarioNext,
     generateStateURLEncoding,
-    setStateFromURL
+    setStateFromURL,
+    getLanguageKeywords
 }

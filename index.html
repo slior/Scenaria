@@ -117,10 +117,12 @@
         let drawingBoard = document.getElementById('drawing');
         let editorParent = document.getElementById('editorContainer')
         scenarioSelection = document.getElementById('scenarioSelect');
-        initEditor(editorParent,() => {
-            main.initApp(drawingBoard)
-            parseStateFromURL()
-        })
+        initEditor(editorParent,
+                    () => {
+                        main.initApp(drawingBoard)
+                        parseStateFromURL()
+                    },
+                    main.getLanguageKeywords())
         
     }
 

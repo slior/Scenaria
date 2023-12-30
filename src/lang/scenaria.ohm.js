@@ -1,4 +1,12 @@
 
+
+const KEYWORDS = {
+    actor : "actor",
+    store : "store",
+    as : "as",
+    user : "user"
+}
+
 const grammar = String.raw`
 Scenaria {
 	
@@ -10,10 +18,9 @@ Scenaria {
   
     reserved_word = actor | as | store | user
 
-     actor = "actor"
-     store = "store"
-     as = "as"
-     user = "user"
+    ${Object.keys(KEYWORDS)
+        .map(k => `${k} = "${KEYWORDS[k]}"`)
+        .join("\n")}
 
      ///---------- Statements
      
@@ -62,5 +69,6 @@ Scenaria {
 `
 
 module.exports = { 
-    grammar
+    grammar,
+    KEYWORDS
 }
