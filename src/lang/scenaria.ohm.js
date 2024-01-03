@@ -30,10 +30,10 @@ Scenaria {
      StoreDef = store TextLiteral as ident
      UserDef = user TextLiteral as ident
      
-     ReqResChannel = "-(" TextLiteral? ")->"
+     ReqResChannel = "-" "(" TextLiteral? ")" "->"
      SyncCall = ident ReqResChannel ident
 
-     AsynchChannel = "-(" TextLiteral? ")-\\"
+     AsynchChannel = "-" "(" TextLiteral? ")" "-\\"
      AsynchCall = ident AsynchChannel ident
      
      DataFlowWrite = ident "-->" ident
@@ -43,15 +43,16 @@ Scenaria {
      
      Step = SyncCallStep | AsynchCallStep | SyncResponse | DataWrite | DataRead
      
-     SyncCallStep = ident "-(" TextLiteral ")->" ident
-     AsynchCallStep = ident "-(" TextLiteral ")-\\" ident
+     SyncCallStep = ident "-" "(" TextLiteral ")" "->" ident
+     AsynchCallStep = ident "-" "(" TextLiteral ")" "-\\" ident
      
      DataWrite = ident "-" TextLiteral "->" ident
      DataRead = ident "<-" TextLiteral "-" ident
      
      SyncResponse = ident "--(" TextLiteral ")--<" ident
      
-     textCharacter = alnum | space
+     punct = "(" | ")" | "!" | "@" | "#" | "$" | "," | "." | "-"
+     textCharacter = alnum | space | punct
      TextLiteral = "'" textCharacter* "'"
      
      ///----------- Other complementary definitions

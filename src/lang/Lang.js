@@ -198,9 +198,9 @@ function createParser()
             return [u]
         },
 
-        ReqResChannel(_, maybeText, __) {
+        ReqResChannel(_,__, maybeText,___, ____) {
             let channelText = maybeText.children.length > 0 ? 
-                                maybeText.sourceString
+                                maybeText.asIR()[0]
                                 : "";
             return [channelText]
 
@@ -210,9 +210,10 @@ function createParser()
             return parseChannel(CHANNEL_TYPE.REQ_RES,fromID,toID,channelT)
         },
 
-        AsynchChannel(_, maybeText, __) {
+        AsynchChannel(_,__, maybeText,___, ____) {
             let channelText = maybeText.children.length > 0 ? 
-                                maybeText.sourceString
+                                // maybeText.sourceString
+                                maybeText.asIR()[0]
                                 : "";
             return [channelText]
         },
@@ -226,11 +227,11 @@ function createParser()
             return [{name : name.asIR()[0], steps : _steps}]
         },
 
-        SyncCallStep(fromID, _, message, __ , toID) {
+        SyncCallStep(fromID, _,__, message, ___, ____ , toID) {
             return parseChannelStep(CHANNEL_TYPE.REQ_RES,SCENARIO_STEP_TYPE.REQ,fromID,toID,message)
         },
 
-        AsynchCallStep(fromID, _, message,__,toID) {
+        AsynchCallStep(fromID, _,__, message, ___, ____ ,toID) {
             return parseChannelStep(CHANNEL_TYPE.ASYNC,SCENARIO_STEP_TYPE.REQ,fromID,toID,message)
         },
 
