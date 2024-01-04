@@ -33,7 +33,7 @@ Scenaria {
      ReqResChannel = "-" "(" TextLiteral? ")" "->"
      SyncCall = ident ReqResChannel ident
 
-     AsynchChannel = "-" "(" TextLiteral? ")" "-\\"
+     AsynchChannel = "-" "(" TextLiteral? ")" "-\\\\"
      AsynchCall = ident AsynchChannel ident
      
      DataFlowWrite = ident "-->" ident
@@ -51,7 +51,7 @@ Scenaria {
      
      SyncResponse = ident "--(" TextLiteral ")--<" ident
      
-     punct = "(" | ")" | "!" | "@" | "#" | "$" | "," | "." | "-"
+     punct = "(" | ")" | "!" | "@" | "#" | "$" | "," | "." | "-" | ":"
      textCharacter = alnum | space | punct
      TextLiteral = "'" textCharacter* "'"
      

@@ -212,7 +212,6 @@ function createParser()
 
         AsynchChannel(_,__, maybeText,___, ____) {
             let channelText = maybeText.children.length > 0 ? 
-                                // maybeText.sourceString
                                 maybeText.asIR()[0]
                                 : "";
             return [channelText]

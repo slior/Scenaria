@@ -66,6 +66,7 @@ describe("Scenaria Language Parser", function() {
 
             aa -('')-> bb;
             bb - ( 'stam' ) -> now;
+            bb - ( 'cdc:data moved' ) -\\ aa;
         `
         let expectedIR = {
             name : "",
@@ -74,7 +75,8 @@ describe("Scenaria Language Parser", function() {
                         newActor(ACTOR_TYPE.AGENT,'now','Nanny Ogg-Witch')
                     ],
             channels : [    newChannel(CHANNEL_TYPE.REQ_RES,'aa','bb',""),
-                            newChannel(CHANNEL_TYPE.REQ_RES,'bb','now',"stam")
+                            newChannel(CHANNEL_TYPE.REQ_RES,'bb','now',"stam"),
+                            newChannel(CHANNEL_TYPE.ASYNC,'bb','aa',"cdc:data moved")
                     ],
             data_flows : [],
             scenarios : []

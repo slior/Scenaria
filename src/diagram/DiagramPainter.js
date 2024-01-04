@@ -71,6 +71,11 @@ class DiagramPainter
         c.stroke('black')
         c.x(channel.x)
         c.y(channel.y)
+        if (channel.text)
+        {
+            let t = c.element('title')
+            t.words(channel.text)
+        }
         if (channel.type == CHANNEL_TYPE.REQ_RES)
             this._drawReqResDecoration(g,channel)
         SVGEventHandler.attachTo(g,() => { 
