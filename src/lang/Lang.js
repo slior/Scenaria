@@ -180,7 +180,7 @@ function createParser()
             return [text.sourceString]
         },
 
-        ActorDef(_, caption, __, id) {
+        AgentDef(_, caption, __, id) {
             let a = newActor(ACTOR_TYPE.AGENT,id.asIR()[0],caption.asIR()[0])
             rememberAgent(a)
             return [a]

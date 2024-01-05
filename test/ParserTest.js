@@ -19,9 +19,9 @@ function parseAndCompare(testSource,expectedIR)
 describe("Scenaria Language Parser", function() {
     it("Successfully parses a comment and ignores it", function() {
         let testProgram = String.raw`
-            actor 'AA' as aa;
+            agent 'AA' as aa;
             //this is just a comment.
-            actor 'BB' as bb; //a comment at the end of the line
+            agent 'BB' as bb; //a comment at the end of the line
         `
         let expectedIR = {
             name : "",
@@ -37,9 +37,9 @@ describe("Scenaria Language Parser", function() {
 
     it("Parses a literal with punctuation marks", function() {
         let testProgram = String.raw`
-            actor 'AA!' as aa;
-            actor 'BB (Failure)' as bb; //uses '(' ')'
-            actor 'Nanny Ogg-Witch' as now; //uses '-'
+            agent 'AA!' as aa;
+            agent 'BB (Failure)' as bb; //uses '(' ')'
+            agent 'Nanny Ogg-Witch' as now; //uses '-'
         `
         let expectedIR = {
             name : "",
@@ -58,9 +58,9 @@ describe("Scenaria Language Parser", function() {
 
     it("Parses channel definitions", function() {
         let testProgram = String.raw`
-            actor 'AA!' as aa;
-            actor 'BB (Failure)' as bb; //uses '(' ')'
-            actor 'Nanny Ogg-Witch' as now; //uses '-'
+            agent 'AA!' as aa;
+            agent 'BB (Failure)' as bb; //uses '(' ')'
+            agent 'Nanny Ogg-Witch' as now; //uses '-'
 
             aa -('')-> bb;
             bb - ( 'stam' ) -> now;
@@ -86,23 +86,23 @@ describe("Scenaria Language Parser", function() {
     it("Rejects identifiers that are reserved words", function() {
         assert.throws(() => {
             let problemSource = String.raw`
-              actor 'user' as user;
+                agent 'user' as user;
             `
             createParserForTest()(problemSource)
           },/not a reserved_word/,"trying to parse 'user' as an identifier")
     
           assert.throws(() => {
             let problemSource = String.raw`
-              store 'db' as actor;
+              store 'db' as agent;
             `
             createParserForTest()(problemSource)
-          },/not a reserved_word/,"trying to parse 'actor' as an identifier")
+          },/not a reserved_word/,"trying to parse 'agent' as an identifier")
     
     })
 
     it("Parses a note for an identifier", function() {
         let testProgram = String.raw`
-            actor 'Vizzini' as vi;
+            agent 'Vizzini' as vi;
             store 'Hoard!' as h;
 
             note for vi: 'Inconceivable!';
@@ -124,7 +124,7 @@ describe("Scenaria Language Parser", function() {
     it("Rejects a note for an identifier it doesn't know", function() {
         assert.throws(() => {
             let problemSource = String.raw`
-              actor 'user' as u;
+              agent 'user' as u;
               note for unknown : 'some note';
             `
             createParserForTest()(problemSource)

@@ -1,6 +1,6 @@
 user 'Shopper' as u;
-actor 'Cart Service' as cs;
-actor 'Order Service' as os;
+agent 'Cart Service' as cs;
+agent 'Order Service' as os;
 store 'Cart Data' as cd;
 
 'Add item happy' {

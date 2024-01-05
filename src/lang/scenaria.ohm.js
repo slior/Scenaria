@@ -1,7 +1,7 @@
 
 
 const KEYWORDS = {
-    actor : "actor",
+    agent : "agent",
     store : "store",
     as : "as",
     user : "user",
@@ -26,9 +26,9 @@ Scenaria {
 
      ///---------- Statements
      
-     Statement = ActorDef | StoreDef | UserDef | SyncCall | AsynchCall | DataFlowWrite | DataFlowRead | Scenario | Note
+     Statement = AgentDef | StoreDef | UserDef | SyncCall | AsynchCall | DataFlowWrite | DataFlowRead | Scenario | Note
      
-     ActorDef = actor TextLiteral as ident
+     AgentDef = agent TextLiteral as ident
      StoreDef = store TextLiteral as ident
      UserDef = user TextLiteral as ident
      
