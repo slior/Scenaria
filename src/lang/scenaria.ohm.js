@@ -16,7 +16,7 @@ Scenaria {
     ProgramElement = SingleStatement | comment
     ProgramElements = (ProgramElement )? (~";" ProgramElement)*
   
-    reserved_word = actor | as | store | user
+    reserved_word = ${Object.values(KEYWORDS).join(" | ")}
 
     ${Object.keys(KEYWORDS)
         .map(k => `${k} = "${KEYWORDS[k]}"`)

@@ -84,4 +84,21 @@ describe("Scenaria Language Parser", function() {
 
         parseAndCompare(testProgram,expectedIR)
     })
+
+    it("Rejects identifiers that are reserved words", function() {
+        assert.throws(() => {
+            let problemSource = String.raw`
+              actor 'user' as user;
+            `
+            createParserForTest()(problemSource)
+          },/not a reserved_word/,"trying to parse 'user' as an identifier")
+    
+          assert.throws(() => {
+            let problemSource = String.raw`
+              store 'db' as actor;
+            `
+            createParserForTest()(problemSource)
+          },/not a reserved_word/,"trying to parse 'actor' as an identifier")
+    
+    })
 })
