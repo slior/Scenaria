@@ -36,6 +36,8 @@ It can optionally contain a list of scenarios.
 Optionally, you can also denote a channel or data flow, without using them in any scenario. If a scenario describes some interaction between two components that don't have a channel of flow defined for them, the relevant channel/flow will be lazily created and added to the model.  
 This is intentional to allow for quick prototyping, without the need to be explicit about all communication channels.
 
+The syntax definition can be found in [here](../src/lang/scenaria.ohm.js).
+
 ### Preliminary Definitions
 
 An **identifier** is a series of alphanumeric characters (english + numbers) or an underscore, with no whitespace. It can start with an an underscore, but not a number.  
@@ -43,9 +45,11 @@ An identifier cannot be a reserved word.
 
 Reserved words are:
 - `user`
-- `actor`
+- `agent`
 - `store`
 - `as`
+- `note`
+- `for`
 
 A **text literal** is a series of any alphanumeric characters, with space, enclosed in single quotes (`'`).
 
@@ -57,18 +61,29 @@ The definition of all types of actors follows a simple syntax:
 ```<component type> <caption> as <id>;```
 
 where:
-- Component type is one of: `user`, `actor` or `store`
+- Component type is one of: `user`, `agent` or `store`
 - Caption is a text literal, to be shown for the component in the diagram.
 - ID is an identifier to be used in the rest of the description to refer to the component.
 
 Examples:
 ```
 user 'Shopper' as u;
-actor 'Cart Service' as cs;
-actor 'Order Service' as os;
+agent 'Cart Service' as cs;
+agent 'Order Service' as os;
 store 'Cart Data' as cd;
 store 'Inventory' as i;
 ```
+
+#### Notes
+
+You can specify a note for an actor by referring to an id of a defined actor:
+```
+note for u: 'A simple user';
+```
+
+The actor must already be defined before the note definition. The note consists of a single sentence enclosed in quotes.
+Notes will be shown as tooltips on the diagram.
+
 
 ### Channel and Data Flow Definitions
 
@@ -197,10 +212,12 @@ The following example describes a very basic e-commerce shopping cart system wit
 
 ```
 user 'Shopper' as u;
-actor 'Cart Service' as cs;
-actor 'Order Service' as os;
+agent 'Cart Service' as cs;
+agent 'Order Service' as os;
 store 'Cart Data' as cd;
 store 'Inventory' as i;
+
+note for i: 'All up-to-date inventory';
 
 cs --> cd;
 cs <-- cd;
