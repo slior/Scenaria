@@ -4,7 +4,9 @@ const KEYWORDS = {
     actor : "actor",
     store : "store",
     as : "as",
-    user : "user"
+    user : "user",
+    note : "note",
+    for : "for"
 }
 
 const grammar = String.raw`
@@ -24,12 +26,14 @@ Scenaria {
 
      ///---------- Statements
      
-     Statement = ActorDef | StoreDef | UserDef | SyncCall | AsynchCall | DataFlowWrite | DataFlowRead | Scenario
+     Statement = ActorDef | StoreDef | UserDef | SyncCall | AsynchCall | DataFlowWrite | DataFlowRead | Scenario | Note
      
      ActorDef = actor TextLiteral as ident
      StoreDef = store TextLiteral as ident
      UserDef = user TextLiteral as ident
      
+     Note = note for ident ":" TextLiteral
+
      ReqResChannel = "-" "(" TextLiteral? ")" "->"
      SyncCall = ident ReqResChannel ident
 

@@ -198,6 +198,17 @@ function createParser()
             return [u]
         },
 
+        Note(_,__,elementID,___,textLiteral) {
+            let elID = elementID.asIR()[0]
+            let text = textLiteral.asIR()[0]
+            if (agentsParsed[elID])
+                agentsParsed[elID].note = text;
+            else if (storesParsed[elID])
+                storesParsed[elID].note = text;
+            else throw new Error(`Unrecognized id for note: ${elID}`)
+            return []
+        },
+
         ReqResChannel(_,__, maybeText,___, ____) {
             let channelText = maybeText.children.length > 0 ? 
                                 maybeText.asIR()[0]

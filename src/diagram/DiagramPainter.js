@@ -55,6 +55,7 @@ class DiagramPainter
             t.cy(r.cy())
             g.move(graphEl.x,graphEl.y)
         }
+        addTooltipIfAvailable(graphEl.note,g)
         SVGEventHandler.attachTo(g,() => { 
                                     this._redrawEdges(graphEl,g);
                                     this._raiseNodeMoved();
@@ -71,11 +72,7 @@ class DiagramPainter
         c.stroke('black')
         c.x(channel.x)
         c.y(channel.y)
-        if (channel.text)
-        {
-            let t = c.element('title')
-            t.words(channel.text)
-        }
+        addTooltipIfAvailable(channel.text, c);
         if (channel.type == CHANNEL_TYPE.REQ_RES)
             this._drawReqResDecoration(g,channel)
         SVGEventHandler.attachTo(g,() => { 
@@ -386,6 +383,15 @@ class DiagramPainter
     {
         if (this._moveCB)
             this._moveCB()
+    }
+}
+
+function addTooltipIfAvailable(text, svgEl)
+{
+    if (text)
+    {
+        let t = svgEl.element('title');
+        t.words(text);
     }
 }
 

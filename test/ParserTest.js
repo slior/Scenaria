@@ -5,9 +5,7 @@ const { newActor, ACTOR_TYPE, newChannel, CHANNEL_TYPE} = require('../src/System
 
 function createParserForTest()
 {
-  if (!createParserForTest.cached)
-    createParserForTest.cached = createParser() //tests are for the default variant
-  return createParserForTest.cached
+    return createParser();
 }
 
 function parseAndCompare(testSource,expectedIR) 
@@ -100,5 +98,36 @@ describe("Scenaria Language Parser", function() {
             createParserForTest()(problemSource)
           },/not a reserved_word/,"trying to parse 'actor' as an identifier")
     
+    })
+
+    it("Parses a note for an identifier", function() {
+        let testProgram = String.raw`
+            actor 'Vizzini' as vi;
+            store 'Hoard!' as h;
+
+            note for vi: 'Inconceivable!';
+            note for h : 'all the gold is here';
+        `
+        let expectedIR = {
+            name : "",
+            actors : [  newActor(ACTOR_TYPE.AGENT,'vi','Vizzini',"Inconceivable!"),
+                        newActor(ACTOR_TYPE.STORE,'h','Hoard!',"all the gold is here")
+                    ],
+            channels : [ ],
+            data_flows : [],
+            scenarios : []
+        }
+
+        parseAndCompare(testProgram,expectedIR)
+    })
+
+    it("Rejects a note for an identifier it doesn't know", function() {
+        assert.throws(() => {
+            let problemSource = String.raw`
+              actor 'user' as u;
+              note for unknown : 'some note';
+            `
+            createParserForTest()(problemSource)
+          },/Unrecognized id for note/,"unrecognized actor id for note")
     })
 })

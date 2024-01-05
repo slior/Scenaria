@@ -76,9 +76,9 @@ function newDataFlow(type,from,to,message = "")
     return ret;
 }
 
-function newActor(type,id,caption)
+function newActor(type,id,caption,note = "")
 {
-    return { type : type, id : id, caption : caption }
+    return { type : type, id : id, caption : caption, note : note }
 }
 
 module.exports = {
