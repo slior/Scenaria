@@ -130,4 +130,25 @@ describe("Scenaria Language Parser", function() {
             createParserForTest()(problemSource)
           },/Unrecognized id for note/,"unrecognized actor id for note")
     })
+
+    it("Parsers a user and agent actors successfully",function() {
+        let testProgram = String.raw`
+            agent 'Vizzini' as vi;
+            user 'Inigo' as montoya;
+
+            note for vi: 'Inconceivable!';
+            note for montoya : 'Hello! My name is Inigo Montoya ...';
+        `
+        let expectedIR = {
+            name : "",
+            actors : [  newActor(ACTOR_TYPE.AGENT,'vi','Vizzini',"Inconceivable!"),
+                        newActor(ACTOR_TYPE.USER,'montoya','Inigo',"Hello! My name is Inigo Montoya ...")
+                    ],
+            channels : [ ],
+            data_flows : [],
+            scenarios : []
+        }
+
+        parseAndCompare(testProgram,expectedIR)
+    })
 })

@@ -193,7 +193,7 @@ function createParser()
         },
 
         UserDef(_,caption,__,id) {
-            let u = {type : ACTOR_TYPE.USER, id : id.asIR()[0], caption : caption.asIR()[0] }
+            let u = newActor(ACTOR_TYPE.USER,id.asIR()[0],caption.asIR()[0])
             rememberAgent(u)
             return [u]
         },
