@@ -7,6 +7,22 @@ store 'Inventory' as i;
 cs --> cd;
 cs <-- cd;
 
+os is @External;
+cd is @Mem;
+i is @External, @DB;
+
+@DB { 
+    prototype : 'db';
+};
+
+@Mem {
+    prototype : 'memory';
+};
+
+@External {
+  color : 'lightblue';
+};
+
 'Add item happy' {
     u -('add item')->cs
 

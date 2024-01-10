@@ -6,7 +6,10 @@ const KEYWORDS = {
     as : "as",
     user : "user",
     note : "note",
-    for : "for"
+    for : "for",
+    color : "color",
+    is : "is",
+    prototype : "prototype",
 }
 
 const grammar = String.raw`
@@ -26,7 +29,7 @@ Scenaria {
 
      ///---------- Statements
      
-     Statement = AgentDef | StoreDef | UserDef | SyncCall | AsynchCall | DataFlowWrite | DataFlowRead | Scenario | Note
+     Statement = AgentDef | StoreDef | UserDef | SyncCall | AsynchCall | DataFlowWrite | DataFlowRead | Scenario | Note | AnnotationDef | AnnotationAssignment
      
      AgentDef = agent TextLiteral as ident
      StoreDef = store TextLiteral as ident
@@ -59,6 +62,17 @@ Scenaria {
      textCharacter = alnum | space | punct
      TextLiteral = "'" textCharacter* "'"
      
+     ///------------- Annotations
+
+     annotationRef = "@" ident
+     AnnotationRefList = (annotationRef)? ("," annotationRef)*
+     AnnotationAssignment = ident is AnnotationRefList
+     AnnotationDef = "@" ident "{"  AnnotationStatement* "}"
+
+     AnnotationStatement = (AnnotColorStmt | AnnotProtoStmt) ";"
+     AnnotColorStmt = color ":" TextLiteral
+     AnnotProtoStmt = prototype ":" TextLiteral
+
      ///----------- Other complementary definitions
      identStart = "_" | letter
      identChar = "_" | alnum

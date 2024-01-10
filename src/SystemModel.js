@@ -26,6 +26,11 @@ const SCENARIO_STEP_TYPE = {
     DATA_WRITE : 'data_write',
     DATA_READ : 'data_read'
 }
+
+const ANNOTATION_KEY = {
+    COLOR : 'color',
+    PROTO : "prototype",
+}
 const NULL_MESSAGE = '--'
 
 function channelID(channel)
@@ -76,10 +81,45 @@ function newDataFlow(type,from,to,message = "")
     return ret;
 }
 
-function newActor(type,id,caption,note = "")
+function newActor(type,id,caption,note = "", annotations = [])
 {
-    return { type : type, id : id, caption : caption, note : note }
+    return { type : type, 
+             id : id,
+             caption : caption,
+             note : note,
+             annotations : annotations
+            }
 }
+
+function newAnnotationDefElement(key,val)
+{   
+    let ret = {}
+    ret[key] = val
+    return ret
+}
+
+function newSystemModel(actors,channels,dataFlows,scenarios,annotations)
+{
+    return {
+            "name" : "",
+            actors : actors,
+            channels : channels,
+            data_flows : dataFlows,
+            scenarios : scenarios,
+            annotations : annotations
+        }
+}
+
+function resolveAnnotations(model)
+{
+    model.actors.forEach(actor => {
+        actor.annotations.map(aID => model.annotations[aID])
+                         .filter(ad => ad !== undefined)
+                         .forEach(ad => Object.assign(actor,ad))
+    })
+    return model;
+}
+
 
 module.exports = {
     EDGE_TYPE,
@@ -93,5 +133,10 @@ module.exports = {
     newDataFlow,
     newDataFlowStep,
     flowID,
-    newActor
+    newActor,
+    ANNOTATION_KEY,
+    newAnnotationDefElement,
+    newSystemModel,
+    resolveAnnotations,
+
 }

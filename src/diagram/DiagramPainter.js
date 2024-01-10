@@ -29,7 +29,7 @@ class DiagramPainter
 
     drawActor(graphEl)
     {
-        graphEl.fillColor = '#ffffff'
+        graphEl.fillColor = graphEl.color || '#ffffff'
         graphEl.lineColor = 'black'
 
         let g = this._svgDraw.group();
@@ -50,7 +50,16 @@ class DiagramPainter
                 r.radius(30)
             else
                 r.radius(2)
-            let t = g.text(graphEl.caption)
+            
+            let t = g.text(function(add) {
+                if (graphEl.prototype)
+                {
+                    add.tspan(`<<${graphEl.prototype}>>`).font({size : 9}).newLine()
+                }
+                add.tspan(graphEl.caption).font({size : 13}).newLine()
+            })
+            .leading(1.3)
+            .attr({'text-anchor' : 'middle'})
             t.cx(r.cx())
             t.cy(r.cy())
             g.move(graphEl.x,graphEl.y)

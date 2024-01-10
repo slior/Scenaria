@@ -8,6 +8,7 @@ const { DiagramController } = require('./diagram/DiagramController')
 const { ScenarioRunner } = require('./ScenarioRunner')
 const { ScenarioStepper } = require('./ScenarioStepper') 
 const { State } = require('./state/State')
+const { resolveAnnotations } = require('./SystemModel')
 
 var drawingContainer = null;
 var topLevelSVG = null;
@@ -106,7 +107,6 @@ function parseCode(programCode)
     let parser = createParser()
     let program = parser(programCode);
     return program;
-    // return JSON.parse(programCode); //for now, no code to parse - we get JSON code and return it.
 }
 
 /**
@@ -119,6 +119,7 @@ function parseAndPresent(code,moveCB)
 {
     model = parseCode(code)
     console.log(`Parsed code: ${JSON.stringify(model)}`)
+    model = resolveAnnotations(model)
     return presentModel(model,moveCB)
 }
 

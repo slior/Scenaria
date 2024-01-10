@@ -3,7 +3,9 @@ const ohm = _ohm.default || _ohm; //workaround to allow importing using common j
 
 const { ACTOR_TYPE, DATA_FLOW_TYPE, CHANNEL_TYPE,
         newChannel, newStep, SCENARIO_STEP_TYPE,
-        newDataFlow, newDataFlowStep, newActor } = require('../SystemModel')
+        newDataFlow, newDataFlowStep, newActor,
+        ANNOTATION_KEY, newAnnotationDefElement, 
+        newSystemModel } = require('../SystemModel')
 
 
 function createGrammarNS()
@@ -38,6 +40,7 @@ function createParser()
     let storesParsed = {}
     let channelsParsed = {}
     let flowsParsed = {}
+    let annotationsDefsParsed = {}
 
     //Helper functions for parsing
     function isValidDataFlow(type,from,to)
@@ -45,12 +48,23 @@ function createParser()
         let agentID = type == DATA_FLOW_TYPE.READ ? to : from;
         let storeID = type == DATA_FLOW_TYPE.READ ? from : to;
 
-        let isValidAgent = (agentsParsed[agentID] && agentsParsed[agentID].type) == ACTOR_TYPE.AGENT
-        let isValidStore = (storesParsed[storeID] && storesParsed[storeID].type) == ACTOR_TYPE.STORE
-
-        return isValidAgent && isValidStore
+        return isValidAgent(agentID) && isValidStore(storeID)
     }
 
+    function isValidAgent(agentID) { return agentsParsed[agentID] && [ACTOR_TYPE.AGENT, ACTOR_TYPE.USER].includes(agentsParsed[agentID].type) }
+    function isValidStore(storeID) { return (storesParsed[storeID] && storesParsed[storeID].type) == ACTOR_TYPE.STORE }
+    function isValidActor(actorID) { return isValidAgent(actorID) || isValidStore(actorID) }
+
+    function annotateActor(actorID,annotations)
+    {
+        if (!annotations) return;
+        let actor = isValidAgent(actorID)?
+                        agentsParsed[actorID] : 
+                        (isValidStore(actorID) ? storesParsed[actorID] : null)
+        if (!actor) throw new Error(`Invalid actor ID for annotation - no actor found for ${actorID}`)
+        if (!(actor.annotations)) actor.annotations = []
+        annotations.forEach(annot => actor.annotations.push(annot))
+    }
     function isValidChannel(fromID,toID)
     {
         let isValidFrom = [ACTOR_TYPE.AGENT,ACTOR_TYPE.USER].includes((agentsParsed[fromID] && agentsParsed[fromID].type))
@@ -76,6 +90,13 @@ function createParser()
     { 
         return flowsParsed[flowObj.id] !== undefined 
                 && flowObj.type == flowsParsed[flowObj.id].type
+    }
+
+    function rememberAnnotation(id,statements)
+    {
+        let annot = {}
+        statements.forEach(st => Object.assign(annot,st))
+        annotationsDefsParsed[id] = annot;
     }
 
     function parseChannel(type,fromID, toID, channelT)
@@ -138,6 +159,7 @@ function createParser()
         Program(programElements) {
 
             let definedElements = programElements.asIR();
+            /// all XXXParsed collections are filled as a result of the asIR call
             let actors = Object.values(agentsParsed)
                         .concat(Object.values(storesParsed))
             let dataFlows = Object.values(flowsParsed)
@@ -145,14 +167,7 @@ function createParser()
 
             let scenarios = definedElements.filter(el => isScenario(el))
 
-            let p = {
-                "name" : "",
-                actors : actors,
-                channels : channels,
-                data_flows : dataFlows,
-                scenarios : scenarios
-            }
-            
+            let p = newSystemModel(actors,channels,dataFlows,scenarios,annotationsDefsParsed)
             return [p]
         },
 
@@ -277,7 +292,46 @@ function createParser()
         TextLiteral(_,s,__) {
             return [s.sourceString]
         },
+
+        AnnotationAssignment(_actorID,_, _annotationIDs) {
+            let actorID = _actorID.asIR()[0];
+            let annotationIDs = _annotationIDs.asIR()
+            if (!isValidActor(actorID)) throw new Error(`Invalid actor id for annotation: ${actorID}`)
+            annotateActor(actorID,annotationIDs)
+            return []
+
+        }, 
+
+        annotationRef(_, annot) {
+           return annot.asIR()
+        },
         
+        AnnotationRefList(maybeFirstElement, _, restOfAnnotRefs) {
+            let first = maybeFirstElement.children.length > 0 ? maybeFirstElement.children[0].asIR() : []
+            let otherElements = restOfAnnotRefs.children.flatMap(e => e.asIR())
+            return first.concat(otherElements)
+        },
+
+        AnnotationDef(_,ident, __, annotStatements, ___) {
+            let annotID = ident.asIR()[0]
+            let annotationsStmts = annotStatements.asIR()
+            rememberAnnotation(annotID,annotationsStmts)
+            return []
+        },
+
+        AnnotationStatement(stmt,_) {
+            return stmt.asIR()
+        },
+
+        AnnotColorStmt(_,__, colorVal ) {
+            let color = colorVal.asIR()[0]
+            return [newAnnotationDefElement(ANNOTATION_KEY.COLOR,color)]
+        },
+
+        AnnotProtoStmt(_,__,protoVal) {
+            let prototype = protoVal.asIR()[0]
+            return [newAnnotationDefElement(ANNOTATION_KEY.PROTO,prototype)]
+        },
         full_ident(firstChar,restOfChars) {
             let identifier = firstChar.sourceString + restOfChars.sourceString
             return [identifier]

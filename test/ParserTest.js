@@ -28,7 +28,8 @@ describe("Scenaria Language Parser", function() {
             actors : [newActor(ACTOR_TYPE.AGENT,'aa','AA'),newActor(ACTOR_TYPE.AGENT,'bb','BB')],
             channels : [],
             data_flows : [],
-            scenarios : []
+            scenarios : [],
+            annotations : {},
         }
 
         parseAndCompare(testProgram,expectedIR)
@@ -49,7 +50,8 @@ describe("Scenaria Language Parser", function() {
                     ],
             channels : [],
             data_flows : [],
-            scenarios : []
+            scenarios : [],
+            annotations : {},
         }
 
         parseAndCompare(testProgram,expectedIR)
@@ -77,7 +79,8 @@ describe("Scenaria Language Parser", function() {
                             newChannel(CHANNEL_TYPE.ASYNC,'bb','aa',"cdc:data moved")
                     ],
             data_flows : [],
-            scenarios : []
+            scenarios : [],
+            annotations : {},
         }
 
         parseAndCompare(testProgram,expectedIR)
@@ -115,7 +118,8 @@ describe("Scenaria Language Parser", function() {
                     ],
             channels : [ ],
             data_flows : [],
-            scenarios : []
+            scenarios : [],
+            annotations : {},
         }
 
         parseAndCompare(testProgram,expectedIR)
@@ -146,9 +150,70 @@ describe("Scenaria Language Parser", function() {
                     ],
             channels : [ ],
             data_flows : [],
-            scenarios : []
+            scenarios : [],
+            annotations : {},
         }
 
         parseAndCompare(testProgram,expectedIR)
+    })
+
+    it("Parses an annotation assignment correctly", function() {
+        let testProgram = String.raw`
+            agent 'Vizzini' as vi;
+            user 'Inigo' as montoya;
+
+            note for vi: 'Inconceivable!';
+            note for montoya : 'Hello! My name is Inigo Montoya ...';
+
+            vi is @BadGuy;
+            montoya is @GoodGuy;
+        `
+        let expectedIR = {
+            name : "",
+            actors : [  newActor(ACTOR_TYPE.AGENT,'vi','Vizzini',"Inconceivable!", ['BadGuy']),
+                        newActor(ACTOR_TYPE.USER,'montoya','Inigo',"Hello! My name is Inigo Montoya ...", ['GoodGuy'])
+                    ],
+            channels : [ ],
+            data_flows : [],
+            scenarios : [],
+            annotations : {},
+        }
+
+        parseAndCompare(testProgram,expectedIR)
+    })
+
+    it("Parses an annotation definition correctly", function() {
+  
+        let testProgram = String.raw`
+            agent 'Vizzini' as vi;
+            user 'Inigo' as montoya;
+
+            vi is @BadGuy;
+            montoya is @GoodGuy;
+
+            @BadGuy {
+                color : 'blue';
+            };
+
+            @GoodGuy {
+                prototype : 'good';
+            };
+        `
+        let expectedIR = {
+            name : "",
+            actors : [  newActor(ACTOR_TYPE.AGENT,'vi','Vizzini',"", ['BadGuy']),
+                        newActor(ACTOR_TYPE.USER,'montoya','Inigo',"", ['GoodGuy'])
+                    ],
+            channels : [ ],
+            data_flows : [],
+            scenarios : [],
+            annotations : {
+                "BadGuy" : { color : 'blue'},
+                "GoodGuy" : { prototype : 'good'}
+            },
+        }
+
+        parseAndCompare(testProgram,expectedIR)
+
     })
 })
