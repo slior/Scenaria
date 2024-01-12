@@ -1,4 +1,6 @@
 
+const { ANNOTATION_KEY } = require('../SystemModel')
+
 function encodeState(graph,code)
 {
     let state = {
@@ -47,6 +49,8 @@ const COMPRESSED_KEYS = {
     bendPoints : "bp"
 
 }
+
+Object.values(ANNOTATION_KEY).forEach(v => COMPRESSED_KEYS[v] = v )
 
 const UNCOMPRESSED_KEYS = {}
 let cks = Object.keys(COMPRESSED_KEYS)

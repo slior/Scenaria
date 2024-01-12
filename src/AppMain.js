@@ -146,7 +146,7 @@ function generateStateURLEncoding(code)
 function setStateFromURL(stateParamValue,codeCB,moveCB)
 {
     let state = State.fromBase64(stateParamValue)
-    model = parseCode(state.code)
+    model = resolveAnnotations(parseCode(state.code))
     codeCB(state.code)
     graph = state.graph
     if (!topLevelSVG)
