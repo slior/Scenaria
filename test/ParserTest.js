@@ -214,6 +214,39 @@ describe("Scenaria Language Parser", function() {
         }
 
         parseAndCompare(testProgram,expectedIR)
+    })
 
+    it ("Parses an annotation clause on an actor definition correctly", function() {
+        let testProgram = String.raw`
+            agent 'Vizzini' as vi is @BadGuy;
+            user 'Inigo' as montoya is @GoodGuy;
+            store 'Pit of Despair' as pod;
+
+            pod is @BadGuy;
+
+            @BadGuy {
+                color : 'red';
+            };
+
+            @GoodGuy {
+                prototype : 'good';
+            };
+        `
+        let expectedIR = {
+            name : "",
+            actors : [  newActor(ACTOR_TYPE.AGENT,'vi','Vizzini',"", ['BadGuy']),
+                        newActor(ACTOR_TYPE.USER,'montoya','Inigo',"", ['GoodGuy']),
+                        newActor(ACTOR_TYPE.STORE,'pod','Pit of Despair',"", ['BadGuy']),
+                    ],
+            channels : [ ],
+            data_flows : [],
+            scenarios : [],
+            annotations : {
+                "BadGuy" : { color : 'red'},
+                "GoodGuy" : { prototype : 'good'}
+            },
+        }
+
+        parseAndCompare(testProgram,expectedIR)
     })
 })

@@ -1,13 +1,12 @@
 user 'Shopper' as u;
 agent 'Cart Service' as cs;
-agent 'Order Service' as os;
+agent 'Order Service' as os is @External;
 store 'Cart Data' as cd;
 store 'Inventory' as i;
 
 cs --> cd;
 cs <-- cd;
 
-os is @External;
 cd is @Mem;
 i is @External, @DB;
 

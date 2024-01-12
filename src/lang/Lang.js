@@ -195,21 +195,30 @@ function createParser()
             return [text.sourceString]
         },
 
-        AgentDef(_, caption, __, id) {
-            let a = newActor(ACTOR_TYPE.AGENT,id.asIR()[0],caption.asIR()[0])
+        AgentDef(_, caption, __, id, maybeAnnotationAssign) {
+            let actorID = id.asIR()[0]
+            let a = newActor(ACTOR_TYPE.AGENT,actorID,caption.asIR()[0])
             rememberAgent(a)
+            if (maybeAnnotationAssign.children.length > 0)
+                annotateActor(actorID,maybeAnnotationAssign.asIR())
             return [a]
         },
 
-        StoreDef(_, caption, __, id) {
-            let s = newActor(ACTOR_TYPE.STORE,id.asIR()[0], caption.asIR()[0])
+        StoreDef(_, caption, __, id, maybeAnnotationAssign) {
+            let storeID = id.asIR()[0]
+            let s = newActor(ACTOR_TYPE.STORE,storeID, caption.asIR()[0])
             rememberStore(s)
+            if (maybeAnnotationAssign.children.length > 0)
+                annotateActor(storeID,maybeAnnotationAssign.asIR())
             return [s]
         },
 
-        UserDef(_,caption,__,id) {
-            let u = newActor(ACTOR_TYPE.USER,id.asIR()[0],caption.asIR()[0])
+        UserDef(_,caption,__,id, maybeAnnotationAssign) {
+            let userID = id.asIR()[0]
+            let u = newActor(ACTOR_TYPE.USER,userID,caption.asIR()[0])
             rememberAgent(u)
+            if (maybeAnnotationAssign.children.length > 0)
+                annotateActor(userID,maybeAnnotationAssign.asIR())
             return [u]
         },
 
@@ -293,14 +302,19 @@ function createParser()
             return [s.sourceString]
         },
 
-        AnnotationAssignment(_actorID,_, _annotationIDs) {
+        // AnnotationAssignment(_actorID,_, _annotationIDs) {
+        AnnotationAssignment(_actorID,annotAssignmentClause) {
             let actorID = _actorID.asIR()[0];
-            let annotationIDs = _annotationIDs.asIR()
+            let annotationIDs = annotAssignmentClause.asIR()
             if (!isValidActor(actorID)) throw new Error(`Invalid actor id for annotation: ${actorID}`)
             annotateActor(actorID,annotationIDs)
             return []
 
         }, 
+
+        AnnotationAssignmentClause(_, _annotationsIDs) {
+            return _annotationsIDs.asIR()
+        },
 
         annotationRef(_, annot) {
            return annot.asIR()

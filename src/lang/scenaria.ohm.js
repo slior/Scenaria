@@ -31,9 +31,9 @@ Scenaria {
      
      Statement = AgentDef | StoreDef | UserDef | SyncCall | AsynchCall | DataFlowWrite | DataFlowRead | Scenario | Note | AnnotationDef | AnnotationAssignment
      
-     AgentDef = agent TextLiteral as ident
-     StoreDef = store TextLiteral as ident
-     UserDef = user TextLiteral as ident
+     AgentDef = agent TextLiteral as ident AnnotationAssignmentClause?
+     StoreDef = store TextLiteral as ident AnnotationAssignmentClause?
+     UserDef = user TextLiteral as ident AnnotationAssignmentClause?
      
      Note = note for ident ":" TextLiteral
 
@@ -66,9 +66,10 @@ Scenaria {
 
      annotationRef = "@" ident
      AnnotationRefList = (annotationRef)? ("," annotationRef)*
-     AnnotationAssignment = ident is AnnotationRefList
+     AnnotationAssignment = ident AnnotationAssignmentClause
+     AnnotationAssignmentClause = is AnnotationRefList
+     
      AnnotationDef = "@" ident "{"  AnnotationStatement* "}"
-
      AnnotationStatement = (AnnotColorStmt | AnnotProtoStmt) ";"
      AnnotColorStmt = color ":" TextLiteral
      AnnotProtoStmt = prototype ":" TextLiteral
