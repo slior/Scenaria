@@ -84,6 +84,75 @@ note for u: 'A simple user';
 The actor must already be defined before the note definition. The note consists of a single sentence enclosed in quotes.
 Notes will be shown as tooltips on the diagram.
 
+#### Annotations
+You can define annotations as a way to add metadata to actors (agents, stores, users).
+These annotations can provide some visual cues to clarify some concept or grouping in the system you're modeling.
+
+Using annotations is done in two steps:
+1. Assigning the annotation to actors ( = tagging the actors with an annotation).
+2. Defining the annotations - what visual cues will it add to the actors tagged with it.
+
+##### Assigning Annotation to Actors
+
+Tagging an actor with an annotation can be done in two ways
+- An annotation assignment clause in the actor definition; e.g. `agent 'Order Service' as os is @External;`
+ - The `@External` is the annotation.
+ - General syntax in this case is `<actor definition> as <actor id> is <annotation>;`
+- A separate annotation assignment clause; e.g. `cd is @Mem;`
+ - In this case, `cd` is an id of a previously defined actor.
+ - `@Mem` is a reference to an annotation defined elsewhere in the program.
+
+In both cases you can define a list of annotation references, separated by a comma. All of the annotations will be assigned to the actor.  
+For example:
+```
+i is @External, @DB;
+```
+In this case , `i` is an id of an actor and `@External`, `@DB` are refrences to annotation definitions.
+
+Annotations that are not defined will do nothing, but will not result in an error.
+
+##### Defining an Annotation
+
+Referring to annotations is not enough. In order to have some effect, you need to define what visual cues will be applied to actors tagged with the referenced annotations.
+Annotation definitions define what kind of cues to apply.
+
+Syntatically, annotations definitions look like this:
+```
+@<annotation id> { <annotation statements> };
+```
+where 
+- annotation id is a valid identifier.
+- annotation statements are a list of statement specifying the change in looks.
+
+Annotation statements are separated by semicolons.
+
+We currently support 2 annotation statements:
+- Color: `color: '<color value>';`
+ - Example: `color: 'lightblue';`
+ - color value can be any valid CSS color value, provided here as a text literal.
+- Prototype: `prototype: <prototype string>;`
+ - Example: `prototype: 'memory';`
+ - The prototype string will be added to the actor's caption as a prefix, enclosed in double angle brackets, e.g. `<<memory>>`.
+
+These are (currently) the only values that can be defined and have any effect.
+
+If an actor is tagged with two annotations that both define the same key, e.g. two annotations with a `color` statements, the behavior is undefined.
+
+Some example definitions:
+```
+@DB { 
+    prototype : 'db';
+};
+
+@Mem {
+    prototype : 'memory';
+};
+
+@External {
+  color : 'lightblue';
+  prototype: 'external';
+};
+```
 
 ### Channel and Data Flow Definitions
 
