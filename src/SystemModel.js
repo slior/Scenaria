@@ -38,6 +38,14 @@ function channelID(channel)
     return `${channel.from}-${channel.to}-${channel.type.toString()}` 
 }
 
+/**
+ * Create and return a new channel object with the relevant properties set, and id assigned.
+ * @param {CHANNEL_TYPE} type The type of the channel
+ * @param {String} from id of the originating agent
+ * @param {String} to id of the receiving agent
+ * @param {String} channelText The text that will appear as a note (tooltip) on the channel. Optional, defaults to empty
+ * @returns The new channel object
+ */
 function newChannel(type,from,to,channelText = "")
 {
     if (!from) throw new Error(`Invalid from actor id when creating channel`)
@@ -48,6 +56,13 @@ function newChannel(type,from,to,channelText = "")
     return ret;
 }
 
+/**
+ * Create a new step for communication over a channel. 
+ * @param {Channel} channel A channel object (as returned by newChannel)
+ * @param {SCENARIO_STEP_TYPE} type The type of the scenario step
+ * @param {String} message The text to show for the this scenario step.
+ * @returns The new channel step object, part of a scenario.
+ */
 function newStep(channel,type,message)
 {
     if (!channel || !channel.id) throw new Error(`Invalid channel definition for step: ${JSON.stringify(channel)}`)

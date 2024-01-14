@@ -192,7 +192,7 @@ function createParser()
         },
 
         comment(_,text) {
-            return [text.sourceString]
+            return []
         },
 
         AgentDef(_, caption, __, id, maybeAnnotationAssign) {
@@ -302,7 +302,6 @@ function createParser()
             return [s.sourceString]
         },
 
-        // AnnotationAssignment(_actorID,_, _annotationIDs) {
         AnnotationAssignment(_actorID,annotAssignmentClause) {
             let actorID = _actorID.asIR()[0];
             let annotationIDs = annotAssignmentClause.asIR()

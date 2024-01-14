@@ -48,7 +48,7 @@ Scenaria {
 
      Scenario = TextLiteral "{" Step* "}"
      
-     Step = SyncCallStep | AsynchCallStep | SyncResponse | DataWrite | DataRead
+     Step = SyncCallStep | AsynchCallStep | SyncResponse | DataWrite | DataRead | comment
      
      SyncCallStep = ident "-" "(" TextLiteral ")" "->" ident
      AsynchCallStep = ident "-" "(" TextLiteral ")" "-\\" ident
@@ -58,7 +58,7 @@ Scenaria {
      
      SyncResponse = ident "--(" TextLiteral ")--<" ident
      
-     punct = "(" | ")" | "!" | "@" | "#" | "$" | "," | "." | "-" | ":"
+     punct = "(" | ")" | "!" | "@" | "#" | "$" | "," | "." | "-" | ":"  | "?" | "="
      textCharacter = alnum | space | punct
      TextLiteral = "'" textCharacter* "'"
      

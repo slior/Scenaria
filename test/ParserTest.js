@@ -1,7 +1,7 @@
 
 const assert = require('assert')
 const { createParser } = require('../src/lang/Lang')
-const { newActor, ACTOR_TYPE, newChannel, CHANNEL_TYPE} = require('../src/SystemModel')
+const { newActor, ACTOR_TYPE, newChannel, CHANNEL_TYPE, newStep, SCENARIO_STEP_TYPE} = require('../src/SystemModel')
 
 function createParserForTest()
 {
@@ -22,13 +22,26 @@ describe("Scenaria Language Parser", function() {
             agent 'AA' as aa;
             //this is just a comment.
             agent 'BB' as bb; //a comment at the end of the line
+
+            'some scenario' {
+                aa -('')-> bb //aa to bb: nothing
+                //and this is another comment
+                
+            };
         `
+
+        let aa = newActor(ACTOR_TYPE.AGENT,'aa','AA')
+        let bb = newActor(ACTOR_TYPE.AGENT,'bb','BB')
+        let aabb = newChannel(CHANNEL_TYPE.REQ_RES,aa.id,bb.id,"")
+        let scenario = { name: "some scenario", steps : [
+            newStep(aabb,SCENARIO_STEP_TYPE.REQ,"")
+        ]}
         let expectedIR = {
             name : "",
-            actors : [newActor(ACTOR_TYPE.AGENT,'aa','AA'),newActor(ACTOR_TYPE.AGENT,'bb','BB')],
-            channels : [],
+            actors : [aa,bb],
+            channels : [aabb],
             data_flows : [],
-            scenarios : [],
+            scenarios : [scenario],
             annotations : {},
         }
 
