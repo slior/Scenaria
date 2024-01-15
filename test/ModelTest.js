@@ -28,6 +28,28 @@ describe("Model Classes", function() {
         assert.deepStrictEqual(m.data_flows,dfs)
         assert.deepStrictEqual(m.scenarios,scenarios)
         assert.deepStrictEqual(m.annotations,annotations)
+    })
 
+    it("Maintains interface of model objects",function() {
+        let actors = [newActor(ACTOR_TYPE.AGENT,"a","A"), newActor(ACTOR_TYPE.AGENT,"b","B")]
+        let a = { type : ACTOR_TYPE.AGENT, 
+                    id : "a",
+                    caption : "A",
+                    note : "",
+                    annotations : []
+                }
+        assert.deepStrictEqual(actors[0],a)
+        let b = { type : ACTOR_TYPE.AGENT, 
+                    id : "b",
+                    caption : "B",
+                    note : "",
+                    annotations : []
+                }
+        assert.deepStrictEqual(actors[1],b)
+
+        let channel = newChannel(CHANNEL_TYPE.REQ_RES,a.id,b.id,"test channel")
+        let chnl = {type : CHANNEL_TYPE.REQ_RES,from : a.id, to : b.id, text : "test channel" }
+        chnl.id = channelID(chnl)
+        assert.deepStrictEqual(channel,chnl)
     })
 })
