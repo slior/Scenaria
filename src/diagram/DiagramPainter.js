@@ -32,44 +32,50 @@ class DiagramPainter
         graphEl.fillColor = graphEl.color || '#ffffff'
         graphEl.lineColor = 'black'
 
-        let g = this._svgDraw.group();
-        if (graphEl.type == ACTOR_TYPE.USER)
-        {
-            let u = this._drawUser(g)
-            let t = g.text(graphEl.caption)
-            t.cx(u.cx())
-            t.cy(u.cy() - USER_ACTOR_CAPTION_Y_ADJUSTMENT)
+        let g = graphEl.type == ACTOR_TYPE.USER ? 
+                 this._drawAndPositionUserActor(graphEl) : 
+                 this._drawAndPositionNonUserActor(graphEl)
 
-            g.cx(graphEl.x)
-            g.cy(graphEl.y)
-        }
-        else
-        {
-            let r = g.rect(graphEl.width,graphEl.height).fill(graphEl.fillColor).attr('stroke',graphEl.lineColor)
-            if (graphEl.type == ACTOR_TYPE.STORE)
-                r.radius(30)
-            else
-                r.radius(2)
-            
-            let t = g.text(function(add) {
-                if (graphEl.prototype)
-                {
-                    add.tspan(`<<${graphEl.prototype}>>`).font({size : 9}).newLine()
-                }
-                add.tspan(graphEl.caption).font({size : 13}).newLine()
-            })
-            .leading(1.3)
-            .attr({'text-anchor' : 'middle'})
-            t.cx(r.cx())
-            t.cy(r.cy())
-            g.move(graphEl.x,graphEl.y)
-        }
         addTooltipIfAvailable(graphEl.note,g)
         SVGEventHandler.attachTo(g,() => { 
                                     this._redrawEdges(graphEl,g);
                                     this._raiseNodeMoved();
                                  })
         this._rememberSVGElementForID(graphEl.id,g)
+    }
+
+    _drawAndPositionNonUserActor(graphEl)
+    {
+        let g = this._svgDraw.group();
+        let r = g.rect(graphEl.width, graphEl.height).fill(graphEl.fillColor).attr('stroke', graphEl.lineColor);
+        if (graphEl.type == ACTOR_TYPE.STORE)
+            r.radius(30);
+        else
+            r.radius(2);
+        let t = g.text(function (add) 
+                {
+                    if (graphEl.prototype)
+                        add.tspan(`<<${graphEl.prototype}>>`).font({ size: 9 }).newLine();
+                    add.tspan(graphEl.caption).font({ size: 13 }).newLine();
+                })
+                .leading(1.3)
+                .attr({ 'text-anchor': 'middle' });
+        t.cx(r.cx());
+        t.cy(r.cy());
+        g.move(graphEl.x, graphEl.y);
+        return g;
+    }
+
+    _drawAndPositionUserActor(graphEl)
+    {
+        let g = this._svgDraw.group();
+        let u = this._drawUser(g);
+        let t = g.text(graphEl.caption);
+        t.cx(u.cx());
+        t.cy(u.cy() - USER_ACTOR_CAPTION_Y_ADJUSTMENT);
+        g.cx(graphEl.x);
+        g.cy(graphEl.y);
+        return g;
     }
 
     drawChannel(channel)
