@@ -12,6 +12,8 @@ const HEAD_DIRECTION = {
 const ARROW_W = 10; //constants for now but should really be derived from layout - how much room it has.
 const ARROW_H = 10;
 
+const DEFAULT_LINE_CORNER_RADIUS = 10;
+
 class DiagramPainter
 {
     constructor(__svgDraw,__graph,__moveCB)
@@ -127,10 +129,97 @@ class DiagramPainter
         var points = [[section.startPoint.x,section.startPoint.y]] //points are, in order: start point, bend points (if any), end point.
                         .concat(bends.map(p => [p.x,p.y]))
         points.push([section.endPoint.x,section.endPoint.y])
-        let svgEl = container.polyline(points)
-                            .stroke({width: 1, color : 'black'}).fill('none')
+        let svgEl = this._drawPathWithRoundedCorners(container,points)
         svgEl.graphEl = edge;
         return svgEl;
+    }
+
+    /**
+     * Given an SVG container and a list of points, determine the line to draw through these points, with rounded corners.
+     * This assumes the points represent an orthogonal edge, i.e. all bends are 90 degrees, and edge sections are either horizontal or vertical.
+     * This will mutate the container - add a path element to it.
+     * 
+     * @param {SVGContainer} container The SVG container to which we need to add the path.
+     * @param {[[Number,Number]]} points An array of points (start, bend points, end - x,y pairs) to draw the path on.
+     * @returns The new Path element object (SVG.js object).
+     */
+    _drawPathWithRoundedCorners(container,points)
+    {
+        var path = container.path();
+        let pathStr = `M${points[0][0]} ${points[0][1]}` // Move to the first point
+
+        if (points.length > 2)
+        { //we have bend points
+            for (var i = 0; i < points.length - 2; i++) // Loop through the points array, creating rounded corners
+            {
+                let [xlast,ylast] = points[i]
+                let [xnext,ynext] = points[i+1]
+                let [xnextnext,ynextnext] = points[i+2]
+                let isHoriz = ynext == ylast; //is the line to the next point horizontal or vertical
+
+                let curveRadius = determineCornerRadius(points[i],points[i+1],points[i+2])
+                let isExtendingPositive = isHoriz ? (xnext > xlast) : (ynext > ylast) //is the next point extends the last point in the positive direction (down or to the right)
+                let isCurvingPositive = isHoriz ? ynextnext > ynext : xnextnext > xnext; //is the point after the next extends in the positive direction (down or to the right)
+                //The rounded corner starts just before the next point, and ends right after it.
+                let [xStartCurve,yStartCurve,xEndCurve,yEndCurve] = determineRoundedCornerPoints(xlast,ylast,xnext,ynext,isHoriz,isExtendingPositive,isCurvingPositive,curveRadius)
+
+                pathStr += " " + (isHoriz ? `H${xStartCurve}` : `V${yStartCurve}`);
+                pathStr += ` Q${xnext},${ynext} ${xEndCurve},${yEndCurve}`
+                
+            }
+            let [lastX,lastY] = points[points.length-1]
+            pathStr += ` L${lastX},${lastY}`
+        }
+        else
+        { //it's only 2 points - start + end => draw a line to the end point
+            pathStr += ` L${points[1][0]},${points[1][1]}`
+        }
+            
+        path.plot(pathStr)
+        path.stroke({width: 1, color : 'black'}).fill('none')
+        return path;
+
+        function determineCornerRadius(p1,p2,p3)
+        {
+            let [x1,y1] = p1;
+            let [x2,y2] = p2;
+            let [x3,y3] = p3;
+
+            let isHoriz = y2 == y1
+            let afterBendDistance = isHoriz ? Math.abs(y3-y2) : Math.abs(x3-x2)
+            let beforeBendDistance = isHoriz ? Math.abs(x2-x1) : Math.abs(y2-y1)
+
+            let distanceToCompare = Math.min(afterBendDistance,beforeBendDistance)
+
+            return distanceToCompare < DEFAULT_LINE_CORNER_RADIUS ? 
+                     distanceToCompare/2 : 
+                     DEFAULT_LINE_CORNER_RADIUS
+        }
+        
+        function determineRoundedCornerPoints(xlast,ylast,xnext,ynext,isHoriz,isExtendingPositive,isCurvingPositive, curveRadius)
+        {
+            return (() => {
+                switch (true)
+                {
+                    case (isHoriz && isExtendingPositive && isCurvingPositive) : 
+                        return [xnext-curveRadius,ylast,xnext,ynext+curveRadius];
+                    case (isHoriz && isExtendingPositive && !isCurvingPositive) : 
+                        return [xnext - curveRadius, ylast, xnext, ynext - curveRadius];
+                    case (isHoriz && !isExtendingPositive && isCurvingPositive) : 
+                        return [xnext + curveRadius, ylast, xnext, ynext + curveRadius];
+                    case (isHoriz && !isExtendingPositive && !isCurvingPositive) : 
+                        return [xnext + curveRadius, ylast, xnext, ynext - curveRadius];
+                    case (!isHoriz && isExtendingPositive && isCurvingPositive) : 
+                        return [xlast, ynext - curveRadius, xnext + curveRadius, ynext];
+                    case (!isHoriz && isExtendingPositive && !isCurvingPositive) : 
+                        return [xlast, ynext - curveRadius, xnext - curveRadius, ynext];
+                    case (!isHoriz && !isExtendingPositive && isCurvingPositive) : 
+                        return [xlast, ynext + curveRadius, xnext + curveRadius, ynext];
+                    case (!isHoriz && !isExtendingPositive && !isCurvingPositive) : 
+                        return [xlast, ynext + curveRadius, xnext - curveRadius, ynext];
+                }
+            })();
+        }
     }
 
     _drawArrowHead(container,edge)
@@ -429,7 +518,6 @@ function reconstructEdge(edge, targetPoint, sourcePoint, isVertical)
     //determine which sections to add, by adding relevant bend points.
     if (dx != 0 && dy != 0)
     { //3 segments => 2 bend points. The only question is how many horizontal and how many vertical
-        console.log(`new edge is vertical? - ${isVertical}`)
         if (isVertical)
         { //1 horizontal segment + 2 vertical ones
             newBendPoints.push({ x: sourcePoint.x, y: sourcePoint.y + (dy/2) });
