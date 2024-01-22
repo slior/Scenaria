@@ -2,7 +2,7 @@ const { EDGE_TYPE, ACTOR_TYPE, CHANNEL_TYPE,channelID } = require('../SystemMode
 const { channelIDFromEdgeID } = require('./DiagramModel')
 const { SVGEventHandler } = require('./SVGEventHandler')
 
-const USER_ACTOR_CAPTION_Y_ADJUSTMENT = 35;
+const USER_ACTOR_CAPTION_Y_ADJUSTMENT = 50;
 
 //Since edges are orthogonal, the arrow heads can be in one of 4 directions
 const HEAD_DIRECTION = {
@@ -71,7 +71,7 @@ class DiagramPainter
     _drawAndPositionUserActor(graphEl)
     {
         let g = this._svgDraw.group();
-        let u = this._drawUser(g);
+        let u = this._drawUser(g,graphEl.x,graphEl.y);
         let t = g.text(graphEl.caption);
         t.cx(u.cx());
         t.cy(u.cy() - USER_ACTOR_CAPTION_Y_ADJUSTMENT);
@@ -268,13 +268,22 @@ class DiagramPainter
     }
 
 
-    _drawUser(container)
+    _drawUser(container,x,y)
     {
         let g = container.group();
-  
-        let p1 = g.path("M16 7C16 9.20914 14.2091 11 12 11C9.79086 11 8 9.20914 8 7C8 4.79086 9.79086 3 12 3C14.2091 3 16 4.79086 16 7Z")
-                     .attr('stroke-width','2')
-        let p2 = g.path("M12 14C8.13401 14 5 17.134 5 21H19C19 17.134 15.866 14 12 14Z").attr('stroke-width','2')
+        let headRadius = 2;
+        let size = 6
+        let c = g.circle(size*headRadius)
+                    .attr('stroke','black')
+                    .attr('stroke-width','2')
+                    .attr('fill','transparent')
+        c.center(x,y)
+        let pathStr = `M${x},${y+c.radius()} l${size*1.5},${size*3} m${size*-3},${size*0} l${size*1.5},${size*-3} v${size*5} l${size*1.5},${size*3} m${size*-3},${size*0} l${size*1.5},${size*-3}`
+        g.path(pathStr)
+            .attr('stroke','black')
+            .attr('stroke-width','2')
+            .attr('fill','transparent')
+
          return g;
     }
 

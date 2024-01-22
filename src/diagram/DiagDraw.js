@@ -2,7 +2,7 @@
 const ELK = require('elkjs')
 const elk = new ELK()
 
-const { EDGE_TYPE,channelID,flowID } = require('../SystemModel')
+const { EDGE_TYPE,channelID,flowID,ACTOR_TYPE } = require('../SystemModel')
 const { DiagramPainter } = require("./DiagramPainter")
 const { incomingChannelEdgeID, outgoingChannelEdgeID } = require('./DiagramModel')
 
@@ -57,12 +57,22 @@ function graphEdgesFor(model) {
     }));
 }
 
-function graphNodesFor(model) {
-    return model.actors.map(a => {
-        return Object.assign({}, a, {
+function actorDim(actor)
+{
+    return actor.type == ACTOR_TYPE.USER ?
+        {
+            height : DRAW_TEXT_HEIGHT + DRAW_MARGIN_HEIGHT * 2 + 100, //The 100 comes from an estimation of the user actor size, see DiagramPainter._drawUser
+            width : DRAW_MARGIN_WIDTH + DRAW_CHAR_WIDTH * a.caption.length
+        } :
+        {
             height: DRAW_MARGIN_HEIGHT * 2 + DRAW_TEXT_HEIGHT,
             width: DRAW_CHAR_WIDTH * a.caption.length + 2 * DRAW_MARGIN_WIDTH
-        });
+        }
+}
+
+function graphNodesFor(model) {
+    return model.actors.map(a => {
+            return Object.assign({},a,actorDim(a))
     }).concat(model.channels.map(c => {
         return Object.assign({}, c, {
             id: channelID(c),
