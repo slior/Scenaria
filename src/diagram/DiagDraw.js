@@ -62,11 +62,11 @@ function actorDim(actor)
     return actor.type == ACTOR_TYPE.USER ?
         {
             height : DRAW_TEXT_HEIGHT + DRAW_MARGIN_HEIGHT * 2 + 100, //The 100 comes from an estimation of the user actor size, see DiagramPainter._drawUser
-            width : DRAW_MARGIN_WIDTH + DRAW_CHAR_WIDTH * a.caption.length
+            width : DRAW_MARGIN_WIDTH + DRAW_CHAR_WIDTH * actor.caption.length
         } :
         {
             height: DRAW_MARGIN_HEIGHT * 2 + DRAW_TEXT_HEIGHT,
-            width: DRAW_CHAR_WIDTH * a.caption.length + 2 * DRAW_MARGIN_WIDTH
+            width: DRAW_CHAR_WIDTH * actor.caption.length + 2 * DRAW_MARGIN_WIDTH
         }
 }
 

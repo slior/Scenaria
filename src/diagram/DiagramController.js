@@ -7,7 +7,7 @@ const DRAW_TEXT_HEIGHT = 10
 const DRAW_CHAR_WIDTH = 8;
 const DRAW_MARGIN_WIDTH = 1;
 
-
+const LINE_SVG_NODE_NAME = 'path';
 
 class DiagramController
 {
@@ -72,7 +72,7 @@ class DiagramController
         
         let msgbox = this._drawMsgBoxForElement(dataFlowID,message)
 
-        let line = svgElements.find(el => el.graphEl.id == dataFlowID).findOne('polyline')
+        let line = svgElements.find(el => el.graphEl.id == dataFlowID).findOne(LINE_SVG_NODE_NAME)
         if (!line) throw new Error(`No line found for data flow ${dataFlowID}`)
         msgbox.cx(line.cx())
         msgbox.cy(line.cy())
@@ -154,7 +154,8 @@ class DiagramController
     {
         svgEl.each((i,children) => {
             let el = children[i]
-            if (el.node.nodeName != 'polyline')
+            
+            if (el.node.nodeName != LINE_SVG_NODE_NAME)
             {
                 let prevColor = el.fill()
                 el.remember(PREV_COLOR_KEY,prevColor)
