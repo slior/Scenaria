@@ -2,7 +2,9 @@ const { EDGE_TYPE, ACTOR_TYPE, CHANNEL_TYPE,channelID } = require('../SystemMode
 const { channelIDFromEdgeID } = require('./DiagramModel')
 const { SVGEventHandler } = require('./SVGEventHandler')
 
-const USER_ACTOR_CAPTION_Y_ADJUSTMENT = 50;
+const USER_CAPTION_MARGIN = 5;
+const CAPTION_FONT_SIZE = 14;
+
 
 //Since edges are orthogonal, the arrow heads can be in one of 4 directions
 const HEAD_DIRECTION = {
@@ -58,7 +60,7 @@ class DiagramPainter
                 {
                     if (graphEl.prototype)
                         add.tspan(`<<${graphEl.prototype}>>`).font({ size: 9 }).newLine();
-                    add.tspan(graphEl.caption).font({ size: 13 }).newLine();
+                    add.tspan(graphEl.caption).font({ size: CAPTION_FONT_SIZE }).newLine();
                 })
                 .leading(1.3)
                 .attr({ 'text-anchor': 'middle' });
@@ -71,12 +73,18 @@ class DiagramPainter
     _drawAndPositionUserActor(graphEl)
     {
         let g = this._svgDraw.group();
-        let u = this._drawUser(g,graphEl.x,graphEl.y);
         let t = g.text(graphEl.caption);
-        t.cx(u.cx());
-        t.cy(u.cy() - USER_ACTOR_CAPTION_Y_ADJUSTMENT);
-        g.cx(graphEl.x);
-        g.cy(graphEl.y);
+        t.font('size',CAPTION_FONT_SIZE)
+        t.cx(graphEl.width/2); //text position is relative to the containing group
+        t.y(USER_CAPTION_MARGIN)
+        this._drawUser(g,graphEl.width,CAPTION_FONT_SIZE);
+        
+        let r = g.rect(graphEl.width,graphEl.height)
+                    .fill('none')
+                    .stroke({ color : 'black', width : 1})
+        r.move(0,0)
+        g.x(graphEl.x);
+        g.y(graphEl.y);
         return g;
     }
 
@@ -268,23 +276,25 @@ class DiagramPainter
     }
 
 
-    _drawUser(container,x,y)
-    {
-        let g = container.group();
+    _drawUser(container,w,captionFontSize)
+    { //sizes here are 'magic numbers' that seem to fit a simple browser-based drawing.
+        //note: element positions are relative to the container.
         let headRadius = 2;
         let size = 6
-        let c = g.circle(size*headRadius)
+        let c = container.circle(size*headRadius)
                     .attr('stroke','black')
                     .attr('stroke-width','2')
                     .attr('fill','transparent')
-        c.center(x,y)
-        let pathStr = `M${x},${y+c.radius()} l${size*1.5},${size*3} m${size*-3},${size*0} l${size*1.5},${size*-3} v${size*5} l${size*1.5},${size*3} m${size*-3},${size*0} l${size*1.5},${size*-3}`
-        g.path(pathStr)
+        let headX = w/2
+        let headY = size * headRadius + captionFontSize + USER_CAPTION_MARGIN * 2
+        c.center(headX,headY)
+        let pathStr = `M${headX},${headY+c.radius()} l${size*1.5},${size*3} m${size*-3},0 l${size*1.5},${size*-3} v${size*5} l${size*1.5},${size*3} m${size*-3},0 l${size*1.5},${size*-3}`
+        container.path(pathStr)
             .attr('stroke','black')
             .attr('stroke-width','2')
             .attr('fill','transparent')
 
-         return g;
+         return container;
     }
 
     _drawReqResDecoration(container,channel)
@@ -631,5 +641,6 @@ function translatePointByNodeFace(point,face,h,w)
 }
 
 module.exports = {
-    DiagramPainter
+    DiagramPainter,
+    CAPTION_FONT_SIZE
 }

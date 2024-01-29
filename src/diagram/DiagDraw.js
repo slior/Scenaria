@@ -3,16 +3,16 @@ const ELK = require('elkjs')
 const elk = new ELK()
 
 const { EDGE_TYPE,channelID,flowID,ACTOR_TYPE } = require('../SystemModel')
-const { DiagramPainter } = require("./DiagramPainter")
+const { DiagramPainter, CAPTION_FONT_SIZE } = require("./DiagramPainter")
 const { incomingChannelEdgeID, outgoingChannelEdgeID } = require('./DiagramModel')
 
 const DRAW_MARGIN_HEIGHT = 10;
 const DRAW_TEXT_HEIGHT = 30;
 const DRAW_CHAR_WIDTH = 10;
-const DRAW_MARGIN_WIDTH = 20;
+const DRAW_MARGIN_WIDTH = 10;
 const DRAW_CHANNEL_RADIUS = 20;
 
-
+const ESTIMATED_USER_ACTOR_HEIGHT = 60; //this is derived from how the user actor is drawn. See DiagramPainer._drawUser
 /**
  * Given a system model object, layout the different actors and stores.
  * Return the model object with layout information.
@@ -61,7 +61,7 @@ function actorDim(actor)
 {
     return actor.type == ACTOR_TYPE.USER ?
         {
-            height : DRAW_TEXT_HEIGHT + DRAW_MARGIN_HEIGHT * 2 + 100, //The 100 comes from an estimation of the user actor size, see DiagramPainter._drawUser
+            height : CAPTION_FONT_SIZE + DRAW_MARGIN_HEIGHT * 2 + ESTIMATED_USER_ACTOR_HEIGHT,
             width : DRAW_MARGIN_WIDTH + DRAW_CHAR_WIDTH * actor.caption.length
         } :
         {
