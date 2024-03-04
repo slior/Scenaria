@@ -1,4 +1,5 @@
 
+const zlib = require('zlib')
 const { ANNOTATION_KEY } = require('../SystemModel')
 
 function encodeState(graph,code)
@@ -10,16 +11,14 @@ function encodeState(graph,code)
     console.log(`length of compressed graph: ${JSON.stringify(compressGraph(graph)).length}`)
     state.g = compressGraph(graph)
     let stateString = JSON.stringify(state)
-    let state64 = Buffer.from(stateString).toString('base64')
-    return state64;
+    return stateString
 
 
 }
 
 function decodeState(stateValue)
 {
-    let str = Buffer.from(stateValue,'base64').toString('utf-8')
-    let state = JSON.parse(str)
+    let state = JSON.parse(stateValue)
     if (state.g)
         state.g = decompressGraph(state.g)
     else throw new Error(`Missing graph from state to decode: ${JSON.stringify(state)}`)
@@ -145,13 +144,19 @@ class State
 
     static encode(graph,code)
     {
-        return encodeState(graph,code)
+        let state = encodeState(graph,code)
+        console.log(`state length uncompressed: ${state.length}`)
+        let compressedState = zlib.deflateSync(state)
+        let state64 = compressedState.toString('base64')
+        console.log(`state length compressed: ${state64.length}`)
+        return state64
     }
 
     static fromBase64(str)
     {
         if (!str) throw new Error("Invalid string to parse for state")
-        let parsedObj = decodeState(str)
+        let inflated = zlib.inflateSync(Buffer.from(str,'base64'))
+        let parsedObj = decodeState(inflated)
         return new State(parsedObj.g,parsedObj.c)
     }
 
