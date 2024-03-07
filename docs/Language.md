@@ -50,6 +50,9 @@ Reserved words are:
 - `as`
 - `note`
 - `for`
+- `is`
+- `color`
+- `prototype`
 
 A **text literal** is a series of any alphanumeric characters, with space, enclosed in single quotes (`'`).
 
