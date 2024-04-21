@@ -21,6 +21,29 @@ class DiagramController
         this.auxiliaryElements = {}
     }
 
+    showNotes(idsToNoteText)
+    {
+        Object.keys(idsToNoteText).forEach(elID => {
+            //find the svg container element
+            let svgElements = this.svgElements[elID]
+            let g = svgElements.find(e => e.node.nodeName == 'g')
+            let origElY = g.cy() //keep the center so we can later position the note properly
+            
+            //create the note element
+            let text = idsToNoteText[elID]
+            let msgbox = this._drawMsgBoxForElement(elID,text,g)
+            
+            //now position the message box
+            msgbox.cx(g.cx())
+            msgbox.cy(origElY - (DRAW_TEXT_HEIGHT*2)) //position it slightly above the center of the element
+        })
+    }
+
+    hideNotes(ids)
+    {
+        ids.forEach(id => { this._removeMessageBoxForModelElement(id)})
+    }
+
     /**
      * Highlight the object designated by the given id in the diagram
      * @param {String} id The id of the object in the model to highlight
@@ -78,11 +101,11 @@ class DiagramController
         msgbox.cy(line.cy())
     }
 
-    _drawMsgBoxForElement(elementID,message)
+    _drawMsgBoxForElement(elementID,message,boxContainer)
     {
         let h = DRAW_MARGIN_HEIGHT * 2 + DRAW_TEXT_HEIGHT;
         let w = DRAW_CHAR_WIDTH * message.length + 2 * DRAW_MARGIN_WIDTH
-        let msgbox = this._drawMsgBox(message,w,h,this.drawingContainer)
+        let msgbox = this._drawMsgBox(message,w,h,boxContainer || (this.drawingContainer))
         this._setAux(elementID,msgbox) //remember the message box for the element
         return msgbox
     }

@@ -68,7 +68,27 @@ function runScenario(scenarioInd, usrMsgCallback)
     scenarioRunner.runScenario(scenario,usrMsgCallback)
 }
 
+function showNotes()
+{
+    if (!diagramController) throw new Error("Diagram not initialized/drawn")
+    if (!graph.children) throw new Error("No model loaded")
+    //extract all elements with notes, with their corresponding IDs
+    let idsToNotes = graph.children.filter(child => child.note)
+                  .reduce((result,child) => {
+                    result[child.id] = child.note
+                    return result
+                  }, {} )
+    //show the notes on the diagram
+    diagramController.showNotes(idsToNotes)
+}
 
+function hideNotes()
+{
+    if (!graph.children) throw new Error("No model loaded")
+    let elementsWithNotes = graph.children.filter(child => child.note)
+                                            .map(child => child.id)
+    diagramController.hideNotes(elementsWithNotes)
+}
 
 function getScenarioStepper(scenarioInd)
 {
@@ -165,5 +185,7 @@ module.exports = {
     scenarioNext,
     generateStateURLEncoding,
     setStateFromURL,
-    getLanguageKeywords
+    getLanguageKeywords,
+    showNotes,
+    hideNotes
 }

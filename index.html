@@ -273,11 +273,21 @@
             setScenariosToSelect(model.scenarios)
             updateStateLink()
             showMsg("Model loaded.")
+            showMsg("Done, from URL.")
         }
         else
         {
             showMsg("No predefined state")
         }
+    }
+
+    function toggleNotes()
+    {
+        let shouldShowNotes = document.getElementById('chkShowNotes').checked
+        if (shouldShowNotes)
+            main.showNotes()
+        else
+            main.hideNotes()
     }
 
 </script>
@@ -298,12 +308,16 @@
     <br/> <br/>
     <button onclick="reset()"> Reset </button>
     <button onclick="parseAndDraw()"> Apply </button>
-    &nbsp;&nbsp;<a id="shareLink">Share</a>
-    
     <select id="scenarioSelect" style="width:20%"></select>
     <button onclick="runScenario()"> Run Scenario </button>
     <button onclick="stepBack()">&lt;</button>
     <button onclick="stepForward()">&gt;</button>
+    <br/> <br/>
+    <input type="checkbox" id="chkShowNotes" onChange="toggleNotes()" />
+    <label for="chkShowNotes">Notes</label>
+    &nbsp;&nbsp;<a id="shareLink">Share</a>
+    
+    
         <hr />
     <div id="cons" class="consoleText" ></div>
     <span id="error" class="errorText" ></span>
