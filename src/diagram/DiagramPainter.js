@@ -15,6 +15,7 @@ const ARROW_W = 10; //constants for now but should really be derived from layout
 const ARROW_H = 10;
 
 const DEFAULT_LINE_CORNER_RADIUS = 10;
+const WHITE_COLOR = '#ffffff'
 
 class DiagramPainter
 {
@@ -33,7 +34,7 @@ class DiagramPainter
 
     drawActor(graphEl)
     {
-        graphEl.fillColor = graphEl.color || '#ffffff'
+        graphEl.fillColor = graphEl.color || WHITE_COLOR
         graphEl.lineColor = 'black'
 
         let g = graphEl.type == ACTOR_TYPE.USER ? 
