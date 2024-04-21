@@ -26,6 +26,10 @@ Unless otherwise noted, names are text literal and any id is an identifier.
 - Syntax: `user` _user name_ `as` _user id_`;`  
 - Example: `user 'Shopper' as s;`  
 
+### Notes
+You can specify notes on actors.
+- Syntax: `note for` _actor id_`:` _text_`;`
+- Example: `note for u: 'A simple user';`
 ## Channels
 
 **Synchronous Channel:**  

@@ -85,7 +85,7 @@ note for u: 'A simple user';
 ```
 
 The actor must already be defined before the note definition. The note consists of a single sentence enclosed in quotes.
-Notes will be shown as tooltips on the diagram.
+Notes will be shown as tooltips on the diagram and can also be toggled on/off in the application using the "Notes" checkbox.
 
 #### Annotations
 You can define annotations as a way to add metadata to actors (agents, stores, users).
