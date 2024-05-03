@@ -33,6 +33,8 @@ const ANNOTATION_KEY = {
 }
 const NULL_MESSAGE = '--'
 
+const ID_KEY = "_id"
+
 function channelID(channel)
 {
     return `${channel.from}-${channel.to}-${channel.type.toString()}` 
@@ -85,6 +87,14 @@ function flowID(type,from,to,message)
     return `${type}-${from}-${to}`
 }
 
+/**
+ * Creates a new instance of a data flow
+ * @param {DATA_FLOW_TYPE} type The type of the data flow
+ * @param {String} from The id of the source actor
+ * @param {String} to The id of the target actor
+ * @param {String} message Optional description of the data flowing
+ * @returns A new DataFlow object
+ */
 function newDataFlow(type,from,to,message = "")
 {
     if (!Object.values(DATA_FLOW_TYPE).includes(type)) throw new Error(`Invalid data flow type: ${type}`)
@@ -113,7 +123,7 @@ function newAnnotationDefElement(key,val)
     return ret
 }
 
-function newSystemModel(actors,channels,dataFlows,scenarios,annotations)
+function newSystemModel(actors,channels,dataFlows,scenarios,annotations, containers = {})
 {
     return {
             "name" : "",
@@ -121,8 +131,29 @@ function newSystemModel(actors,channels,dataFlows,scenarios,annotations)
             channels : channels,
             data_flows : dataFlows,
             scenarios : scenarios,
-            annotations : annotations
+            annotations : annotations,
+            containers : containers
         }
+}
+
+function newContainer(id, name, actors,channels,dataFlows, annotations, containers)
+{
+    return {
+        id : id,
+        name : name,
+        actors : actors,
+        channels : channels,
+        dataFlows : dataFlows,
+        annotations : annotations,
+        containers : containers
+    }
+}
+
+function newAnnotation(id,properties)
+{
+    let ret = { }
+    ret[ID_KEY] = id
+    return Object.assign(ret,...properties)
 }
 
 function resolveAnnotations(model)
@@ -133,6 +164,61 @@ function resolveAnnotations(model)
                          .forEach(ad => Object.assign(actor,ad))
     })
     return model;
+}
+
+/**
+ * Tests whether the given object represents an actor
+ * @param {Object} obj The object to test
+ * @returns TRUE iff the object represents an actor type, created with newActor
+ * @see newActor
+ */
+function isActor(obj)
+{
+    return obj && obj.type && Object.values(ACTOR_TYPE).includes(obj.type)
+}
+
+function isChannel(obj)
+{
+    return obj && obj.type && Object.values(CHANNEL_TYPE).includes(obj.type)
+}
+
+/**
+ * Tests whether the given object is a data flow
+ * @param {Object} obj The object to test
+ * @returns TRUE iff the object is a data flow object, created with newDataFlow
+ * @see newDataFlow
+ */
+function isDataFlow(obj)
+{
+    return obj && obj.type && Object.values(DATA_FLOW_TYPE).includes(obj.type)
+}
+
+/**
+ * Test whether the given object is an annotation object.
+ * @param {Object} obj The object to test
+ * @returns TRUE iff the given object represents a valid model annotation
+ */
+function isAnnotation(obj)
+{
+    if (!obj) return false;
+    let propKeys = Object.keys(obj)
+    if (propKeys.length <= 0) return false; //no keys ==> invalid annotation
+
+    //This is kind of a weird way to test that an object is an annotation.
+    // TODO: consider creating a proper ctor and using it. Possibly an actual class
+    let validAnnotationKeys = Object.values(ANNOTATION_KEY);
+    let allAreAnnotationKeys = propKeys.every(key => ID_KEY === key || validAnnotationKeys.includes(key))
+    return allAreAnnotationKeys
+}
+
+//extract the id of an object that has an id.
+function toID(o) 
+{
+    if (o[ID_KEY])
+        return o[ID_KEY]
+    else if (o.id) //TODO: all objects should move to use the 'ID_KEY', so this condition wouldn't be necessary
+        return o.id
+    else return undefined
 }
 
 
@@ -153,5 +239,12 @@ module.exports = {
     newAnnotationDefElement,
     newSystemModel,
     resolveAnnotations,
+    newContainer,
+    isActor,
+    isChannel,
+    isDataFlow,
+    isAnnotation,
+    newAnnotation,
+    toID
 
 }

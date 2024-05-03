@@ -10,6 +10,7 @@ const KEYWORDS = {
     color : "color",
     is : "is",
     prototype : "prototype",
+    container : 'container'
 }
 
 const grammar = String.raw`
@@ -29,7 +30,8 @@ Scenaria {
 
      ///---------- Statements
      
-     Statement = AgentDef | StoreDef | UserDef | SyncCall | AsynchCall | DataFlowWrite | DataFlowRead | Scenario | Note | AnnotationDef | AnnotationAssignment
+     StructureStatement = AgentDef | StoreDef | UserDef | SyncCall | AsynchCall | DataFlowWrite | DataFlowRead | Note | AnnotationDef | AnnotationAssignment | ContainerDef
+     Statement = StructureStatement | Scenario
      
      AgentDef = agent TextLiteral as ident AnnotationAssignmentClause?
      StoreDef = store TextLiteral as ident AnnotationAssignmentClause?
@@ -73,6 +75,9 @@ Scenaria {
      AnnotationStatement = (AnnotColorStmt | AnnotProtoStmt) ";"
      AnnotColorStmt = color ":" TextLiteral
      AnnotProtoStmt = prototype ":" TextLiteral
+    
+     ///----------- Containers
+     ContainerDef = container TextLiteral as ident "{" StructureStatement* "}"
 
      ///----------- Other complementary definitions
      identStart = "_" | letter

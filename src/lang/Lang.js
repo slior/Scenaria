@@ -5,7 +5,11 @@ const { ACTOR_TYPE, DATA_FLOW_TYPE, CHANNEL_TYPE,
         newChannel, newStep, SCENARIO_STEP_TYPE,
         newDataFlow, newDataFlowStep, newActor,
         ANNOTATION_KEY, newAnnotationDefElement, 
-        newSystemModel } = require('../SystemModel')
+        newSystemModel,newContainer,isActor, 
+        isChannel,
+        isDataFlow,
+        isAnnotation,
+        newAnnotation, toID} = require('../SystemModel')
 
 
 function createGrammarNS()
@@ -41,6 +45,8 @@ function createParser()
     let channelsParsed = {}
     let flowsParsed = {}
     let annotationsDefsParsed = {}
+    let containerDefsParsed = {}
+    let containerStack = []
 
     //Helper functions for parsing
     function isValidDataFlow(type,from,to)
@@ -92,13 +98,17 @@ function createParser()
                 && flowObj.type == flowsParsed[flowObj.id].type
     }
 
-    function rememberAnnotation(id,statements)
+    function rememberAnnotation(annot)
     {
-        let annot = {}
-        statements.forEach(st => Object.assign(annot,st))
-        annotationsDefsParsed[id] = annot;
+        annotationsDefsParsed[toID(annot)] = annot;
     }
 
+    function rememberContainer(containerDef)
+    {
+        containerDefsParsed[containerDef.id] = containerDef
+        containerStack.push[containerDef.id]
+        
+    }
     function parseChannel(type,fromID, toID, channelT)
     {
         let from = fromID.asIR()[0]
@@ -167,8 +177,12 @@ function createParser()
 
             let scenarios = definedElements.filter(el => isScenario(el))
 
-            let p = newSystemModel(actors,channels,dataFlows,scenarios,annotationsDefsParsed)
+            let p = newSystemModel(actors,channels,dataFlows,scenarios,annotationsDefsParsed,containerDefsParsed)
             return [p]
+        },
+
+        StructureStatement(c) {
+            return c.asIR();
         },
 
         Statement(c) {
@@ -328,8 +342,9 @@ function createParser()
         AnnotationDef(_,ident, __, annotStatements, ___) {
             let annotID = ident.asIR()[0]
             let annotationsStmts = annotStatements.asIR()
-            rememberAnnotation(annotID,annotationsStmts)
-            return []
+            let annot = newAnnotation(annotID,annotationsStmts)
+            rememberAnnotation(annot)
+            return [annot]
         },
 
         AnnotationStatement(stmt,_) {
@@ -345,6 +360,21 @@ function createParser()
             let prototype = protoVal.asIR()[0]
             return [newAnnotationDefElement(ANNOTATION_KEY.PROTO,prototype)]
         },
+
+        ContainerDef(_, name, __, id, ___, statements, ____) {
+            let theName = name.asIR()[0]
+            let containerID = id.asIR()[0]
+            let containedObjects = statements.asIR()
+            //TODO: go through different elements parsed in this container, and add them to the container parsed
+            let containedActors = containedObjects.filter(isActor).map(toID)
+            let containedChannels = containedObjects.filter(isChannel).map(toID)
+            let containedDataFlows = containedObjects.filter(isDataFlow).map(toID)
+            let containedAnnotations = containedObjects.filter(isAnnotation).map(toID)
+            let containerDef = newContainer(containerID,theName,containedActors,containedChannels,containedDataFlows,containedAnnotations,[])
+            rememberContainer(containerDef) //also pushes it to the stack
+            return [containerDef]
+        },
+
         full_ident(firstChar,restOfChars) {
             let identifier = firstChar.sourceString + restOfChars.sourceString
             return [identifier]
