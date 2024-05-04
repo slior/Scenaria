@@ -4,7 +4,7 @@ const { channelID, newChannel, CHANNEL_TYPE,
         isActor, newDataFlow, DATA_FLOW_TYPE,
         isChannel, isDataFlow, isAnnotation, isContainer,
         newAnnotation, newAnnotationDefElement, ANNOTATION_KEY, 
-        newContainer } = require('../src/SystemModel')
+        newContainer,ID_KEY,toID } = require('../src/SystemModel')
 
 const { outgoingChannelEdgeID, incomingChannelEdgeID, channelIDFromEdgeID} = require('../src/diagram/DiagramModel')
 const should = require('should')
@@ -40,23 +40,23 @@ describe("Model Classes", function() {
     it("Maintains interface of model objects",function() {
         let actors = [newActor(ACTOR_TYPE.AGENT,"a","A"), newActor(ACTOR_TYPE.AGENT,"b","B")]
         let a = { type : ACTOR_TYPE.AGENT, 
-                    id : "a",
                     caption : "A",
                     note : "",
                     annotations : []
                 }
+        a[ID_KEY] = "a"
         assert.deepStrictEqual(actors[0],a)
         let b = { type : ACTOR_TYPE.AGENT, 
-                    id : "b",
                     caption : "B",
                     note : "",
                     annotations : []
                 }
+        b[ID_KEY] = "b"
         assert.deepStrictEqual(actors[1],b)
 
-        let channel = newChannel(CHANNEL_TYPE.REQ_RES,a.id,b.id,"test channel")
-        let chnl = {type : CHANNEL_TYPE.REQ_RES,from : a.id, to : b.id, text : "test channel" }
-        chnl.id = channelID(chnl)
+        let channel = newChannel(CHANNEL_TYPE.REQ_RES,toID(a),toID(b),"test channel")
+        let chnl = {type : CHANNEL_TYPE.REQ_RES,from : toID(a), to : toID(b), text : "test channel" }
+        chnl[ID_KEY] = channelID(chnl)
         assert.deepStrictEqual(channel,chnl)
     })
 
@@ -70,7 +70,7 @@ describe("Model Classes", function() {
         let df = newDataFlow(DATA_FLOW_TYPE.READ,s,a)
         isActor(df).should.be.false()
 
-        let c = newChannel(CHANNEL_TYPE.ASYNC,a.id,s.id)
+        let c = newChannel(CHANNEL_TYPE.ASYNC,toID(a),toID(s))
         isActor(c).should.be.false()
 
         should(isActor(null)).be.null()

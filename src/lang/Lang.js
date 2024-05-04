@@ -47,7 +47,6 @@ function createParser()
     let flowsParsed = {}
     let annotationsDefsParsed = {}
     let containerDefsParsed = {}
-    let containerStack = []
 
     //Helper functions for parsing
     function isValidDataFlow(type,from,to)
@@ -80,23 +79,25 @@ function createParser()
         return isValidFrom && isValidTo
     }
 
-    function rememberAgent(agentObj) { agentsParsed[agentObj.id] = agentObj }
-    function rememberStore(storeObj) { storesParsed[storeObj.id] = storeObj }
+    function rememberAgent(agentObj) { agentsParsed[toID(agentObj)] = agentObj }
+    function rememberStore(storeObj) { storesParsed[toID(storeObj)] = storeObj }
 
-    function rememberChannel(channelObj) { channelsParsed[channelObj.id] = channelObj }
+    function rememberChannel(channelObj) { channelsParsed[toID(channelObj)] = channelObj }
     function channelDefined(channelObj)
     { //it's defined if we already saw that channel, and it's of the same type.
-        return typeof(channelsParsed[channelObj.id]) != 'undefined' 
-                && channelObj.type == channelsParsed[channelObj.id].type
+        let channelID = toID(channelObj)
+        return typeof(channelsParsed[channelID]) != 'undefined' 
+                && channelObj.type == channelsParsed[channelID].type
     }
     
     function isScenario(o) { return o.steps !== undefined }
 
-    function rememberDataFlow(flowObj) { if (flowObj) flowsParsed[flowObj.id] = flowObj }
+    function rememberDataFlow(flowObj) { if (flowObj) flowsParsed[toID(flowObj)] = flowObj }
     function flowDefined(flowObj) 
     { 
-        return flowsParsed[flowObj.id] !== undefined 
-                && flowObj.type == flowsParsed[flowObj.id].type
+        let flowID = toID(flowObj)
+        return flowsParsed[flowID] !== undefined 
+                && flowObj.type == flowsParsed[flowID].type
     }
 
     function rememberAnnotation(annot)
@@ -106,9 +107,7 @@ function createParser()
 
     function rememberContainer(containerDef)
     {
-        containerDefsParsed[containerDef.id] = containerDef
-        containerStack.push[containerDef.id]
-        
+        containerDefsParsed[toID(containerDef)] = containerDef
     }
     function parseChannel(type,fromID, toID, channelT)
     {
@@ -123,10 +122,10 @@ function createParser()
         return [channel]
     }
 
-    function parseChannelStep(channelType,stepType,fromID,toID,msg)
+    function parseChannelStep(channelType,stepType,fromID,targetID,msg)
     {
         let from = fromID.asIR()[0]
-        let to = toID.asIR()[0]
+        let to = targetID.asIR()[0]
         let msgText = msg.asIR()[0]
 
         //lazily define the channel object if not defined, and then return the step object
@@ -134,7 +133,7 @@ function createParser()
         if (!channelDefined(channel))
             rememberChannel(channel)
 
-        let step = newStep(channelsParsed[channel.id],stepType,msgText)
+        let step = newStep(channelsParsed[toID(channel)],stepType,msgText)
         return [step]
     }
 
@@ -292,7 +291,7 @@ function createParser()
             let channel = newChannel(CHANNEL_TYPE.REQ_RES,caller,responder)
             if (!channelDefined(channel)) throw new Error(`Channel undefined for response step: ${caller} -(${msgText})-< ${responder}`)
 
-            let step = newStep(channelsParsed[channel.id],SCENARIO_STEP_TYPE.RES,msgText)
+            let step = newStep(channelsParsed[toID(channel)],SCENARIO_STEP_TYPE.RES,msgText)
             return [step]
         },
 

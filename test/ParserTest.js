@@ -1,7 +1,11 @@
 
 const assert = require('assert')
 const { createParser } = require('../src/lang/Lang')
-const { newActor, ACTOR_TYPE, newChannel, CHANNEL_TYPE, newStep, SCENARIO_STEP_TYPE, newContainer, newAnnotationDefElement, channelID, newDataFlow, DATA_FLOW_TYPE, newAnnotation, ANNOTATION_KEY} = require('../src/SystemModel');
+const { newActor, ACTOR_TYPE, newChannel,
+        CHANNEL_TYPE, newStep, SCENARIO_STEP_TYPE,
+        newContainer, newAnnotationDefElement, channelID,
+        newDataFlow, DATA_FLOW_TYPE, newAnnotation,
+        ANNOTATION_KEY, toID } = require('../src/SystemModel');
 const { create } = require('domain');
 
 function createParserForTest()
@@ -48,7 +52,7 @@ describe("Scenaria Language Parser", function() {
 
         let aa = newActor(ACTOR_TYPE.AGENT,'aa','AA')
         let bb = newActor(ACTOR_TYPE.AGENT,'bb','BB')
-        let aabb = newChannel(CHANNEL_TYPE.REQ_RES,aa.id,bb.id,"")
+        let aabb = newChannel(CHANNEL_TYPE.REQ_RES,toID(aa),toID(bb),"")
         let scenario = { name: "some scenario", steps : [
             newStep(aabb,SCENARIO_STEP_TYPE.REQ,"")
         ]}
@@ -314,7 +318,7 @@ describe("Scenaria Language Parser", function() {
             },
             containers : {
                 "gg" : newContainer("gg","Good Guys",['montoya','bc'],[],[],['Swashbuckler'],[]),
-                "bg" : newContainer("bg","Bad",['vi'],[vi_bc_channel.id],[vi_pod_write.id],[],[]),
+                "bg" : newContainer("bg","Bad",['vi'],[toID(vi_bc_channel)],[toID(vi_pod_write)],[],[]),
             },
         })
 

@@ -2,7 +2,7 @@
 const ELK = require('elkjs')
 const elk = new ELK()
 
-const { EDGE_TYPE,channelID,flowID,ACTOR_TYPE } = require('../SystemModel')
+const { EDGE_TYPE,channelID,flowID,ACTOR_TYPE,toID } = require('../SystemModel')
 const { DiagramPainter, CAPTION_FONT_SIZE } = require("./DiagramPainter")
 const { incomingChannelEdgeID, outgoingChannelEdgeID } = require('./DiagramModel')
 
@@ -72,9 +72,9 @@ function actorDim(actor)
 
 function graphNodesFor(model) {
     return model.actors.map(a => {
-            return Object.assign({},a,actorDim(a))
+            return Object.assign({id : toID(a)},a,actorDim(a))
     }).concat(model.channels.map(c => {
-        return Object.assign({}, c, {
+        return Object.assign({id : toID(c)}, c, {
             id: channelID(c),
             width: DRAW_CHANNEL_RADIUS,
             height: DRAW_CHANNEL_RADIUS

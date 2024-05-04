@@ -53,8 +53,8 @@ function newChannel(type,from,to,channelText = "")
     if (!from) throw new Error(`Invalid from actor id when creating channel`)
     if (!to) throw new Error(`Invalid to actor id when creating channel`)
 
-    let ret = {type : type,from : from, to : to, text : channelText }
-    ret.id = channelID(ret)
+    let channelProps = {type : type,from : from, to : to, text : channelText }
+    let ret = Object.assign(newModelObject(channelID(channelProps)),channelProps)
     return ret;
 }
 
@@ -67,19 +67,19 @@ function newChannel(type,from,to,channelText = "")
  */
 function newStep(channel,type,message)
 {
-    if (!channel || !channel.id) throw new Error(`Invalid channel definition for step: ${JSON.stringify(channel)}`)
+    if (!channel || !channel[ID_KEY]) throw new Error(`Invalid channel definition for step: ${JSON.stringify(channel)}`)
     if (!Object.values(SCENARIO_STEP_TYPE).includes(type)) throw new Error(`Invalid channel step type: ${type}`) //TODO: check specifically for channel step types?
 
-    return { type : type, message : (message || NULL_MESSAGE), channel : channel.id}
+    return { type : type, message : (message || NULL_MESSAGE), channel : toID(channel)}
 
 }
 
 function newDataFlowStep(dataFlow, type, message)
 {
-    if (!dataFlow || !dataFlow.id) throw new Error(`Invalid data flow for data flow step: ${JSON.stringify(dataFlow)}`)
+    if (!dataFlow || !dataFlow[ID_KEY]) throw new Error(`Invalid data flow for data flow step: ${JSON.stringify(dataFlow)}`)
     if (!Object.values(SCENARIO_STEP_TYPE).includes(type)) throw new Error(`Invalid data flow type for step: ${type}`) //TODO: check specifically for data step types?
 
-    return { type : type, dataflow: dataFlow.id, message : (message || NULL_MESSAGE)}
+    return { type : type, dataflow: toID(dataFlow), message : (message || NULL_MESSAGE)}
 }
 
 function flowID(type,from,to,message)
@@ -101,19 +101,23 @@ function newDataFlow(type,from,to,message = "")
     if (!from) throw new Error(`Invalid from actor id when creating data flow`)
     if (!to) throw new Error(`Invalid to actor id when creating data flow`)
 
-    let ret = { type : type, from : from, to : to, text : (message || NULL_MESSAGE)}
-    ret.id = flowID(type,from,to,message)
+    let ret = Object.assign(newModelObject(flowID(type,from,to,message)),{
+        type : type, 
+        from : from,
+        to : to,
+        text : (message || NULL_MESSAGE)
+    })
     return ret;
 }
 
 function newActor(type,id,caption,note = "", annotations = [])
 {
-    return { type : type, 
-             id : id,
-             caption : caption,
-             note : note,
-             annotations : annotations
-            }
+    return Object.assign(newModelObject(id), { 
+        type : type, 
+        caption : caption,
+        note : note,
+        annotations : annotations
+    })
 }
 
 function newAnnotationDefElement(key,val)
@@ -138,16 +142,22 @@ function newSystemModel(actors,channels,dataFlows,scenarios,annotations, contain
 
 function newContainer(id, name, actors,channels,dataFlows, annotations, containers)
 {
-    if (!id) throw new Error("Invalid id for container")
-    return {
-        id : id,
+    return Object.assign(newModelObject(id), {
         name : (name || id),
         actors : (actors || []),
         channels : (channels || []),
         dataFlows : (dataFlows || []),
         annotations : (annotations || []),
         containers : (containers ||[])
-    }
+    })
+}
+
+function newModelObject(id)
+{
+    if (!id) throw new Error("Invalid id for model object")
+    let ret = {}
+    ret[ID_KEY] = id
+    return ret;
 }
 
 /**
@@ -159,7 +169,7 @@ function newContainer(id, name, actors,channels,dataFlows, annotations, containe
 function isContainer(obj)
 {
     if (!obj) return false;
-    if (!obj.id || !obj.name || !obj.actors || !obj.channels || !obj.dataFlows || !obj.annotations || !obj.containers)
+    if (!obj[ID_KEY] || !obj.name || !obj.actors || !obj.channels || !obj.dataFlows || !obj.annotations || !obj.containers)
         return false;
     return true;
 }
@@ -172,9 +182,7 @@ function isContainer(obj)
  */
 function newAnnotation(id,properties)
 {
-    let ret = { }
-    ret[ID_KEY] = id
-    return Object.assign(ret,...properties)
+    return Object.assign(newModelObject(id),...properties)
 }
 
 function resolveAnnotations(model)
@@ -267,6 +275,6 @@ module.exports = {
     isDataFlow,
     isAnnotation,
     newAnnotation,
-    toID
+    toID, ID_KEY
 
 }
