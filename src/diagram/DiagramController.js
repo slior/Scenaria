@@ -178,7 +178,7 @@ class DiagramController
         svgEl.each((i,children) => {
             let el = children[i]
             
-            if (el.node.nodeName != LINE_SVG_NODE_NAME)
+            if(el.fill && el.node.nodeName != LINE_SVG_NODE_NAME)
             {
                 let prevColor = el.fill()
                 el.remember(PREV_COLOR_KEY,prevColor)
