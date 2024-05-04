@@ -1,5 +1,11 @@
 const assert = require('assert')
-const { channelID, newChannel, CHANNEL_TYPE, newActor,ACTOR_TYPE, newSystemModel, isActor, newDataFlow, DATA_FLOW_TYPE, isChannel, isDataFlow, isAnnotation  } = require('../src/SystemModel')
+const { channelID, newChannel, CHANNEL_TYPE,
+        newActor,ACTOR_TYPE, newSystemModel,
+        isActor, newDataFlow, DATA_FLOW_TYPE,
+        isChannel, isDataFlow, isAnnotation, isContainer,
+        newAnnotation, newAnnotationDefElement, ANNOTATION_KEY, 
+        newContainer } = require('../src/SystemModel')
+
 const { outgoingChannelEdgeID, incomingChannelEdgeID, channelIDFromEdgeID} = require('../src/diagram/DiagramModel')
 const should = require('should')
 
@@ -126,8 +132,36 @@ describe("Model Classes", function() {
         let c = newChannel(CHANNEL_TYPE.ASYNC,"a","b")
         isAnnotation(c).should.be.false()
 
+        let at = newAnnotation('annot',[newAnnotationDefElement(ANNOTATION_KEY.COLOR,'green')])
+        isAnnotation(at).should.be.true()
+
         should(isAnnotation(null)).be.false()
         should(isAnnotation(undefined)).be.false()
         should(isAnnotation({})).be.false()
+    })
+
+    it("Identifies a container correctly", function() {
+        let a = newActor(ACTOR_TYPE.AGENT,"a","A")
+
+        isContainer(a).should.be.false()
+
+        let s = newActor(ACTOR_TYPE.STORE,"s","S")
+        isContainer(s).should.be.false()
+
+        let df = newDataFlow(DATA_FLOW_TYPE.READ,s,a)
+        isContainer(df).should.be.false()
+        
+        let c = newChannel(CHANNEL_TYPE.ASYNC,"a","b")
+        isContainer(c).should.be.false()
+
+        let at = newAnnotation('annot',[newAnnotationDefElement(ANNOTATION_KEY.COLOR,'green')])
+        isContainer(at).should.be.false()
+
+        let cont = newContainer('c','The Container',[a,s],[c],[df],[at],[])
+        isContainer(cont).should.be.true()
+
+        should(isContainer(null)).be.false()
+        should(isContainer(undefined)).be.false()
+        should(isContainer({})).be.false()
     })
 })

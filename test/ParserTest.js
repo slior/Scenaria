@@ -320,4 +320,41 @@ describe("Scenaria Language Parser", function() {
 
         parseAndCompare(testProgram,expectedIR)
     })
+
+    it("Parses a nested container correctly", function() {
+        let testProgram = String.raw`
+
+            user 'Shopper' as s;
+
+            container 'System' as sys {
+
+                container 'Frontend' as fe {
+                    agent 'Shop UI' as ui
+                }
+
+                container 'Backend' as be {
+                    agent 'Gateway' as gw
+                    agent 'Auth' as au
+                    store 'Data' as data
+                }
+            };
+        `
+
+        let expectedIR = createExpectedIR({
+            actors : [
+                newActor(ACTOR_TYPE.USER,'s','Shopper'),
+                newActor(ACTOR_TYPE.AGENT,'ui','Shop UI'),
+                newActor(ACTOR_TYPE.AGENT,'gw','Gateway'),
+                newActor(ACTOR_TYPE.AGENT,'au','Auth'),
+                newActor(ACTOR_TYPE.STORE,'data','Data'),
+            ],
+            containers : {
+                'fe' : newContainer('fe','Frontend',['ui'],[],[],[],[]),
+                'be' : newContainer('be','Backend',['gw','au','data'],[],[],[],[]),
+                'sys' : newContainer('sys','System',[],[],[],[],['fe','be'])
+            }
+        })
+
+        parseAndCompare(testProgram,expectedIR)
+    })
 })

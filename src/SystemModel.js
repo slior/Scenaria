@@ -138,17 +138,38 @@ function newSystemModel(actors,channels,dataFlows,scenarios,annotations, contain
 
 function newContainer(id, name, actors,channels,dataFlows, annotations, containers)
 {
+    if (!id) throw new Error("Invalid id for container")
     return {
         id : id,
-        name : name,
-        actors : actors,
-        channels : channels,
-        dataFlows : dataFlows,
-        annotations : annotations,
-        containers : containers
+        name : (name || id),
+        actors : (actors || []),
+        channels : (channels || []),
+        dataFlows : (dataFlows || []),
+        annotations : (annotations || []),
+        containers : (containers ||[])
     }
 }
 
+/**
+ * Tests whether the given object is a valid container object.
+ * @param {Object} obj The object to test
+ * @returns TRUE iff the object is a valid container object
+ * @see newContainer
+ */
+function isContainer(obj)
+{
+    if (!obj) return false;
+    if (!obj.id || !obj.name || !obj.actors || !obj.channels || !obj.dataFlows || !obj.annotations || !obj.containers)
+        return false;
+    return true;
+}
+
+/**
+ * Creates a new annoation object with the given id.
+ * @param {String} id The id of the annotation
+ * @param {Object[]} properties A list of key value pairs (as objects), to assign for the annotation object
+ * @returns The new annotation object
+ */
 function newAnnotation(id,properties)
 {
     let ret = { }
@@ -240,6 +261,7 @@ module.exports = {
     newSystemModel,
     resolveAnnotations,
     newContainer,
+    isContainer,
     isActor,
     isChannel,
     isDataFlow,

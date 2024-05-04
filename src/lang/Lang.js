@@ -9,7 +9,8 @@ const { ACTOR_TYPE, DATA_FLOW_TYPE, CHANNEL_TYPE,
         isChannel,
         isDataFlow,
         isAnnotation,
-        newAnnotation, toID} = require('../SystemModel')
+        newAnnotation, toID,
+        isContainer} = require('../SystemModel')
 
 
 function createGrammarNS()
@@ -370,7 +371,8 @@ function createParser()
             let containedChannels = containedObjects.filter(isChannel).map(toID)
             let containedDataFlows = containedObjects.filter(isDataFlow).map(toID)
             let containedAnnotations = containedObjects.filter(isAnnotation).map(toID)
-            let containerDef = newContainer(containerID,theName,containedActors,containedChannels,containedDataFlows,containedAnnotations,[])
+            let containedContainers = containedObjects.filter(isContainer).map(toID)
+            let containerDef = newContainer(containerID,theName,containedActors,containedChannels,containedDataFlows,containedAnnotations,containedContainers)
             rememberContainer(containerDef) //also pushes it to the stack
             return [containerDef]
         },
