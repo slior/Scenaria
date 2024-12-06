@@ -74,16 +74,21 @@ class DiagramPainter
     _drawAndPositionUserActor(graphEl)
     {
         let g = this._svgDraw.group();
+        
+        //Note: order of drawing is important here.
+        // The text and user icon need to be drawn on top of the rectangle, so the rectangle is drawn first.
+
+        let r = g.rect(graphEl.width,graphEl.height)
+                    .fill(graphEl.fillColor)
+                    .stroke({ color : 'black', width : 1})
+        r.move(0,0)
+
         let t = g.text(graphEl.caption);
         t.font('size',CAPTION_FONT_SIZE)
         t.cx(graphEl.width/2); //text position is relative to the containing group
         t.y(USER_CAPTION_MARGIN)
         this._drawUser(g,graphEl.width,CAPTION_FONT_SIZE);
-        
-        let r = g.rect(graphEl.width,graphEl.height)
-                    .fill('none')
-                    .stroke({ color : 'black', width : 1})
-        r.move(0,0)
+
         g.x(graphEl.x);
         g.y(graphEl.y);
         return g;
