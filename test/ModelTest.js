@@ -4,7 +4,8 @@ const { channelID, newChannel, CHANNEL_TYPE,
         isActor, newDataFlow, DATA_FLOW_TYPE,
         isChannel, isDataFlow, isAnnotation, isContainer,
         newAnnotation, newAnnotationDefElement, ANNOTATION_KEY, 
-        newContainer,ID_KEY,toID } = require('../src/SystemModel')
+        newContainer,ID_KEY,toID, 
+        resolveAnnotations } = require('../src/SystemModel')
 
 const { outgoingChannelEdgeID, incomingChannelEdgeID, channelIDFromEdgeID} = require('../src/diagram/DiagramModel')
 const should = require('should')
@@ -164,4 +165,35 @@ describe("Model Classes", function() {
         should(isContainer(undefined)).be.false()
         should(isContainer({})).be.false()
     })
+})
+
+describe("Annotation resolution", function() {
+    it('should not override existing actor properties with annotation properties', () => {
+        // Setup
+        const actorId = 'actor1';
+        const annotationId = 'annotation1';
+        const actor = newActor(ACTOR_TYPE.AGENT, actorId, 'Test Actor', 'note', [annotationId]);
+        actor.existingProperty = 'original value';
+        
+        const annotation = newAnnotation(annotationId, [
+            { existingProperty: 'new value' },
+            { newProperty: 'added value' }
+        ]);
+
+        const model = newSystemModel(
+            [actor],           // actors
+            [],               // channels
+            [],               // dataFlows
+            [],               // scenarios
+            { [annotationId]: annotation }  // annotations
+        );
+
+        // Act
+        resolveAnnotations(model);
+
+        // Assert
+        model.actors[0].existingProperty.should.equal('original value');  // Should keep original value
+        model.actors[0].newProperty.should.equal('added value');         // Should add new property
+
+    });
 })

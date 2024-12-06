@@ -177,7 +177,7 @@ function isContainer(obj)
 /**
  * Creates a new annoation object with the given id.
  * @param {String} id The id of the annotation
- * @param {Object[]} properties A list of key value pairs (as objects), to assign for the annotation object
+ * @param {Object[]} properties A list of key value pairs (as object), to assign for the annotation object
  * @returns The new annotation object
  */
 function newAnnotation(id,properties)
@@ -190,7 +190,14 @@ function resolveAnnotations(model)
     model.actors.forEach(actor => {
         actor.annotations.map(aID => model.annotations[aID])
                          .filter(ad => ad !== undefined)
-                         .forEach(ad => Object.assign(actor,ad))
+                         .forEach(ad => {
+                            // Only assign properties that don't exist in actor
+                            Object.keys(ad).forEach(key => {
+                                if (!(key in actor)) {
+                                    actor[key] = ad[key];
+                                }
+                            });
+                         })
     })
     return model;
 }
