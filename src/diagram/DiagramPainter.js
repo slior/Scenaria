@@ -32,14 +32,25 @@ class DiagramPainter
 
     get svgElements() { return this._svgElements }
 
-    drawActor(graphEl)
+    drawContainerBoundary(containerObj,parentGroup)
+    {
+        let g = parentGroup ? parentGroup.group() : this._svgDraw.group();
+        g.rect(containerObj.width, containerObj.height)
+            .fill('none')
+            .stroke('black')
+            .move(0,0)
+
+        return g;
+    }
+
+    drawActor(graphEl,containerGroup, parentModelObj)
     {
         graphEl.fillColor = graphEl.color || WHITE_COLOR
         graphEl.lineColor = 'black'
 
         let g = graphEl.type == ACTOR_TYPE.USER ? 
-                 this._drawAndPositionUserActor(graphEl) : 
-                 this._drawAndPositionNonUserActor(graphEl)
+                 this._drawAndPositionUserActor(graphEl,containerGroup) : 
+                 this._drawAndPositionNonUserActor(graphEl,containerGroup)
 
         addTooltipIfAvailable(graphEl.note,g)
         SVGEventHandler.attachTo(g,() => { 
@@ -49,12 +60,12 @@ class DiagramPainter
         this._rememberSVGElementForID(graphEl.id,g)
     }
 
-    _drawAndPositionNonUserActor(graphEl)
+    _drawAndPositionNonUserActor(graphEl,containerGroup)
     {
-        let g = this._svgDraw.group();
+        let g = containerGroup ? containerGroup.group() : this._svgDraw.group();
         let r = g.rect(graphEl.width, graphEl.height).fill(graphEl.fillColor).attr('stroke', graphEl.lineColor);
         if (graphEl.type == ACTOR_TYPE.STORE)
-            r.radius(30);
+            r.radius(30);//TODO: cleanup magic numbers
         else
             r.radius(2);
         let t = g.text(function (add) 
@@ -67,13 +78,14 @@ class DiagramPainter
                 .attr({ 'text-anchor': 'middle' });
         t.cx(r.cx());
         t.cy(r.cy());
-        g.move(graphEl.x, graphEl.y);
+        g.move(graphEl.x, graphEl.y); //after everything is drawn in the group - apply the move transformation on all elements at once
         return g;
     }
 
-    _drawAndPositionUserActor(graphEl)
+    _drawAndPositionUserActor(graphEl,containerGroup)
     {
-        let g = this._svgDraw.group();
+        
+        let g = containerGroup ? containerGroup.group() : this._svgDraw.group();
         
         //Note: order of drawing is important here.
         // The text and user icon need to be drawn on top of the rectangle, so the rectangle is drawn first.
@@ -89,15 +101,15 @@ class DiagramPainter
         t.y(USER_CAPTION_MARGIN)
         this._drawUser(g,graphEl.width,CAPTION_FONT_SIZE);
 
-        g.x(graphEl.x);
-        g.y(graphEl.y);
+        g.move(graphEl.x,graphEl.y) //after everything is drawn in the group - apply the move transformation on all elements at once
+
         return g;
     }
 
-    drawChannel(channel)
+    drawChannel(channel,containerGroup,parentModelObj)
     {
-        let g = this._svgDraw.group()
-        let radius = channel.radius || 20
+        let g = containerGroup ? containerGroup.group() : this._svgDraw.group()
+        let radius = channel.radius || 20 //TODO: cleanup magic numbers
         let c = g.circle(radius)
         c.fill('#ffffff')
         c.stroke('black')
@@ -105,7 +117,7 @@ class DiagramPainter
         c.y(channel.y)
         addTooltipIfAvailable(channel.text, c);
         if (channel.type == CHANNEL_TYPE.REQ_RES)
-            this._drawReqResDecoration(g,channel)
+            this._drawReqResDecoration(g,channel,parentModelObj)
         SVGEventHandler.attachTo(g,() => { 
                                     this._redrawEdges(channel,g)
                                     this._raiseNodeMoved()
@@ -113,9 +125,9 @@ class DiagramPainter
         this._rememberSVGElementForID(channel.id,g)
     }
 
-    drawEdge(edge)
+    drawEdge(edge,containerGroup)
     {
-        let g = this._svgDraw.group(edge.id)
+        let g = containerGroup ? containerGroup.group(edge.id) : this._svgDraw.group(edge.id)
         this._drawEdgeLine(g,edge)
 
         if (edge.type == EDGE_TYPE.DATA_FLOW)
@@ -303,10 +315,10 @@ class DiagramPainter
          return container;
     }
 
-    _drawReqResDecoration(container,channel)
+    _drawReqResDecoration(containingGroup,channel,parentModelObj)
     {
-        let incomingEdge = this._channelIncomingEdge(channel);
-        let outgoingEdge = this._channelOutgoingEdge(channel)
+        let incomingEdge = this._channelIncomingEdge(channel,parentModelObj);
+        let outgoingEdge = this._channelOutgoingEdge(channel,parentModelObj)
         let inX = incomingEdge.sections[0].endPoint.x
         let inY = incomingEdge.sections[0].endPoint.y
         let outX = outgoingEdge.sections[0].startPoint.x
@@ -336,22 +348,22 @@ class DiagramPainter
                 break;
         }
     
-        let textEl = container.text(text)
+        let textEl = containingGroup.text(text)
         textEl.size(8)
         textEl.x(labelX)
         textEl.y(labelY)
     }
 
-    _channelIncomingEdge(channel)
+    _channelIncomingEdge(channel,parentModelObj)
     {
-        let incomingEdges = this._findEdgesByTarget(channel)
+        let incomingEdges = this._findEdgesByTarget(channel,parentModelObj)
         if (incomingEdges.length != 1) throw new Error(`Invalid number of incoming edges for channel ${JSON.stringify(channel)}: ${incomingEdges.length}`)
         return incomingEdges[0];
     }
 
-    _channelOutgoingEdge(channel) 
+    _channelOutgoingEdge(channel,parentModelObj) 
     {
-        let outgoingEdges = this._findEdgesBySource(channel)
+        let outgoingEdges = this._findEdgesBySource(channel,parentModelObj)
         if (outgoingEdges.length != 1) throw new Error(`Invalid number of outgoing edges for channel ${JSON.stringify(channel)}: ${outgoingEdges.length}`)
         return outgoingEdges[0];
     }
@@ -361,9 +373,10 @@ class DiagramPainter
      * @param {Node} graphNode A node in the graph, representing either an actor or a channel
      * @returns The list of edges where one of the targets is the given node
      */
-    _findEdgesByTarget(graphNode)
+    _findEdgesByTarget(graphNode,parentModelObj)
     {
-        return this._graph.edges.filter(e => e.targets.includes(graphNode.id))
+        let parent = parentModelObj || this._graph
+        return parent.edges.filter(e => e.targets.includes(graphNode.id))
     }
 
     /**
@@ -371,9 +384,10 @@ class DiagramPainter
      * @param {Node} graphNode A node in the graph, representing either an actor or a channel
      * @returns The list of edges where one of the sources is the given node.
      */
-    _findEdgesBySource(graphNode)
+    _findEdgesBySource(graphNode,parentModelObj)
     {
-        return this._graph.edges.filter(e => e.sources.includes(graphNode.id))
+        let parent = parentModelObj || this._graph
+        return parent.edges.filter(e => e.sources.includes(graphNode.id))
     }
 
 

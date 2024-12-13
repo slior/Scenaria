@@ -13,7 +13,7 @@ function createParserForTest()
     return createParser();
 }
 
-function    parseAndCompare(testSource,expectedIR) 
+function parseAndCompare(testSource,expectedIR) 
 {
   let p = createParserForTest()
   let result = p(testSource)
@@ -296,12 +296,18 @@ describe("Scenaria Language Parser", function() {
 
         let vi_bc_channel = newChannel(CHANNEL_TYPE.REQ_RES,'vi','bc',"kidnaps")
         let vi_pod_write = newDataFlow(DATA_FLOW_TYPE.WRITE,'vi','pod')
+        let montoya = newActor(ACTOR_TYPE.USER,'montoya','Inigo',"", ['GoodGuy','Swashbuckler'])
+        let bc = newActor(ACTOR_TYPE.USER,'bc','Buttercup',"", [])
+        let vi = newActor(ACTOR_TYPE.AGENT,'vi','Vizzini',"", ['BadGuy'])
+        let swashbuckler = newAnnotation("Swashbuckler",[newAnnotationDefElement(ANNOTATION_KEY.COLOR,"orange")])
+        let badGuy = newAnnotation("BadGuy",[newAnnotationDefElement(ANNOTATION_KEY.COLOR,"red")])
+        let goodGuy = newAnnotation("GoodGuy",[newAnnotationDefElement(ANNOTATION_KEY.PROTO,"good")])
         let expectedIR = createExpectedIR({
             actors : [
                 //note that order of actors is important - depends on parsing order
-                newActor(ACTOR_TYPE.USER,'montoya','Inigo',"", ['GoodGuy','Swashbuckler']),
-                newActor(ACTOR_TYPE.USER,'bc','Buttercup',"", []),
-                newActor(ACTOR_TYPE.AGENT,'vi','Vizzini',"", ['BadGuy']),
+                montoya,
+                bc,
+                vi,
                 newActor(ACTOR_TYPE.STORE,"pod","Pit of Despair"),
                 
             ],
@@ -312,13 +318,13 @@ describe("Scenaria Language Parser", function() {
                 vi_pod_write
             ],
             annotations : {
-                "BadGuy" : newAnnotation("BadGuy",[newAnnotationDefElement(ANNOTATION_KEY.COLOR,"red")]),
-                "GoodGuy" : newAnnotation("GoodGuy",[newAnnotationDefElement(ANNOTATION_KEY.PROTO,"good")]),
-                "Swashbuckler" : newAnnotation("Swashbuckler",[newAnnotationDefElement(ANNOTATION_KEY.COLOR,"orange")]),
+                "BadGuy" : badGuy,
+                "GoodGuy" : goodGuy,
+                "Swashbuckler" : swashbuckler,
             },
             containers : {
-                "gg" : newContainer("gg","Good Guys",['montoya','bc'],[],[],['Swashbuckler'],[]),
-                "bg" : newContainer("bg","Bad",['vi'],[toID(vi_bc_channel)],[toID(vi_pod_write)],[],[]),
+                "gg" : newContainer("gg","Good Guys",[montoya,bc],[],[],[swashbuckler],[]),
+                "bg" : newContainer("bg","Bad",[vi],[vi_bc_channel],[vi_pod_write],[],[]),
             },
         })
 
@@ -344,18 +350,25 @@ describe("Scenaria Language Parser", function() {
             };
         `
 
+        let ui = newActor(ACTOR_TYPE.AGENT,'ui','Shop UI')
+        let gw = newActor(ACTOR_TYPE.AGENT,'gw','Gateway')
+        let au = newActor(ACTOR_TYPE.AGENT,'au','Auth')
+        let data = newActor(ACTOR_TYPE.STORE,'data','Data')
+        let fe = newContainer('fe','Frontend',[ui],[],[],[],[])
+        let be = newContainer('be','Backend',[gw,au,data],[],[],[],[])
+        let sys = newContainer('sys','System',[],[],[],[],[fe,be])
         let expectedIR = createExpectedIR({
             actors : [
                 newActor(ACTOR_TYPE.USER,'s','Shopper'),
-                newActor(ACTOR_TYPE.AGENT,'ui','Shop UI'),
-                newActor(ACTOR_TYPE.AGENT,'gw','Gateway'),
-                newActor(ACTOR_TYPE.AGENT,'au','Auth'),
-                newActor(ACTOR_TYPE.STORE,'data','Data'),
+                ui,
+                gw,
+                au,
+                data,
             ],
             containers : {
-                'fe' : newContainer('fe','Frontend',['ui'],[],[],[],[]),
-                'be' : newContainer('be','Backend',['gw','au','data'],[],[],[],[]),
-                'sys' : newContainer('sys','System',[],[],[],[],['fe','be'])
+                'fe' : fe,
+                'be' : be,
+                'sys' : sys
             }
         })
 

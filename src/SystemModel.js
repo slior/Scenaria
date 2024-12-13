@@ -1,4 +1,3 @@
-
 const EDGE_TYPE = { 
     DATA_FLOW : 'dataflow',
     CHANNEL : 'channel'
@@ -34,6 +33,7 @@ const ANNOTATION_KEY = {
 const NULL_MESSAGE = '--'
 
 const ID_KEY = "_id"
+const CONTAINER_KEY = "_container";
 
 function channelID(channel)
 {
@@ -140,16 +140,36 @@ function newSystemModel(actors,channels,dataFlows,scenarios,annotations, contain
         }
 }
 
+
+/**
+ * Creates a new container object with the given ID, name, and contained objects.
+ * @param {String} id The unique identifier for this container
+ * @param {String} name The name of the container
+ * @param {String[]} actors Array of actor objects contained in this container
+ * @param {String[]} channels Array of channel objects contained in this container
+ * @param {String[]} dataFlows Array of data flow objects contained in this container
+ * @param {String[]} annotations Array of annotation objects contained in this container
+ * @param {String[]} containers Array of container objects contained in this container
+ * 
+ * @returns The new container object
+ */
 function newContainer(id, name, actors,channels,dataFlows, annotations, containers)
 {
-    return Object.assign(newModelObject(id), {
+    let ret = Object.assign(newModelObject(id), {
         name : (name || id),
-        actors : (actors || []),
-        channels : (channels || []),
-        dataFlows : (dataFlows || []),
-        annotations : (annotations || []),
-        containers : (containers ||[])
+        actors : (actors.map(toID) || []),
+        channels : (channels.map(toID) || []),
+        dataFlows : (dataFlows.map(toID) || []),
+        annotations : (annotations.map(toID) || []),
+        containers : (containers.map(toID) ||[])
     })
+    //NOTE: this assumes that the 'assignContainerTo' function changes the model objects in place
+    if (actors) actors.forEach(a => assignContainerTo(a,ret))
+    if (channels) channels.forEach(c => assignContainerTo(c,ret))
+    if (dataFlows) dataFlows.forEach(df => assignContainerTo(df,ret))
+    if (annotations) annotations.forEach(a => assignContainerTo(a,ret))
+    if (containers) containers.forEach(c => assignContainerTo(c,ret))
+    return ret;
 }
 
 function newModelObject(id)
@@ -172,6 +192,48 @@ function isContainer(obj)
     if (!obj[ID_KEY] || !obj.name || !obj.actors || !obj.channels || !obj.dataFlows || !obj.annotations || !obj.containers)
         return false;
     return true;
+}
+
+/**
+ * Assigns the given container to the given model object
+ * Changes the model object in place.
+ * @param {Object} modelObj The model object to assign the container to
+ * @param {Object} container The container to assign to the model object
+ * @returns The model object with the container assigned
+ */
+function assignContainerTo(modelObj,container)
+{ 
+    if (!modelObj) throw new Error("Invalid model object when assigning container")
+    if (!isContainer(container)) throw new Error("Invalid container when assigning container")
+    modelObj[CONTAINER_KEY] = toID(container)
+    return modelObj;
+}
+
+function isModelObjectContainedIn(modelObj,container)
+{
+    if (!modelObj || !container) return false;
+    return modelObj[CONTAINER_KEY] === toID(container)
+}
+
+function getContainedActors(system,container)
+{
+    return system.actors.filter(a => isModelObjectContainedIn(a,container))
+}
+
+function getContainedChannels(system,container)
+{
+    return system.channels.filter(c => isModelObjectContainedIn(c,container))
+}
+
+function getContainedContainers(system,container)
+{
+    return Object.values(system.containers).filter(c => isModelObjectContainedIn(c,container))
+}
+
+function isTopLevelObject(modelObj)
+{
+    if (!modelObj) return false;
+    return !modelObj[CONTAINER_KEY]
 }
 
 /**
@@ -282,6 +344,13 @@ module.exports = {
     isDataFlow,
     isAnnotation,
     newAnnotation,
-    toID, ID_KEY
-
+    toID, ID_KEY,
+    isModelObjectContainedIn,
+    isTopLevelObject,
+    getContainedActors,
+    getContainedChannels,
+    getContainedContainers,
+    assignContainerTo,
+    newModelObject,
+    CONTAINER_KEY
 }

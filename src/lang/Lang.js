@@ -366,11 +366,12 @@ function createParser()
             let containerID = id.asIR()[0]
             let containedObjects = statements.asIR()
             //TODO: go through different elements parsed in this container, and add them to the container parsed
-            let containedActors = containedObjects.filter(isActor).map(toID)
-            let containedChannels = containedObjects.filter(isChannel).map(toID)
-            let containedDataFlows = containedObjects.filter(isDataFlow).map(toID)
-            let containedAnnotations = containedObjects.filter(isAnnotation).map(toID)
-            let containedContainers = containedObjects.filter(isContainer).map(toID)
+            
+            let containedActors = containedObjects.filter(isActor)
+            let containedChannels = containedObjects.filter(isChannel)
+            let containedDataFlows = containedObjects.filter(isDataFlow)
+            let containedAnnotations = containedObjects.filter(isAnnotation)
+            let containedContainers = containedObjects.filter(isContainer)
             let containerDef = newContainer(containerID,theName,containedActors,containedChannels,containedDataFlows,containedAnnotations,containedContainers)
             rememberContainer(containerDef) //also pushes it to the stack
             return [containerDef]
