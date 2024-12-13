@@ -30,6 +30,10 @@ const DEFAULT_EDGE_COLOR = 'black'
 const DEFAULT_CHANNEL_LINE_COLOR = DEFAULT_EDGE_COLOR;
 const NO_FILL = 'none';
 const DEFAULT_EDGE_WIDTH = 1;
+const PROTOTYPE_TEXT_SIZE = 9;
+const CONTAINER_NAME_TEXT_SIZE = 9;
+const REQ_RES_TEXT_SIZE = 8;
+const REQ_RES_LABEL_OFFSET = 10;
 /**
  * Class responsible for drawing diagram elements using SVG.js
  */
@@ -66,11 +70,19 @@ class DiagramPainter
     drawContainerBoundary(containerObj,parentGroup)
     {
         let g = parentGroup ? parentGroup.group() : this._svgDraw.group();
-        g.rect(containerObj.width, containerObj.height)
+        let r = g.rect(containerObj.width, containerObj.height)
             .fill(NO_FILL)
             .stroke(DEFAULT_CONTAINER_BORDER_COLOR)
             .move(0,0)
-
+        let t = g.text(function (add) 
+                {
+                    add.tspan(containerObj.name).font({ size: CONTAINER_NAME_TEXT_SIZE }).newLine();
+                })
+                .leading(1.3)
+                .attr({ 'text-anchor': 'middle' });
+        //Position the container name at the middle of the rectable, on top of it.
+        t.cx(r.cx())
+        t.cy(r.y() - CONTAINER_NAME_TEXT_SIZE)
         return g;
     }
 
@@ -111,7 +123,7 @@ class DiagramPainter
         let t = g.text(function (add) 
                 {
                     if (graphEl.prototype)
-                        add.tspan(`<<${graphEl.prototype}>>`).font({ size: 9 }).newLine();
+                        add.tspan(`<<${graphEl.prototype}>>`).font({ size: PROTOTYPE_TEXT_SIZE }).newLine();
                     add.tspan(graphEl.caption).font({ size: CAPTION_FONT_SIZE }).newLine();
                 })
                 .leading(1.3)
@@ -401,25 +413,25 @@ class DiagramPainter
         {   //direction of channel is determined by the incoming and outgoing edge.
             // this serves to determine the location of the label decoration + the text, specifically the arrow drawn (a unicode character)
             case (inY == outY) && (inX < outX) : //point right
-                labelY -= 20;
+                labelY -= REQ_RES_LABEL_OFFSET;
                 text += '\u25B6' 
                 break;
             case (inY == outY) && (inX > outX) : //point left
-                labelY -= 20;
+                labelY -= REQ_RES_LABEL_OFFSET;
                 text = '\u25C0 R' //note: we're overwriting the text here completely
                 break;
             case (inY < outY) && (inX == outX) : //point down
-                labelX -= 15;
+                labelX -= REQ_RES_LABEL_OFFSET;
                 text += '\n\u25BC'
                 break;
             case (inY > outY) && (inX == outX) : //point up
-                labelX -= 15;
+                labelX -= REQ_RES_LABEL_OFFSET;
                 text += '\n\u25B2'
                 break;
         }
     
         let textEl = containingGroup.text(text)
-        textEl.size(8)
+        textEl.font({size : REQ_RES_TEXT_SIZE})
         textEl.x(labelX)
         textEl.y(labelY)
     }
