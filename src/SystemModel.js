@@ -74,6 +74,14 @@ function newStep(channel,type,message)
 
 }
 
+/**
+ * Creates a new scenario step for a data flow.
+ * @param {DataFlow} dataFlow The data flow object this step refers to
+ * @param {SCENARIO_STEP_TYPE} type The type of the scenario step 
+ * @param {String} message Optional message to show for this step. If not provided, will use a default message
+ * @returns {Object} A new data flow step object that can be added to a scenario
+ * @throws {Error} If the data flow is invalid or the step type is not valid
+ */
 function newDataFlowStep(dataFlow, type, message)
 {
     if (!dataFlow || !dataFlow[ID_KEY]) throw new Error(`Invalid data flow for data flow step: ${JSON.stringify(dataFlow)}`)
@@ -110,6 +118,15 @@ function newDataFlow(type,from,to,message = "")
     return ret;
 }
 
+/**
+ * Creates a new actor object with the given properties
+ * @param {ACTOR_TYPE} type The type of actor (USER, AGENT, or STORE)
+ * @param {String} id The unique identifier for this actor
+ * @param {String} caption The display caption for this actor
+ * @param {String} note Optional tooltip text to show when hovering over the actor
+ * @param {Array} annotations Optional array of annotation objects to apply to this actor
+ * @returns {Object} A new actor object with the specified properties
+ */
 function newActor(type,id,caption,note = "", annotations = [])
 {
     return Object.assign(newModelObject(id), { 
@@ -127,6 +144,16 @@ function newAnnotationDefElement(key,val)
     return ret
 }
 
+/**
+ * Creates a new system model object containing all the model elements.
+ * @param {Array} actors Array of actor objects in the system
+ * @param {Array} channels Array of channel objects connecting actors
+ * @param {Array} dataFlows Array of data flow objects between actors
+ * @param {Array} scenarios Array of scenario objects describing system behavior
+ * @param {Array} annotations Array of annotation objects for model elements
+ * @param {Object} containers Object mapping container IDs to container objects, defaults to empty
+ * @returns {Object} A new system model object containing all the provided elements
+ */
 function newSystemModel(actors,channels,dataFlows,scenarios,annotations, containers = {})
 {
     return {
@@ -209,27 +236,80 @@ function assignContainerTo(modelObj,container)
     return modelObj;
 }
 
+/**
+ * Tests whether a model object is contained within a specific container.
+ * A model object is considered to be contained in a container if its _container property
+ * points to the container's ID.
+ * 
+ * @param {Object} modelObj The model object to test. Can be an actor, channel, data flow, or annotation.
+ * @param {Object} container The container object to check against
+ * @returns {boolean} TRUE if the model object is contained in the specified container, FALSE otherwise.
+ *                    Also returns FALSE if either parameter is null or undefined.
+ * 
+ * @see newContainer
+ * @see assignContainerTo
+ */
 function isModelObjectContainedIn(modelObj,container)
 {
     if (!modelObj || !container) return false;
     return modelObj[CONTAINER_KEY] === toID(container)
 }
 
+/**
+ * Gets all actors that are contained within the specified container.
+ * 
+ * @param {SystemModel} system The system model containing all actors
+ * @param {Object} container The container object whose actors we want to retrieve
+ * @returns {Array} Array of actor objects that are contained in the specified container
+ * 
+ * @see isModelObjectContainedIn
+ * @see assignContainerTo
+ */
 function getContainedActors(system,container)
 {
     return system.actors.filter(a => isModelObjectContainedIn(a,container))
 }
 
+/**
+ * Gets all channels that are contained within the specified container.
+ * 
+ * @param {SystemModel} system The system model containing all channels
+ * @param {Object} container The container object whose channels we want to retrieve
+ * @returns {Array} Array of channel objects that are contained in the specified container
+ * 
+ * @see isModelObjectContainedIn
+ * @see assignContainerTo
+ */
 function getContainedChannels(system,container)
 {
     return system.channels.filter(c => isModelObjectContainedIn(c,container))
 }
 
+/**
+ * Gets all containers that are directly contained within the specified container.
+ * 
+ * @param {SystemModel} system The system model containing all containers
+ * @param {Object} container The container object whose nested containers we want to retrieve
+ * @returns {Array} Array of container objects that are directly contained in the specified container
+ * 
+ * @see isModelObjectContainedIn
+ * @see assignContainerTo
+ * @see newContainer
+ */
 function getContainedContainers(system,container)
 {
     return Object.values(system.containers).filter(c => isModelObjectContainedIn(c,container))
 }
 
+/**
+ * Tests whether the given model object is a top-level object, meaning it is not contained within any container.
+ * 
+ * @param {Object} modelObj The model object to test
+ * @returns {boolean} TRUE if the object is a top-level object (not contained in any container), FALSE otherwise
+ * 
+ * @see assignContainerTo
+ * @see isModelObjectContainedIn
+ */
 function isTopLevelObject(modelObj)
 {
     if (!modelObj) return false;

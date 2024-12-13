@@ -365,7 +365,6 @@ function createParser()
             let theName = name.asIR()[0]
             let containerID = id.asIR()[0]
             let containedObjects = statements.asIR()
-            //TODO: go through different elements parsed in this container, and add them to the container parsed
             
             let containedActors = containedObjects.filter(isActor)
             let containedChannels = containedObjects.filter(isChannel)

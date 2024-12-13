@@ -44,14 +44,44 @@ async function layoutModel(model)
     return await elk.layout(graph)
 }
 
+/**
+ * Gets all top-level containers from the system model and converts them to graph objects
+ * suitable for layout. A top-level container is one that is not nested within any other container.
+ * 
+ * @param {SystemModel} systemModel The system model containing all containers
+ * @returns {Array} Array of container graph objects representing the top-level containers.
+ *                  Each container graph object includes its nested elements (actors, channels, containers)
+ *                  which are added recursively via createContainerGraphObjFor.
+ * 
+ * @see isTopLevelObject
+ * @see createContainerGraphObjFor
+ */
 function getTopLevelContainersAsGraphObjects(systemModel)
 {
     return Object.values(systemModel.containers)
         .filter(c => isTopLevelObject(c)) //'containers' has all the containers, we need only the top level ones here, the nested ones will be recursively added.
         .map(c =>  createContainerGraphObjFor(c,systemModel) )
-
 }
 
+/**
+ * Creates a graph object representation of a container and its nested elements for layout purposes.
+ * This function recursively processes nested containers to build a complete hierarchical graph structure.
+ * 
+ * @param {Object} containerModelObj The container model object to convert to a graph object
+ * @param {SystemModel} system The system model containing all model elements
+ * @returns {Object} A graph object representing the container with its nested elements, suitable for layout.
+ *                   The returned object includes:
+ *                   - All actors contained directly in this container
+ *                   - All channels contained directly in this container  
+ *                   - All nested containers (processed recursively)
+ *                   - All edges between elements in this container
+ * 
+ * @see getContainedActors
+ * @see getContainedChannels 
+ * @see getContainedContainers
+ * @see getContainedEdges
+ * @see containerGraphNodeFor
+ */
 function createContainerGraphObjFor(containerModelObj,system)
 {
     let containedActors = getContainedActors(system,containerModelObj).map(actorGraphNodeFor)
@@ -79,9 +109,7 @@ function getContainedEdges(system, container)
 
     let containerChannels = system.channels.filter(c => isModelObjectContainedIn(c,container))
     // Get channel edges
-    // const channelEdges = container.channels
     const channelEdges = containerChannels
-        // .filter(channel => isModelObjectContainedIn(channel, container))
         .flatMap(channel => [
             { id: incomingChannelEdgeID(channel), sources: [channel.from], targets: [channelID(channel)], type: EDGE_TYPE.CHANNEL }, 
             { id: outgoingChannelEdgeID(channel), sources: [channelID(channel)], targets: [channel.to], type: EDGE_TYPE.CHANNEL }
@@ -90,8 +118,6 @@ function getContainedEdges(system, container)
     // Get data flow edges
     let containerDataFlows = system.data_flows.filter(df => isModelObjectContainedIn(df,container))
     const dataFlowEdges = containerDataFlows
-    // const dataFlowEdges = container.dataFlows
-        // .filter(flow => isModelObjectContainedIn(flow, container))
         .map(f => ({
             id: flowID(f.type, f.from, f.to),
             sources: [f.from],
@@ -107,8 +133,8 @@ function graphEdgesFor(model) {
     .filter(c => isTopLevelObject(c))
     .flatMap(channel => {
         return [
-                { id: incomingChannelEdgeID(channel), sources: [channel.from], targets: [channelID(channel)], type: "channel" },//TODO: extract channel type constant
-                { id: outgoingChannelEdgeID(channel), sources: [channelID(channel)], targets: [channel.to], type: "channel" }
+                { id: incomingChannelEdgeID(channel), sources: [channel.from], targets: [channelID(channel)], type: EDGE_TYPE.CHANNEL },
+                { id: outgoingChannelEdgeID(channel), sources: [channelID(channel)], targets: [channel.to], type: EDGE_TYPE.CHANNEL }
         ];
     }).concat(model.data_flows.filter(f => isTopLevelObject(f)).map(f => {
         return {
@@ -189,33 +215,46 @@ function drawGraph(draw,graph, moveCB = () => {})
     if (!draw) throw new Error("Invalid SVG drawing container when drawing a graph")
     console.log(graph)
 
-    //TODO: unify scan of children into single function
     let painter = new DiagramPainter(draw,graph, moveCB)
-    //draw top level containers
-    graph.children 
-        .filter(child => isContainer(child) && isTopLevelObject(child))
-        .forEach(child => {
-            drawContainer(draw,graph,child,painter)
-        })
-    //draw top level actors and channels
+
+
+    //Draw top level objects
     graph.children
-        .filter(child => !isContainer(child) && isTopLevelObject(child))
+        .filter(isTopLevelObject)
         .forEach(child => {
-            if (graphNodeRepresentsAnActor(child))
-                painter.drawActor(child)
-            else   
-                painter.drawChannel(child)
+            switch (true)
+            {
+                case isContainer(child) : drawContainer(draw,graph,child,painter); break; //will recursively draw contained objects.
+                case graphNodeRepresentsAnActor(child) : painter.drawActor(child); break; //parent model object will default to the system (graph).
+                default: painter.drawChannel(child); break; //parent model object will default to the system (graph)
+            }
         })
 
-    //draw edges
-    graph.edges
-    .filter(e => isTopLevelObject(e))
-    .forEach(edge => {
-        painter.drawEdge(edge)
-    })
+    //draw top level edges
+    graph.edges.filter(isTopLevelObject)
+         .forEach(edge =>  painter.drawEdge(edge) )
+
     return painter
 }
 
+/**
+ * Draws a container and all its contained elements (actors, channels, nested containers) in the diagram.
+ * The function recursively draws nested containers and their contents.
+ * 
+ * @param {SVG} draw The SVG.js container object where the diagram is being drawn
+ * @param {Object} graph The graph object containing layout information for the entire diagram
+ * @param {Object} container The container object to draw, with layout information (x, y coordinates)
+ * @param {DiagramPainter} painter The DiagramPainter instance used for drawing diagram elements
+ * @param {SVG.Container} [parentGroup] Optional SVG group element that will contain this container's elements. 
+ *                                     If not provided, elements are drawn directly in the main SVG container.
+ * 
+ * The function:
+ * 1. Creates a container boundary using the painter
+ * 2. Draws all non-container elements (actors and channels)
+ * 3. Recursively draws nested containers
+ * 4. Draws all edges between elements in this container
+ * 5. Positions the container group at its specified coordinates
+ */
 function drawContainer(draw,graph,container, painter,parentGroup)
 {    
     let containerGroup = painter.drawContainerBoundary(container,parentGroup);

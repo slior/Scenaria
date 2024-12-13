@@ -17,8 +17,30 @@ const ARROW_H = 10;
 const DEFAULT_LINE_CORNER_RADIUS = 10;
 const WHITE_COLOR = '#ffffff'
 
+const STORE_CORNER_RADIUS = 30;
+const DEFAULT_CHANNEL_RADIUS = 20;
+const DEFAULT_CORNER_RADIUS = 2;
+
+const DEFAULT_CONTAINER_BORDER_COLOR = 'black';
+
+const DEFAULT_ACTOR_LINE_COLOR = 'black';
+const DEFAULT_USER_ACTOR_LINE_COLOR = 'black';
+const DEFAULT_ACTOR_LINE_WIDTH = 1;
+const DEFAULT_EDGE_COLOR = 'black'
+const DEFAULT_CHANNEL_LINE_COLOR = DEFAULT_EDGE_COLOR;
+const NO_FILL = 'none';
+const DEFAULT_EDGE_WIDTH = 1;
+/**
+ * Class responsible for drawing diagram elements using SVG.js
+ */
 class DiagramPainter
 {
+    /**
+     * Create a new DiagramPainter
+     * @param {SVG} __svgDraw The SVG.js drawing object to use for rendering
+     * @param {Graph} __graph The graph model containing nodes and edges to draw
+     * @param {Function} __moveCB Callback function to call when a node is moved
+     */
     constructor(__svgDraw,__graph,__moveCB)
     {
         if (!__svgDraw) throw new Error("Invalid svg drawing object")
@@ -30,23 +52,37 @@ class DiagramPainter
         this._moveCB = __moveCB
     }
 
+    /**
+     * Get the map of SVG elements indexed by graph element ID
+     */
     get svgElements() { return this._svgElements }
 
+    /**
+     * Draw a container boundary rectangle
+     * @param {Object} containerObj The container object with width and height
+     * @param {SVG.Container} parentGroup Optional parent group to draw in
+     * @returns {SVG.Container} The group containing the boundary rectangle
+     */
     drawContainerBoundary(containerObj,parentGroup)
     {
         let g = parentGroup ? parentGroup.group() : this._svgDraw.group();
         g.rect(containerObj.width, containerObj.height)
-            .fill('none')
-            .stroke('black')
+            .fill(NO_FILL)
+            .stroke(DEFAULT_CONTAINER_BORDER_COLOR)
             .move(0,0)
 
         return g;
     }
 
-    drawActor(graphEl,containerGroup, parentModelObj)
+    /**
+     * Draw an actor node (user, system or store)
+     * @param {Object} graphEl The actor node to draw
+     * @param {SVG.Container} containerGroup Optional parent group to draw in
+     */
+    drawActor(graphEl,containerGroup)
     {
         graphEl.fillColor = graphEl.color || WHITE_COLOR
-        graphEl.lineColor = 'black'
+        graphEl.lineColor = DEFAULT_ACTOR_LINE_COLOR
 
         let g = graphEl.type == ACTOR_TYPE.USER ? 
                  this._drawAndPositionUserActor(graphEl,containerGroup) : 
@@ -60,14 +96,18 @@ class DiagramPainter
         this._rememberSVGElementForID(graphEl.id,g)
     }
 
+    /**
+     * Draw a non-user actor (system or store)
+     * @private
+     */
     _drawAndPositionNonUserActor(graphEl,containerGroup)
     {
         let g = containerGroup ? containerGroup.group() : this._svgDraw.group();
         let r = g.rect(graphEl.width, graphEl.height).fill(graphEl.fillColor).attr('stroke', graphEl.lineColor);
         if (graphEl.type == ACTOR_TYPE.STORE)
-            r.radius(30);//TODO: cleanup magic numbers
+            r.radius(STORE_CORNER_RADIUS);
         else
-            r.radius(2);
+            r.radius(DEFAULT_CORNER_RADIUS);
         let t = g.text(function (add) 
                 {
                     if (graphEl.prototype)
@@ -82,6 +122,10 @@ class DiagramPainter
         return g;
     }
 
+    /**
+     * Draw a user actor with icon
+     * @private 
+     */
     _drawAndPositionUserActor(graphEl,containerGroup)
     {
         
@@ -92,7 +136,7 @@ class DiagramPainter
 
         let r = g.rect(graphEl.width,graphEl.height)
                     .fill(graphEl.fillColor)
-                    .stroke({ color : 'black', width : 1})
+                    .stroke({ color : DEFAULT_USER_ACTOR_LINE_COLOR, width : DEFAULT_ACTOR_LINE_WIDTH})
         r.move(0,0)
 
         let t = g.text(graphEl.caption);
@@ -106,13 +150,19 @@ class DiagramPainter
         return g;
     }
 
+    /**
+     * Draw a channel node (request-response or async)
+     * @param {Object} channel The channel node to draw
+     * @param {SVG.Container} containerGroup Optional parent group to draw in
+     * @param {Object} parentModelObj Parent model object for context
+     */
     drawChannel(channel,containerGroup,parentModelObj)
     {
         let g = containerGroup ? containerGroup.group() : this._svgDraw.group()
-        let radius = channel.radius || 20 //TODO: cleanup magic numbers
+        let radius = channel.radius || DEFAULT_CHANNEL_RADIUS
         let c = g.circle(radius)
-        c.fill('#ffffff')
-        c.stroke('black')
+        c.fill(WHITE_COLOR)
+        c.stroke(DEFAULT_CHANNEL_LINE_COLOR)
         c.x(channel.x)
         c.y(channel.y)
         addTooltipIfAvailable(channel.text, c);
@@ -125,6 +175,11 @@ class DiagramPainter
         this._rememberSVGElementForID(channel.id,g)
     }
 
+    /**
+     * Draw an edge between nodes
+     * @param {Object} edge The edge to draw
+     * @param {SVG.Container} containerGroup Optional parent group to draw in
+     */
     drawEdge(edge,containerGroup)
     {
         let g = containerGroup ? containerGroup.group(edge.id) : this._svgDraw.group(edge.id)
@@ -148,6 +203,10 @@ class DiagramPainter
         g.graphEl = edge
     }
 
+    /**
+     * Draw the line segments of an edge
+     * @private
+     */
     _drawEdgeLine(container,edge)
     {
         let section = edge.sections[0];
@@ -202,7 +261,7 @@ class DiagramPainter
         }
             
         path.plot(pathStr)
-        path.stroke({width: 1, color : 'black'}).fill('none')
+        path.stroke({width: 1, color : DEFAULT_EDGE_COLOR}).fill(NO_FILL)
         return path;
 
         function determineCornerRadius(p1,p2,p3)
@@ -248,6 +307,10 @@ class DiagramPainter
         }
     }
 
+    /**
+     * Draw an arrow head at the end of an edge
+     * @private
+     */
     _drawArrowHead(container,edge)
     {
         let lastSection = edge.sections[edge.sections.length-1]
@@ -290,17 +353,20 @@ class DiagramPainter
         }
     
         let polylineCoords = `${point1.x},${point1.y} ${point2.x},${point2.y} ${point3.x},${point3.y}`
-        return container.polygon(polylineCoords).fill('black').stroke({width : 1})
+        return container.polygon(polylineCoords).fill(DEFAULT_EDGE_COLOR).stroke({width : DEFAULT_EDGE_WIDTH})
     }
 
-
+    /**
+     * Draw a user icon in the given container
+     * @private
+     */
     _drawUser(container,w,captionFontSize)
     { //sizes here are 'magic numbers' that seem to fit a simple browser-based drawing.
         //note: element positions are relative to the container.
         let headRadius = 2;
         let size = 6
         let c = container.circle(size*headRadius)
-                    .attr('stroke','black')
+                    .attr('stroke',DEFAULT_ACTOR_LINE_COLOR)
                     .attr('stroke-width','2')
                     .attr('fill','transparent')
         let headX = w/2
@@ -315,6 +381,10 @@ class DiagramPainter
          return container;
     }
 
+    /**
+     * Draw the request-response decoration for a channel
+     * @private
+     */
     _drawReqResDecoration(containingGroup,channel,parentModelObj)
     {
         let incomingEdge = this._channelIncomingEdge(channel,parentModelObj);
@@ -354,6 +424,10 @@ class DiagramPainter
         textEl.y(labelY)
     }
 
+    /**
+     * Find the incoming edge to a channel
+     * @private
+     */
     _channelIncomingEdge(channel,parentModelObj)
     {
         let incomingEdges = this._findEdgesByTarget(channel,parentModelObj)
@@ -361,6 +435,10 @@ class DiagramPainter
         return incomingEdges[0];
     }
 
+    /**
+     * Find the outgoing edge from a channel
+     * @private
+     */
     _channelOutgoingEdge(channel,parentModelObj) 
     {
         let outgoingEdges = this._findEdgesBySource(channel,parentModelObj)
@@ -389,7 +467,6 @@ class DiagramPainter
         let parent = parentModelObj || this._graph
         return parent.edges.filter(e => e.sources.includes(graphNode.id))
     }
-
 
     /**
      * Draw an async arrow head at the end of the given edge.
@@ -439,6 +516,10 @@ class DiagramPainter
         container.polygon(polylineCoords).fill('black').stroke({width : 1})
     }
 
+    /**
+     * Determine the direction an edge is pointing at its end
+     * @private
+     */
     _determineEdgeEndDirection(edge)
     {
         let hasBends = edge.sections[0].bendPoints && edge.sections[0].bendPoints.length > 0
@@ -459,6 +540,10 @@ class DiagramPainter
             return startX > endX ? HEAD_DIRECTION.W : HEAD_DIRECTION.E
     }
 
+    /**
+     * Store an SVG element in the index by its graph element ID
+     * @private
+     */
     _rememberSVGElementForID(id,svgEl)
     {
         if (!id) throw new Error("Invalid ID for graph element")
@@ -469,12 +554,20 @@ class DiagramPainter
         this._svgElements[id].push(svgEl)
     }
 
+    /**
+     * Remove all SVG elements for a given graph element ID from the index
+     * @private
+     */
     _forgetSVGElementsForID(id)
     {
         if (!id) throw new Error("Invalid ID for graph element")
         this._svgElements[id] = []
     }
 
+    /**
+     * Redraw all edges connected to a node after it moves
+     * @private
+     */
     _redrawEdges(graphNode, svgEl)
     {
         /*
@@ -488,6 +581,10 @@ class DiagramPainter
         outgoingEdges.forEach(e => { this._rerouteEdge(e,graphNode,svgEl) })
     }
 
+    /**
+     * Reroute an edge after a connected node moves
+     * @private
+     */
     _rerouteEdge(edge,graphNode,svgEl)
     {
         let isIncoming = edge.targets.includes(graphNode.id)
@@ -505,6 +602,10 @@ class DiagramPainter
         this._redrawEdge(edge);
     }
 
+    /**
+     * Redraw an edge after it has been rerouted
+     * @private
+     */
     _redrawEdge(edge) 
     {
         let edgeSVGElements = edge.type == EDGE_TYPE.DATA_FLOW ?
@@ -517,11 +618,19 @@ class DiagramPainter
         this.drawEdge(edge);
     }
 
+    /**
+     * Find a node in the graph by ID
+     * @private
+     */
     _findGraphNode(nodeID)
     {
         return this._graph.children.find(c => c.id == nodeID)
     }
 
+    /**
+     * Notify listeners that a node has moved
+     * @private
+     */
     _raiseNodeMoved()
     {
         if (this._moveCB)
