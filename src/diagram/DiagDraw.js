@@ -26,22 +26,35 @@ const ESTIMATED_USER_ACTOR_HEIGHT = 60; //this is derived from how the user acto
 async function layoutModel(model)
 {
     //create graph structure for layout library
-    let nodes = graphNodesFor(model) //top level actors and channels
-    let containers = getTopLevelContainersAsGraphObjects(model)
-    let edges = graphEdgesFor(model)
-
-    let graph = {
-        id : (model.name || "graph"),
-        layoutOptions: { 'elk.algorithm': 'layered', 
-                         'elk.edgeRouting' : 'ORTHOGONAL', 
-                         'elk.layered.layering.strategy' : 'INTERACTIVE',
-                         'elk.layered.nodePlacement.strategy' : 'NETWORK_SIMPLEX'
-                    },
-        children: nodes.concat(containers),
-        edges: edges
-    }
+    let graph = graphFromSystemModel(model)
     //run layout and return result
     return await elk.layout(graph)
+}
+
+/**
+ * Converts a system model into a graph structure suitable for layout.
+ * 
+ * @param {SystemModel} model The system model to convert into a graph structure.
+ * @returns {Object} A graph structure object ready for layout operation
+ */
+function graphFromSystemModel(model)
+{
+    let nodes = graphNodesFor(model);
+    let containers = getTopLevelContainersAsGraphObjects(model);
+    let edges = graphEdgesFor(model);
+
+    let graph = {
+        id: model.name || "graph", 
+        layoutOptions: {
+            'elk.algorithm': 'layered', 
+            'elk.edgeRouting': 'ORTHOGONAL', 
+            'elk.layered.layering.strategy': 'INTERACTIVE', 
+            'elk.layered.nodePlacement.strategy': 'NETWORK_SIMPLEX' 
+        },
+        children: nodes.concat(containers), 
+        edges: edges
+    };
+    return graph;
 }
 
 /**
@@ -202,6 +215,45 @@ function graphNodeRepresentsAnActor(node)
 }
 
 
+/**
+ * Assigns nesting levels to the containers in the graph.
+ * 
+ * @param {Object} graph The graph object to which the nesting levels are being assigned.
+ * @see graphFromSystemModel
+ */
+function assignContainerNestingLevels(graph)
+{
+    graph.children
+        .filter(c => isContainer(c) && isTopLevelObject(c))
+        .forEach(child => {
+            assignNestingLevels(child)
+        })
+    
+
+    /**
+     * Assigns nesting levels to a container and its nested containers.
+     * This function is called recursively to assign levels to nested containers.
+     * 
+     * @param {Object} container The container to which the nesting levels are being assigned.
+     * 
+     * @returns {number} The nesting level of the container.
+     */
+    function assignNestingLevels(container)
+    {
+        if (!container) throw new Error("invalid container when assigning nesting levels");
+        let nestedContainers = container.children.filter(c => isContainer(c))
+        if (nestedContainers.length == 0)
+        {
+            container.level = 1
+        }
+        else
+        {
+            let maxNestedLevel = Math.max(...(nestedContainers.map(nc => assignNestingLevels(nc)))) //note: also assigns level to nested containers.
+            container.level = maxNestedLevel+1
+        }
+        return container.level
+    }
+}
 
 /**
  * Using the given SVG object, draws the given graph
@@ -213,6 +265,8 @@ function graphNodeRepresentsAnActor(node)
 function drawGraph(draw,graph, moveCB = () => {})
 {
     if (!draw) throw new Error("Invalid SVG drawing container when drawing a graph")
+
+    assignContainerNestingLevels(graph)
     console.log(graph)
 
     let painter = new DiagramPainter(draw,graph, moveCB)
@@ -255,7 +309,7 @@ function drawGraph(draw,graph, moveCB = () => {})
  * 4. Draws all edges between elements in this container
  * 5. Positions the container group at its specified coordinates
  */
-function drawContainer(draw,graph,container, painter,parentGroup)
+function drawContainer(draw,graph,container, painter, parentGroup)
 {    
     let containerGroup = painter.drawContainerBoundary(container,parentGroup);
     
@@ -272,7 +326,7 @@ function drawContainer(draw,graph,container, painter,parentGroup)
     container.children
         .filter(child => isContainer(child) && isModelObjectContainedIn(child,container))
         .forEach(child => {
-            drawContainer(draw,graph,child,painter,containerGroup)
+            drawContainer(draw,graph,child,painter, containerGroup)
         })
 
     //draw edges in this container
@@ -284,7 +338,6 @@ function drawContainer(draw,graph,container, painter,parentGroup)
     // This applies the transform to all the children at this point, so has to be run *after* all children are drawn.
     containerGroup.move(container.x,container.y)
 }
-
 
 
 module.exports = {

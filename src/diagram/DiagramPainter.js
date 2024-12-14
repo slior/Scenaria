@@ -34,6 +34,19 @@ const PROTOTYPE_TEXT_SIZE = 9;
 const CONTAINER_NAME_TEXT_SIZE = 9;
 const REQ_RES_TEXT_SIZE = 8;
 const REQ_RES_LABEL_OFFSET = 10;
+
+const GREY_SHADES = [
+    '#FFFFFF', '#DADADA', '#B5B5B5', '#909090', '#6B6B6B',
+    '#464646', '#212121', '#212121', '#212121', '#212121'
+];
+function getContainerFillColor(level)
+{
+    level = Math.max(level,0) //at least 0.
+    level = Math.min(level,GREY_SHADES.length-1)
+
+    return GREY_SHADES[level]
+}
+
 /**
  * Class responsible for drawing diagram elements using SVG.js
  */
@@ -61,6 +74,8 @@ class DiagramPainter
      */
     get svgElements() { return this._svgElements }
 
+
+
     /**
      * Draw a container boundary rectangle
      * @param {Object} containerObj The container object with width and height
@@ -69,9 +84,11 @@ class DiagramPainter
      */
     drawContainerBoundary(containerObj,parentGroup)
     {
+        let level = containerObj.level || 0;
+        let fillColor = level >= 0 ? getContainerFillColor(level) : NO_FILL
         let g = parentGroup ? parentGroup.group() : this._svgDraw.group();
         let r = g.rect(containerObj.width, containerObj.height)
-            .fill(NO_FILL)
+            .fill(fillColor)
             .stroke(DEFAULT_CONTAINER_BORDER_COLOR)
             .move(0,0)
         let t = g.text(function (add) 
