@@ -97,9 +97,11 @@ class DiagramPainter
                 })
                 .leading(1.3)
                 .attr({ 'text-anchor': 'middle' });
-        //Position the container name at the middle of the rectable, on top of it.
+        
+        addTooltipIfAvailable(containerObj.name,r)
+        //Position the container name at the middle of the rectable, inside the rectangle.
         t.cx(r.cx())
-        t.cy(r.y() - CONTAINER_NAME_TEXT_SIZE)
+        t.cy(r.y() + CONTAINER_NAME_TEXT_SIZE-2)
         return g;
     }
 
