@@ -14,6 +14,11 @@ const DRAW_TEXT_HEIGHT = 30;
 const DRAW_CHAR_WIDTH = 10;
 const DRAW_MARGIN_WIDTH = 10;
 const DRAW_CHANNEL_RADIUS = 20;
+const DEFAULT_SPACING = 80
+const MIN_SPACING = 10;
+const MAX_SPACING = 100;
+const SPACING_KEY = 'spacing'
+
 
 const ESTIMATED_USER_ACTOR_HEIGHT = 60; //this is derived from how the user actor is drawn. See DiagramPainer._drawUser
 /**
@@ -23,12 +28,10 @@ const ESTIMATED_USER_ACTOR_HEIGHT = 60; //this is derived from how the user acto
  * @param {SystemModel} model The model whose diagram we're layout
  * @returns A promise with the model object enriched with layout information (x,y, edges)
  */
-async function layoutModel(model)
+async function layoutModel(model, layoutInputs)
 {
-    //create graph structure for layout library
-    let graph = graphFromSystemModel(model)
-    //run layout and return result
-    return await elk.layout(graph)
+    let graph = graphFromSystemModel(model, layoutInputs)
+    return await elk.layout(graph) //run layout and return result
 }
 
 /**
@@ -37,7 +40,7 @@ async function layoutModel(model)
  * @param {SystemModel} model The system model to convert into a graph structure.
  * @returns {Object} A graph structure object ready for layout operation
  */
-function graphFromSystemModel(model)
+function graphFromSystemModel(model, layoutInputs)
 {
     let nodes = graphNodesFor(model);
     let containers = getTopLevelContainersAsGraphObjects(model);
@@ -49,13 +52,38 @@ function graphFromSystemModel(model)
             'elk.algorithm': 'layered', 
             'elk.edgeRouting': 'ORTHOGONAL', 
             'elk.layered.layering.strategy': 'INTERACTIVE', 
-            'elk.layered.nodePlacement.strategy': 'NETWORK_SIMPLEX' 
+            'elk.layered.nodePlacement.strategy': 'NETWORK_SIMPLEX',
+            'elk.crossingMinimization.strategy': 'LAYER_SWEEP',
+            'nodePlacement.strategy': 'NETWORK_SIMPLEX',
+            'hierarchyHandling': 'INCLUDE_CHILDREN',
+            'spacing.nodeNode': layoutInputs[SPACING_KEY] || DEFAULT_SPACING,
+            'spacing.nodeNodeBetweenLayers': layoutInputs[SPACING_KEY] || DEFAULT_SPACING,
+            'spacing.edgeNodeBetweenLayers': layoutInputs[SPACING_KEY] || DEFAULT_SPACING,
+            'spacing.edgeNode': layoutInputs[SPACING_KEY] || DEFAULT_SPACING
         },
         children: nodes.concat(containers), 
         edges: edges
     };
     return graph;
 }
+
+
+
+/**
+ * Creates layout options based on the provided value from  user inputs.
+ * 
+ * @param {number} spacing The spacing value to use for layout.
+ * @returns {Object} An object containing the layout options.
+ * @throws {Error} If any value given is invalid
+ */
+function newLayoutOptionsFromInputs(spacing)
+{
+    if (spacing < MIN_SPACING || spacing > MAX_SPACING) {
+        throw new Error(`Spacing must be between ${MIN_SPACING} and ${MAX_SPACING}.`);
+    }
+    return { [SPACING_KEY] : spacing};
+}
+ 
 
 /**
  * Gets all top-level containers from the system model and converts them to graph objects
@@ -343,6 +371,7 @@ function drawContainer(draw,graph,container, painter, parentGroup)
 module.exports = {
     layoutModel,
     drawGraph,
+    newLayoutOptionsFromInputs,
 
     //for testing. should not be used outside this module.
     graphNodeRepresentsAnActor 

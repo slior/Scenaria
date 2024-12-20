@@ -101,6 +101,10 @@
             padding-left: 5px;
         }
 
+        .spacingInput {
+            width: 60px;
+            margin-left: 10px;
+        }
     </style>
     <!-- Loader and code for initializing the editor -->
     <!-- Also defines a 'getCode' function to retrieve the code -->
@@ -133,6 +137,12 @@
         return getCode(); //retrievs it from the monaco editor - defined in Editor.js
     }
 
+    function getLayoutOptionInputs()
+    {
+        let spacingValue = parseInt(document.getElementById('spacingInput').value, 10);
+        return main.layoutOptionsFromInputs(spacingValue)
+    }
+
     function parseAndDraw()
     {
         try
@@ -140,7 +150,9 @@
             clearError()
             main.reset()
             let code = getCodeFromEditor();
-            main.parseAndPresent(code, () => { updateStateLink() })
+           
+
+            main.parseAndPresent(code, () => { updateStateLink() }, getLayoutOptionInputs())
                 .then(model => {
                     setScenariosToSelect(model.scenarios)
                     updateStateLink()
@@ -315,6 +327,8 @@
     <br/> <br/>
     <input type="checkbox" id="chkShowNotes" onChange="toggleNotes()" />
     <label for="chkShowNotes">Notes</label>
+    <input type="number" id="spacingInput" min="20" max="100" step="1" value="20" class="spacingInput" />
+    <label for="spacingInput">Spacing</label>
     &nbsp;&nbsp;<a id="shareLink">Share</a>
     
     

@@ -3,7 +3,7 @@ const { createParser, getLanguageKeywords } = require("./lang/Lang")
 
 const assert = require('assert')
 const { SVG } = require('@svgdotjs/svg.js')
-const {layoutModel,drawGraph } = require('./diagram/DiagDraw')
+const {layoutModel,drawGraph, newLayoutOptionsFromInputs } = require('./diagram/DiagDraw')
 const { DiagramController } = require('./diagram/DiagramController')
 const { ScenarioRunner } = require('./ScenarioRunner')
 const { ScenarioStepper } = require('./ScenarioStepper') 
@@ -39,11 +39,23 @@ function clearDiagram()
     }
 }
 
-function presentModel(model,moveCB)
+/**
+ * Creates layout options based on the provided user inputs.
+ * 
+ * @param {number} spacing The spacing value to use for layout.
+ * @returns {Object} An object containing the layout options.
+ * @throws {Error} If any value given is invalid
+ */
+function layoutOptionsFromInputs(spacing)
+{
+    return newLayoutOptionsFromInputs(spacing)
+}
+
+function presentModel(model,moveCB, layoutInputs)
 {
      topLevelSVG = createSVGImpl(drawingContainer)
 
-    return layoutModel(model)
+    return layoutModel(model, layoutInputs)
             .then(g => { 
                 graph = g;
                 return drawGraph(topLevelSVG,g,moveCB)
@@ -135,12 +147,12 @@ function parseCode(programCode)
  * @param {() => void} moveCB An optional callback to call when a node is moved
  * @returns A promise with the parsed model.
  */
-function parseAndPresent(code,moveCB)
+function parseAndPresent(code,moveCB, layoutInputs)
 {
     model = parseCode(code)
     console.log(`Parsed code: ${JSON.stringify(model)}`)
     model = resolveAnnotations(model)
-    return presentModel(model,moveCB)
+    return presentModel(model,moveCB, layoutInputs)
 }
 
 /**
@@ -187,5 +199,6 @@ module.exports = {
     setStateFromURL,
     getLanguageKeywords,
     showNotes,
-    hideNotes
+    hideNotes,
+    layoutOptionsFromInputs
 }
