@@ -21,6 +21,7 @@ class SVGEventHandler
 
     handleMouseDown(evt)
     {
+        evt.stopPropagation()
         this.isDragging = true;
         this.startPoint = { x : evt.x, y : evt.y }
         this.element.css({ cursor: 'grabbing' });
@@ -28,6 +29,7 @@ class SVGEventHandler
 
     handleMouseMove(evt)
     {
+        evt.stopPropagation()
         if (this.isDragging)
         {
             const dx = evt.x - this.startPoint.x;
@@ -40,6 +42,7 @@ class SVGEventHandler
 
     handleMouseUp(evt) 
     {
+        evt.stopPropagation()
         this.isDragging = false;
         this.element.css({ cursor: 'grab' });
         if (this.dropCallback)
