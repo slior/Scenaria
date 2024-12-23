@@ -53,6 +53,7 @@ Reserved words are:
 - `is`
 - `color`
 - `prototype`
+- `container`
 
 A **text literal** is a series of any alphanumeric characters, with space, enclosed in single quotes (`'`).
 
