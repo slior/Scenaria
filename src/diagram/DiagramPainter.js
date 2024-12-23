@@ -105,6 +105,8 @@ class DiagramPainter
 
         SVGEventHandler.attachTo(g,() => {
             //TODO: redraw edges that connect to the container.
+            updateGraphObjPositionAttributes(containerObj,g)
+            this._raiseNodeMoved(); //will notify application the container has moved -> will update state link
         })
 
         return g;
@@ -126,6 +128,7 @@ class DiagramPainter
 
         addTooltipIfAvailable(graphEl.note,g)
         SVGEventHandler.attachTo(g,() => { 
+                                    updateGraphObjPositionAttributes(graphEl,g)
                                     this._redrawEdges(graphEl,g);
                                     this._raiseNodeMoved();
                                  })
@@ -633,7 +636,7 @@ class DiagramPainter
         reconstructEdge(edge, targetPoint, sourcePoint,isVertical); //this will mutate the edge object
         console.log(`new edge: ${JSON.stringify(edge)}`)
 
-        updateGraphNodePositionAttributes(graphNode, svgEl);
+        updateGraphObjPositionAttributes(graphNode, svgEl);
         
         this._redrawEdge(edge);
     }
@@ -683,7 +686,7 @@ function addTooltipIfAvailable(text, svgEl)
     }
 }
 
-function updateGraphNodePositionAttributes(graphNode, svgEl)
+function updateGraphObjPositionAttributes(graphNode, svgEl)
 {
     graphNode.x = svgEl.x();
     graphNode.y = svgEl.y();

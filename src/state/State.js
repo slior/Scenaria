@@ -7,9 +7,12 @@ function encodeState(graph,code)
     let state = {
         c : code
     }
+    const { compressed: compressedGraph, keyMap} = compress(graph);
+
     console.log(`length of uncompressed graph: ${JSON.stringify(graph).length}`)
-    console.log(`length of compressed graph: ${JSON.stringify(compressGraph(graph)).length}`)
-    state.g = compressGraph(graph)
+    console.log(`length of compressed graph: ${JSON.stringify(compressedGraph).length}`)
+    state.g = compressedGraph
+    state.k = keyMap
     let stateString = JSON.stringify(state)
     return stateString
 
@@ -19,117 +22,105 @@ function encodeState(graph,code)
 function decodeState(stateValue)
 {
     let state = JSON.parse(stateValue)
-    if (state.g)
-        state.g = decompressGraph(state.g)
-    else throw new Error(`Missing graph from state to decode: ${JSON.stringify(state)}`)
+    if (!state.g) throw new Error(`Missing graph from state to decode: ${JSON.stringify(state)}`)
+    if (!state.k) throw new Error(`Missing compression keymap in state: ${JSON.stringify(state)}`)
+    const decompressedGraph = decompress(state.g,state.k)
+    state.g = decompressedGraph
     return state;
 }
 
-const COMPRESSED_KEYS = {
-    //for nodes
-    children : "c",
-    type : "t",
-    id : "i",
-    width : "w",
-    height : "h",
-    x : "x",
-    y : "y",
-    caption : "ca", 
-    fillColor : "fc",
-    lineColor : 'lc',
 
-    //for edges
-    edges : "e",
-    sources : "s",
-    targets : "ts",
-    sections : "se",
-    startPoint : "sp",
-    ednPoint : "ep",
-    bendPoints : "bp"
 
-}
-
-Object.values(ANNOTATION_KEY).forEach(v => COMPRESSED_KEYS[v] = v )
-
-const UNCOMPRESSED_KEYS = {}
-let cks = Object.keys(COMPRESSED_KEYS)
-Object.values(COMPRESSED_KEYS).forEach(v => {
-    let k = cks.find(_k => COMPRESSED_KEYS[_k] == v)
-    if (k) 
-        UNCOMPRESSED_KEYS[v] = k
-    else throw new Error(`Could not reverse map key for ${v}`)
-})
-
-function compressGraph(graph)
+/**
+ * Compresses an object by generating short key names and recursively compressing the object.
+ * 
+ * @param {Object} obj The object to compress.
+ * @returns {Object,Object} The compressed object and the key map.
+ */
+function compress(obj)
 {
-    let compressed = {}
-    compressed[COMPRESSED_KEYS['children']] = graph.children.map(child => {
-        let compressedChild = {}
-        Object.keys(child).forEach(k => {
-            let ck = COMPRESSED_KEYS[k]
-            if (ck)
-                compressedChild[ck] = child[k]
-        })
-        return compressedChild
-    })
+    const keyMap = {};
+    let keyCounter = 0;
 
-    compressed[COMPRESSED_KEYS['edges']] = graph.edges.map(edge => {
-        let compressedEdge = {}
-        compressedEdge[COMPRESSED_KEYS['sources']] = edge['sources']
-        compressedEdge[COMPRESSED_KEYS['targets']] = edge['targets']
-        compressedEdge[COMPRESSED_KEYS['type']] = edge['type']
-        compressedEdge[COMPRESSED_KEYS['id']] = edge['id']
-        compressedEdge[COMPRESSED_KEYS['sections']] = edge.sections.map(section => {
-            let compressedSection = {}
-            compressedSection[COMPRESSED_KEYS['id']] = section['id']
-            compressedSection[COMPRESSED_KEYS['startPoint']] = section['startPoint']
-            compressedSection[COMPRESSED_KEYS['endPoint']] = section['endPoint']
-            compressedSection[COMPRESSED_KEYS['bendPoints']] = section['bendPoints']
-            return compressedSection
-        })
-        return compressedEdge
-    })
-    return compressed
+    // Generate short key names
+    const generateKey = (() =>
+    {
+        const chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
+        return () => {
+            let key = "";
+            let num = keyCounter++;
+            do
+            {
+                key = chars[num % chars.length] + key;
+                num = Math.floor(num / chars.length);
+            } while (num > 0);
+            return key;
+        };
+    })();
+
+    // Compress the object recursively
+    function _compress(obj)
+    {
+        if (Array.isArray(obj))
+        {
+            return obj.map(el => _compress(el));
+        }
+        else if (obj !== null && typeof obj === "object")
+        {
+            const compressedObj = {};
+            for (const key in obj)
+            {
+                if (!keyMap[key])
+                    keyMap[key] = generateKey();
+                compressedObj[keyMap[key]] = _compress(obj[key]);
+            }
+            return compressedObj;
+        }
+        return obj; // Primitive value, leave as is
+    }
+
+    return { compressed: _compress(obj), keyMap };
 }
 
-function decompressGraph(compressed)
+
+/**
+ * Decompresses a compressed object back to its original form using a provided key map.
+ * 
+ * @param {Object} compressed The compressed object to decompress.
+ * @param {Object} keyMap The key map used for compression.
+ * @returns {Object} The decompressed object.
+ * @see compress
+ */
+function decompress(compressed, keyMap)
 {
-    let graph = {}
-    let children = compressed[COMPRESSED_KEYS['children']]
-    let uncompressedChildren = children.map(compressedChild => {
-        let uncompressedChild = {}
-        Object.keys(UNCOMPRESSED_KEYS).forEach(ck => {
-            let uck = UNCOMPRESSED_KEYS[ck]
-            if (uck)
-                uncompressedChild[uck] = compressedChild[ck]
-            else throw new Error(`Unrecognized compressed key ${ck}`)
-        })
-        return uncompressedChild
-    })
-    graph.children = uncompressedChildren
+    // Create a reverse map for efficient lookup
+    const reverseKeyMap = Object.fromEntries(
+        Object.entries(keyMap).map(([original, short]) => [short, original])
+    );
 
-    
-    let uncompressedEdges = compressed[COMPRESSED_KEYS['edges']].map(compressedEdge => {
-        let uncompressedEdge = {}
-        uncompressedEdge['id'] = compressedEdge[COMPRESSED_KEYS['id']]
-        uncompressedEdge['sources'] = compressedEdge[COMPRESSED_KEYS['sources']]
-        uncompressedEdge['targets'] = compressedEdge[COMPRESSED_KEYS['targets']]
-        uncompressedEdge['type'] = compressedEdge[COMPRESSED_KEYS['type']]
+    // Decompress recursively
+    function _decompress(obj)
+    {
+        if (Array.isArray(obj))
+        {
+            return obj.map(_decompress);
+        }
+        else if (obj !== null && typeof obj === "object")
+        {
+            const decompressedObj = {};
+            for (const key in obj)
+            {
+                const originalKey = reverseKeyMap[key];
+                decompressedObj[originalKey] = _decompress(obj[key]);
+            }
+            return decompressedObj;
+        }
+        return obj; // Primitive value, leave as is
+    }
 
-        uncompressedEdge.sections = compressedEdge[COMPRESSED_KEYS['sections']].map(compressedSection => {
-            let uncompressedSection = {}
-            uncompressedSection['id'] = compressedSection[COMPRESSED_KEYS['id']]
-            uncompressedSection['startPoint'] = compressedSection[COMPRESSED_KEYS['startPoint']]
-            uncompressedSection['endPoint'] = compressedSection[COMPRESSED_KEYS['endPoint']]
-            uncompressedSection['bendPoints'] = compressedSection[COMPRESSED_KEYS['bendPoints']]
-            return uncompressedSection
-        })
-        return uncompressedEdge
-    })
-
-    graph.edges = uncompressedEdges
-    return graph;
+    return _decompress(compressed);
 }
+
 
 class State
 {
@@ -142,7 +133,14 @@ class State
         this._code = _code
     }
 
-    static encode(graph,code)
+    /**
+     * Encodes the state (graph and code) into a base64 string.
+     * 
+     * @param {Object} graph The graph data to encode.
+     * @param {String} code The code to encode.
+     * @returns {String} The base64 encoded string of the state.
+     */
+    static encode(graph, code)
     {
         let state = encodeState(graph,code)
         console.log(`state length uncompressed: ${state.length}`)
@@ -152,6 +150,13 @@ class State
         return state64
     }
 
+    /**
+     * Creates a new State instance from a base64 string.
+     * 
+     * @param {String} str The base64 string to parse.
+     * @returns {State} A new State instance.
+     * @throws {Error} Throws an error if the string is invalid.
+     */
     static fromBase64(str)
     {
         if (!str) throw new Error("Invalid string to parse for state")
@@ -166,5 +171,9 @@ class State
 
 
 module.exports = {
-    State
+    State,
+
+    //For testing purposes
+    compress,
+    decompress
 }
