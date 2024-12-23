@@ -199,6 +199,50 @@ cs --> cd;
 cs <-- cd;
 ```
 
+### Containers
+
+It's possible to group actors and data flows into containers that will be drawn as part of the diagram.  
+The syntax for a container is:  
+```
+container <name> as <id> { 
+    <other definitions ... >
+}
+```
+
+Example:
+```
+container 'Backend' as be {
+    agent 'Gateway' as gw
+    agent 'Auth' as au
+    store 'Data' as data
+
+    gw -('authenticate')-> au
+
+    gw <-- data
+};
+```
+
+Containers can also be nested:
+```
+container 'System' as sys {
+
+    container 'Frontend' as fe {
+        agent 'Shop UI' as ui
+    }
+
+    container 'Backend' as be {
+        agent 'Gateway' as gw
+        agent 'Auth' as au
+        store 'Data' as data
+
+        gw -('authenticate')-> au
+
+        gw <-- data
+    }
+};
+```
+
+
 ### Scenario Definition
 
 After defining at least the components in the system, you can add scenarios to the description.  
