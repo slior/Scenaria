@@ -25,7 +25,8 @@ class ScenarioRunner extends ScenarioExecuter
     {
         if (!scenario) throw new Error("Invalid scenario")
 
-        userMsgCallback(`Running scenario ${scenario.name}`)
+        if (fromIndex <= 0) //show this message only on the first step
+            userMsgCallback(`Running scenario ${scenario.name}`)
         
         let allSteps = scenario.steps
         let step = allSteps[fromIndex]

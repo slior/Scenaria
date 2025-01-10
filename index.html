@@ -165,18 +165,55 @@
         }
     }
     
+    const VIEW_LINK_ELEMENT_ID = "viewLink"
+    const SHARE_LINK_ELEMENT_ID = "shareLink"
+    const VIEWER_PAGE = "viewer";
+
     function updateStateLink()
     {
         let newURL = generateStateURL()
-        let shareLink = document.getElementById("shareLink")
+        let shareLink = document.getElementById(SHARE_LINK_ELEMENT_ID)
         shareLink.href = newURL
+
+        let viewLink = document.getElementById(VIEW_LINK_ELEMENT_ID)
+        viewLink.href = generateViewURL()
+    }
+
+    function generateViewURL()
+    {
+        let state = main.generateStateURLEncoding(getCodeFromEditor())
+        let currentURL = new URL(window.location.href)
+        
+        let viewerURL = viewURLFrom(currentURL,state)
+        
+        return viewerURL.toString()
     }
 
     function resetStateLink()
     {
-        let shareLink = document.getElementById("shareLink")
+        let shareLink = document.getElementById(SHARE_LINK_ELEMENT_ID)
         shareLink.href = noStateURL()
+        
+        let viewLink = document.getElementById(VIEW_LINK_ELEMENT_ID)
+        viewLink.href = viewURLFrom(noStateURL())
     }
+
+    /**
+     * Creates a URL to the viewer.html page with the given state parameter.
+     * If no state parameter is given, will return a URL without the state parameter.
+     * 
+     * @param {URL} currentURL - The current base URL.
+     * @param {string} state - The state parameter to be added to the URL. Optional
+     * @returns {URL} The created URL.
+     */
+    function viewURLFrom(currentURL, state)
+    {
+        let viewerURL = new URL(VIEWER_PAGE, currentURL.origin + currentURL.pathname.replace(/[^/]*$/, ''))
+        if (state)
+            viewerURL.searchParams.set(STATE_PARAM, state)
+        return viewerURL
+    }
+
 
     function setScenariosToSelect(scenarios)
     {
@@ -330,6 +367,7 @@
     <input type="number" id="spacingInput" min="20" max="100" step="1" value="20" class="spacingInput" />
     <label for="spacingInput">Spacing</label>
     &nbsp;&nbsp;<a id="shareLink">Share</a>
+    &nbsp;&nbsp;<a id="viewLink">View Only</a>
     
     
         <hr />

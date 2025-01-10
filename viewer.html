@@ -1,0 +1,183 @@
+<html>
+<head>
+    <title>Scenaria Viewer</title>
+    <link rel="icon" href="./favicon.png">
+    <style>
+        .errorText { 
+            color: red;
+            font-family:Courier, monospace;
+        }
+
+        .consoleText {
+            color : black;
+            font-family:Courier, monospace;
+            overflow-y: auto;
+            height: 100px;
+            border: 1px solid black;
+        }
+        
+        button {
+            color: #090909;
+            padding: 0.7em 1.7em;
+            font-size: 18px;
+            border-radius: 0.5em;
+            background: #e8e8e8;
+            border: 1px solid #e8e8e8;
+            transition: all .3s;
+            box-shadow: 6px 6px 12px #c5c5c5,
+                        -6px -6px 12px #ffffff;
+        }
+
+        button:active {
+            color: #666;
+            box-shadow: inset 4px 4px 12px #c5c5c5,
+                        inset -4px -4px 12px #ffffff;
+        }
+
+        body{
+            font-family: arial;	
+        }
+
+        .drawingArea {
+            height : 70vh;
+            width: 100%;
+            border:1px solid black;
+            overflow-y:scroll;
+            border-radius: 6px;
+        }
+
+        .drawingSVG {
+            height : 800px;
+            width : 100%;
+            user-select: none;
+        }
+
+        .spacingInput {
+            width: 60px;
+            margin-left: 10px;
+        }
+    </style>
+    <script src="./main.js"></script>
+<script>
+    var scenarioSelection = null;
+    const STATE_PARAM = 's'
+
+    function init()
+    {        
+        let drawingBoard = document.getElementById('drawing');
+        scenarioSelection = document.getElementById('scenarioSelect');
+        main.initApp(drawingBoard);
+        parseStateFromURL();
+    }
+    function parseStateFromURL()
+    {
+        let params = new URLSearchParams(window.location.search);
+        if (params.has(STATE_PARAM))
+        {
+            let model = main.setStateFromURL(
+                                params.get(STATE_PARAM),
+                                (code) => {}, //no code callback
+                                () => {}  //no movement callback
+                            )
+            setScenariosToSelect(model.scenarios)
+            showMsg("Model loaded.")
+            showMsg("Done, from URL.")
+        }
+        else
+        {
+            showError("No diagram state provided in URL")
+        }
+    }
+
+    function setScenariosToSelect(scenarios)
+    {
+        if (!scenarios) throw new Error("No scenarios when setting scenarios selection")
+    
+        clearScenarioSelection();
+
+        if (scenarioSelection)
+            scenarios.forEach((scenario,ind) =>
+            {
+                let opt = document.createElement("option");
+                opt.value = ind;
+                opt.innerHTML = scenario.name || `Scenario ${ind}`;
+                scenarioSelection.append(opt);
+            })
+    }
+
+    function clearScenarioSelection()
+    {
+        while (scenarioSelection.options.length > 0) 
+            scenarioSelection.remove(0)
+    }
+
+    // function getLayoutOptionInputs() {
+    //     let spacingValue = parseInt(document.getElementById('spacingInput').value, 10);
+    //     return main.layoutOptionsFromInputs(spacingValue)
+    // }
+
+    
+    function showMsg(msg) {
+        let m = msg || '';
+        console.log(m)
+        document.getElementById('cons').innerHTML += m + "<br/>"
+    }
+
+    function showError(msg) {
+        console.error(msg || '')
+        document.getElementById("error").innerText = `${msg || ""}`
+    }
+
+    function clearError() {
+        document.getElementById("error").innerText = ""
+    }
+
+    function clearConsole() {
+        document.getElementById('cons').innerText = ''
+    }
+
+    function runScenario()
+    {
+        main.runScenario(scenarioSelection.value, showMsg)
+    }
+
+    function stepBack()
+    {
+        main.scenarioBack(scenarioSelection.value, showMsg)
+    }
+
+    function stepForward()
+    {
+        main.scenarioNext(scenarioSelection.value, showMsg)
+    }
+
+    
+
+    function toggleNotes()
+    {
+        let shouldShowNotes = document.getElementById('chkShowNotes').checked
+        if (shouldShowNotes)
+            main.showNotes()
+        else
+            main.hideNotes()
+    }
+</script>
+</head>
+
+<body onload="init()">
+    <div id="drawing" class="drawingArea"></div>
+    <hr/>
+    <select id="scenarioSelect" style="width:20%"></select>
+    <button onclick="runScenario()">Run Scenario</button>
+    <button onclick="stepBack()">&lt;</button>
+    <button onclick="stepForward()">&gt;</button>
+    <input type="checkbox" id="chkShowNotes" onChange="toggleNotes()" />
+    <label for="chkShowNotes">Notes</label>
+    <!-- <input type="number" id="spacingInput" min="20" max="100" step="1" value="20" class="spacingInput" /> -->
+    <!-- <label for="spacingInput">Spacing</label> -->
+    
+    <hr />
+    <div id="cons" class="consoleText"></div>
+    <span id="error" class="errorText"></span>
+</body>
+</html> 
