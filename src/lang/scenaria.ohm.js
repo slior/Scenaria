@@ -18,9 +18,9 @@ Scenaria {
 	
     Program = ProgramElements
      
-    SingleStatement = Statement ";"
+    SingleStatement = Statement
     ProgramElement = SingleStatement | comment
-    ProgramElements = (ProgramElement )? (~";" ProgramElement)*
+    ProgramElements = (ProgramElement )? (ProgramElement)*
   
     reserved_word = ${Object.values(KEYWORDS).join(" | ")}
 
@@ -72,7 +72,7 @@ Scenaria {
      AnnotationAssignmentClause = is AnnotationRefList
      
      AnnotationDef = "@" ident "{"  AnnotationStatement* "}"
-     AnnotationStatement = (AnnotColorStmt | AnnotProtoStmt) ";"
+     AnnotationStatement = (AnnotColorStmt | AnnotProtoStmt)
      AnnotColorStmt = color ":" TextLiteral
      AnnotProtoStmt = prototype ":" TextLiteral
     

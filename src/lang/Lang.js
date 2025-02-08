@@ -189,7 +189,7 @@ function createParser()
             return c.asIR();
         },
 
-        SingleStatement(c,_)
+        SingleStatement(c)
         {
             return c.asIR();
         },
@@ -347,7 +347,7 @@ function createParser()
             return [annot]
         },
 
-        AnnotationStatement(stmt,_) {
+        AnnotationStatement(stmt) {
             return stmt.asIR()
         },
 

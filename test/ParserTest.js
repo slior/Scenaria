@@ -39,15 +39,15 @@ function createExpectedIR(overriddenProps)
 describe("Scenaria Language Parser", function() {
     it("Successfully parses a comment and ignores it", function() {
         let testProgram = String.raw`
-            agent 'AA' as aa;
+            agent 'AA' as aa
             //this is just a comment.
-            agent 'BB' as bb; //a comment at the end of the line
+            agent 'BB' as bb //a comment at the end of the line
 
             'some scenario' {
                 aa -('')-> bb //aa to bb: nothing
                 //and this is another comment
                 
-            };
+            }
         `
 
         let aa = newActor(ACTOR_TYPE.AGENT,'aa','AA')
@@ -69,9 +69,9 @@ describe("Scenaria Language Parser", function() {
 
     it("Parses a literal with punctuation marks", function() {
         let testProgram = String.raw`
-            agent 'AA!' as aa;
-            agent 'BB (Failure)' as bb; //uses '(' ')'
-            agent 'Nanny Ogg-Witch' as now; //uses '-'
+            agent 'AA!' as aa
+            agent 'BB (Failure)' as bb //uses '(' ')'
+            agent 'Nanny Ogg-Witch' as now //uses '-'
         `
         let expectedIR = createExpectedIR({
             actors : [  newActor(ACTOR_TYPE.AGENT,'aa','AA!'),
@@ -86,13 +86,13 @@ describe("Scenaria Language Parser", function() {
 
     it("Parses channel definitions", function() {
         let testProgram = String.raw`
-            agent 'AA!' as aa;
-            agent 'BB (Failure)' as bb; //uses '(' ')'
-            agent 'Nanny Ogg-Witch' as now; //uses '-'
+            agent 'AA!' as aa
+            agent 'BB (Failure)' as bb //uses '(' ')'
+            agent 'Nanny Ogg-Witch' as now //uses '-'
 
-            aa -('')-> bb;
-            bb - ( 'stam' ) -> now;
-            bb - ( 'cdc:data moved' ) -\\ aa;
+            aa -('')-> bb
+            bb - ( 'stam' ) -> now
+            bb - ( 'cdc:data moved' ) -\\ aa
         `
 
         let expectedIR = createExpectedIR({
@@ -115,14 +115,14 @@ describe("Scenaria Language Parser", function() {
     it("Rejects identifiers that are reserved words", function() {
         assert.throws(() => {
             let problemSource = String.raw`
-                agent 'user' as user;
+                agent 'user' as user
             `
             createParserForTest()(problemSource)
           },/not a reserved_word/,"trying to parse 'user' as an identifier")
     
           assert.throws(() => {
             let problemSource = String.raw`
-              store 'db' as agent;
+              store 'db' as agent
             `
             createParserForTest()(problemSource)
           },/not a reserved_word/,"trying to parse 'agent' as an identifier")
@@ -131,11 +131,11 @@ describe("Scenaria Language Parser", function() {
 
     it("Parses a note for an identifier", function() {
         let testProgram = String.raw`
-            agent 'Vizzini' as vi;
-            store 'Hoard!' as h;
+            agent 'Vizzini' as vi
+            store 'Hoard!' as h
 
-            note for vi: 'Inconceivable!';
-            note for h : 'all the gold is here';
+            note for vi: 'Inconceivable!'
+            note for h : 'all the gold is here'
         `
 
         let expectedIR = createExpectedIR({ 
@@ -151,20 +151,20 @@ describe("Scenaria Language Parser", function() {
     it("Rejects a note for an identifier it doesn't know", function() {
         assert.throws(() => {
             let problemSource = String.raw`
-              agent 'user' as u;
-              note for unknown : 'some note';
+              agent 'user' as u
+              note for unknown : 'some note'
             `
             createParserForTest()(problemSource)
           },/Unrecognized id for note/,"unrecognized actor id for note")
     })
 
-    it("Parsers a user and agent actors successfully",function() {
+    it("Parses a user and agent actors successfully",function() {
         let testProgram = String.raw`
-            agent 'Vizzini' as vi;
-            user 'Inigo' as montoya;
+            agent 'Vizzini' as vi
+            user 'Inigo' as montoya
 
-            note for vi: 'Inconceivable!';
-            note for montoya : 'Hello! My name is Inigo Montoya ...';
+            note for vi: 'Inconceivable!'
+            note for montoya : 'Hello! My name is Inigo Montoya ...'
         `
 
         let expectedIR = createExpectedIR({
@@ -179,14 +179,14 @@ describe("Scenaria Language Parser", function() {
 
     it("Parses an annotation assignment correctly", function() {
         let testProgram = String.raw`
-            agent 'Vizzini' as vi;
-            user 'Inigo' as montoya;
+            agent 'Vizzini' as vi
+            user 'Inigo' as montoya
 
-            note for vi: 'Inconceivable!';
-            note for montoya : 'Hello! My name is Inigo Montoya ...';
+            note for vi: 'Inconceivable!'
+            note for montoya : 'Hello! My name is Inigo Montoya ...'
 
-            vi is @BadGuy;
-            montoya is @GoodGuy;
+            vi is @BadGuy
+            montoya is @GoodGuy
         `
 
         let expectedIR = createExpectedIR({
@@ -202,19 +202,19 @@ describe("Scenaria Language Parser", function() {
     it("Parses an annotation definition correctly", function() {
   
         let testProgram = String.raw`
-            agent 'Vizzini' as vi;
-            user 'Inigo' as montoya;
+            agent 'Vizzini' as vi
+            user 'Inigo' as montoya
 
-            vi is @BadGuy;
-            montoya is @GoodGuy;
+            vi is @BadGuy
+            montoya is @GoodGuy
 
             @BadGuy {
-                color : 'blue';
-            };
+                color : 'blue'
+            }
 
             @GoodGuy {
-                prototype : 'good';
-            };
+                prototype : 'good'
+            }
         `
         
         let expectedIR = createExpectedIR({
@@ -233,19 +233,19 @@ describe("Scenaria Language Parser", function() {
 
     it ("Parses an annotation clause on an actor definition correctly", function() {
         let testProgram = String.raw`
-            agent 'Vizzini' as vi is @BadGuy;
-            user 'Inigo' as montoya is @GoodGuy;
-            store 'Pit of Despair' as pod;
+            agent 'Vizzini' as vi is @BadGuy
+            user 'Inigo' as montoya is @GoodGuy
+            store 'Pit of Despair' as pod
 
-            pod is @BadGuy;
+            pod is @BadGuy
 
             @BadGuy {
-                color : 'red';
-            };
+                color : 'red'
+            }
 
             @GoodGuy {
-                prototype : 'good';
-            };
+                prototype : 'good'
+            }
         `
 
         let expectedIR = createExpectedIR({
@@ -266,16 +266,16 @@ describe("Scenaria Language Parser", function() {
 
     it("Parses a container of element correctly", function() {
         let testProgram = String.raw`
-            store 'Pit of Despair' as pod;
+            store 'Pit of Despair' as pod
 
             container 'Good Guys' as gg {
                 user 'Inigo' as montoya is @GoodGuy, @Swashbuckler
                 user 'Buttercup' as bc
 
                 @Swashbuckler {
-                    color : 'orange';
+                    color : 'orange'
                 }
-            };
+            }
 
             container 'Bad' as bg {
                 agent 'Vizzini' as vi is @BadGuy
@@ -283,15 +283,15 @@ describe("Scenaria Language Parser", function() {
                 vi -('kidnaps')-> bc
 
                 vi --> pod
-            };
+            }
 
             @BadGuy {
-                color : 'red';
-            };
+                color : 'red'
+            }
 
             @GoodGuy {
-                prototype : 'good';
-            };
+                prototype : 'good'
+            }
         `
 
         let vi_bc_channel = newChannel(CHANNEL_TYPE.REQ_RES,'vi','bc',"kidnaps")
@@ -334,7 +334,7 @@ describe("Scenaria Language Parser", function() {
     it("Parses a nested container correctly", function() {
         let testProgram = String.raw`
 
-            user 'Shopper' as s;
+            user 'Shopper' as s
 
             container 'System' as sys {
 
@@ -347,7 +347,7 @@ describe("Scenaria Language Parser", function() {
                     agent 'Auth' as au
                     store 'Data' as data
                 }
-            };
+            }
         `
 
         let ui = newActor(ACTOR_TYPE.AGENT,'ui','Shop UI')

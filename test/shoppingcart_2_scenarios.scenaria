@@ -1,26 +1,26 @@
-user 'Shopper' as u;
-agent 'Cart Service' as cs;
-agent 'Order Service' as os is @External;
-store 'Cart Data' as cd;
-store 'Inventory' as i;
+user 'Shopper' as u
+agent 'Cart Service' as cs
+agent 'Order Service' as os is @External
+store 'Cart Data' as cd
+store 'Inventory' as i
 
-cs --> cd;
-cs <-- cd;
+cs --> cd
+cs <-- cd
 
-cd is @Mem;
-i is @External, @DB;
+cd is @Mem
+i is @External, @DB
 
 @DB { 
-    prototype : 'db';
-};
+    prototype : 'db'
+}
 
 @Mem {
-    prototype : 'memory';
-};
+    prototype : 'memory'
+}
 
 @External {
-  color : 'lightblue';
-};
+  color : 'lightblue'
+}
 
 'Add item happy' {
     u -('add item')->cs
@@ -32,7 +32,7 @@ i is @External, @DB;
     
     cs - 'item' -> cd
     u --('added')--< cs
-};
+}
 
 'Add Item Failure' {
     u -('add item')->cs
@@ -41,4 +41,4 @@ i is @External, @DB;
     cs <- 'item data' - i
 
     u --('no item')--< cs
-};
+}

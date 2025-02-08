@@ -1,4 +1,4 @@
-user 'Shopper' as s;
+user 'Shopper' as s
 
 container 'System' as sys {
 
@@ -15,4 +15,4 @@ container 'System' as sys {
 
         gw <-- data
     }
-};
+}

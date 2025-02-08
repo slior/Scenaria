@@ -1,9 +1,9 @@
-user 'Shopper' as u;
-agent 'Cart Service' as cs;
-agent 'Order Service' as os;
-store 'Cart Data' as cd;
+user 'Shopper' as u
+agent 'Cart Service' as cs
+agent 'Order Service' as os
+store 'Cart Data' as cd
 
-u -()-> cs;
-cs --> cd;
-cs <-- cd;
-cs -()-\ os;
+u -()-> cs
+cs --> cd
+cs <-- cd
+cs -()-\ os

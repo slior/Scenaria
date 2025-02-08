@@ -1,11 +1,11 @@
-user 'Shopper' as u;
-agent 'Cart Service' as cs;
-agent 'Order Service' as os;
-store 'Cart Data' as cd;
+user 'Shopper' as u
+agent 'Cart Service' as cs
+agent 'Order Service' as os
+store 'Cart Data' as cd
 
 'Add item happy' {
     u -('add item')->cs
     cs -('place order')->os
     
     cs --('all ok')--< os
-};
+}
