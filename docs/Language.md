@@ -62,7 +62,7 @@ A comment can be added using double forward slashes. Anything after the forward 
 ### Actors
 
 The definition of all types of actors follows a simple syntax:  
-```<component type> <caption> as <id>;```
+```<component type> <caption> as <id>```
 
 where:
 - Component type is one of: `user`, `agent` or `store`
@@ -71,18 +71,18 @@ where:
 
 Examples:
 ```
-user 'Shopper' as u;
-agent 'Cart Service' as cs;
-agent 'Order Service' as os;
-store 'Cart Data' as cd;
-store 'Inventory' as i;
+user 'Shopper' as u
+agent 'Cart Service' as cs
+agent 'Order Service' as os
+store 'Cart Data' as cd
+store 'Inventory' as i
 ```
 
 #### Notes
 
 You can specify a note for an actor by referring to an id of a defined actor:
 ```
-note for u: 'A simple user';
+note for u: 'A simple user'
 ```
 
 The actor must already be defined before the note definition. The note consists of a single sentence enclosed in quotes.
@@ -99,17 +99,17 @@ Using annotations is done in two steps:
 ##### Assigning Annotation to Actors
 
 Tagging an actor with an annotation can be done in two ways
-- An annotation assignment clause in the actor definition; e.g. `agent 'Order Service' as os is @External;`
+- An annotation assignment clause in the actor definition; e.g. `agent 'Order Service' as os is @External`
  - The `@External` is the annotation.
- - General syntax in this case is `<actor definition> as <actor id> is <annotation>;`
-- A separate annotation assignment clause; e.g. `cd is @Mem;`
+ - General syntax in this case is `<actor definition> as <actor id> is <annotation>`
+- A separate annotation assignment clause; e.g. `cd is @Mem`
  - In this case, `cd` is an id of a previously defined actor.
  - `@Mem` is a reference to an annotation defined elsewhere in the program.
 
 In both cases you can define a list of annotation references, separated by a comma. All of the annotations will be assigned to the actor.  
 For example:
 ```
-i is @External, @DB;
+i is @External, @DB
 ```
 In this case , `i` is an id of an actor and `@External`, `@DB` are refrences to annotation definitions.
 
@@ -122,7 +122,7 @@ Annotation definitions define what kind of cues to apply.
 
 Syntatically, annotations definitions look like this:
 ```
-@<annotation id> { <annotation statements> };
+@<annotation id> { <annotation statements> }
 ```
 where 
 - annotation id is a valid identifier.
@@ -131,11 +131,11 @@ where
 Annotation statements are separated by semicolons.
 
 We currently support 2 annotation statements:
-- Color: `color: '<color value>';`
- - Example: `color: 'lightblue';`
+- Color: `color: '<color value>'`
+ - Example: `color: 'lightblue'`
  - color value can be any valid CSS color value, provided here as a text literal.
-- Prototype: `prototype: <prototype string>;`
- - Example: `prototype: 'memory';`
+- Prototype: `prototype: <prototype string>`
+ - Example: `prototype: 'memory'`
  - The prototype string will be added to the actor's caption as a prefix, enclosed in double angle brackets, e.g. `<<memory>>`.
 
 These are (currently) the only values that can be defined and have any effect.
@@ -145,17 +145,17 @@ If an actor is tagged with two annotations that both define the same key, e.g. t
 Some example definitions:
 ```
 @DB { 
-    prototype : 'db';
-};
+    prototype : 'db'
+}
 
 @Mem {
-    prototype : 'memory';
-};
+    prototype : 'memory'
+}
 
 @External {
-  color : 'lightblue';
-  prototype: 'external';
-};
+  color : 'lightblue'
+  prototype: 'external'
+}
 ```
 
 ### Channel and Data Flow Definitions
@@ -182,9 +182,9 @@ An asynchrounous channel is similar in syntax to a synchronous channel, only the
 
 Examples:
 ```
-u -()-> cs;
-u -('adding items')-> cs;
-cs -()-\\ os;
+u -()-> cs
+u -('adding items')-> cs
+cs -()-\\ os
 ```
 
 Data flow definitions are simple arrows showing the direction of the data flow:  
@@ -196,8 +196,8 @@ For read:
 
 Examples:
 ```
-cs --> cd;
-cs <-- cd;
+cs --> cd
+cs <-- cd
 ```
 
 ### Containers
@@ -220,7 +220,7 @@ container 'Backend' as be {
     gw -('authenticate')-> au
 
     gw <-- data
-};
+}
 ```
 
 Containers can also be nested:
@@ -240,7 +240,7 @@ container 'System' as sys {
 
         gw <-- data
     }
-};
+}
 ```
 
 
@@ -252,7 +252,7 @@ You can add more than one scenario.
 A given scenario is a list of steps that happen with components in the system. Different scenarios as a result of some input of data values (a branch) should be described as a separate scenario.
 
 Syntatically a scenario is denoted as a block of steps with a description:  
-``` <description> { <list of steps> };```
+``` <description> { <list of steps> }```
 
 where:
 - Description is a text literal.
@@ -318,26 +318,19 @@ A complete example for a scenario would be:
     
     cs - 'item' -> cd
     u --('added')--< cs
-};
+}
 ```
-
-(note how it ends with a semicolon as well.)
 
 ## A Complete Example
 
 The following example describes a very basic e-commerce shopping cart system with two scenarios - one for failure and one for a "happy path".
 
 ```
-user 'Shopper' as u;
-agent 'Cart Service' as cs;
-agent 'Order Service' as os;
-store 'Cart Data' as cd;
-store 'Inventory' as i;
-
-note for i: 'All up-to-date inventory';
-
-cs --> cd;
-cs <-- cd;
+user 'Shopper' as u
+agent 'Cart Service' as cs
+agent 'Order Service' as os
+store 'Cart Data' as cd
+store 'Inventory' as i
 
 'Add item happy' {
     u -('add item')->cs
@@ -349,7 +342,7 @@ cs <-- cd;
     
     cs - 'item' -> cd
     u --('added')--< cs
-};
+}
 
 'Add Item Failure' {
     u -('add item')->cs
@@ -358,5 +351,5 @@ cs <-- cd;
     cs <- 'item data' - i
 
     u --('no item')--< cs
-};
+}
 ```
