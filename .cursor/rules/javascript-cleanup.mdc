@@ -1,0 +1,128 @@
+---
+description: JS code cleanup standards
+globs: *.js
+---
+ ---
+description: JavaScript Code Cleanup Standards
+globs: "*.js"
+---
+# JavaScript Code Cleanup Standards
+
+Standards for writing clean, maintainable JavaScript code.
+
+<rule>
+name: javascript_code_cleanup
+description: Guidelines for writing clean JavaScript code following best practices
+
+filters:
+  - type: file_extension
+    pattern: "\\.js$"
+  - type: content
+    pattern: "(?s).*function.*|.*const.*|.*let.*|.*var.*"
+
+actions:
+  - type: suggest
+    message: |
+      When writing JavaScript code:
+
+      1. Function Guidelines:
+         - Start with a verb (e.g., get, set, create, update)
+         - Use camelCase
+         - Keep functions short (<20 instructions)
+         - Add JSDoc comments for all functions
+         - Use early returns to avoid nesting
+         - Use arrow functions for simple operations (<3 lines)
+         ```javascript
+         // Bad
+         function getData() {
+           if (condition) {
+             if (otherCondition) {
+               return data;
+             }
+           }
+         }
+
+         // Good
+         function getData() {
+           if (!condition) return null;
+           if (!otherCondition) return null;
+           return data;
+         }
+         ```
+
+      2. Naming Conventions:
+         - PascalCase for classes
+         - camelCase for variables/functions
+         - Use complete words (except standard abbr.)
+         - Boolean variables start with is/has/can
+         - Event handlers start with handle
+         ```javascript
+         // Bad
+         let usr = {};
+         function procData() {}
+         
+         // Good
+         let user = {};
+         function processData() {}
+         ```
+
+      3. State Management:
+         - Group related state in objects
+         - Use const by default
+         - Minimize global state
+         ```javascript
+         // Bad
+         let container = null;
+         let model = null;
+         
+         // Good
+         const appState = {
+           container: null,
+           model: null
+         };
+         ```
+
+      4. Error Handling:
+         - Use descriptive error messages
+         - Add validation at function start
+         - Use early returns for validation
+         ```javascript
+         // Bad
+         if (!model) throw new Error("Invalid");
+         
+         // Good
+         if (!model) {
+           throw new Error("Model must be initialized before operation");
+         }
+         ```
+
+examples:
+  - input: |
+      function getData(id) {
+        if (id) {
+          if (cache[id]) {
+            return cache[id];
+          }
+        }
+        return null;
+      }
+
+    output: |
+      /**
+       * Retrieves data for the given ID from cache
+       * @param {string} id The ID to look up
+       * @returns {Object|null} The cached data or null if not found
+       */
+      function getData(id) {
+        if (!id) return null;
+        return cache[id] || null;
+      }
+
+metadata:
+  priority: high
+  version: 1.0
+  tags:
+    - javascript
+    - cleanup
+    - best-practices
+</rule>
