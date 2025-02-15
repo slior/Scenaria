@@ -112,50 +112,85 @@ function runScenario(scenarioIndex, userMessageCallback) {
     scenarioRunner.runScenario(scenario, userMessageCallback);
 }
 
-function showNotes()
-{
-    if (!appState.diagramController) throw new Error("Diagram not initialized/drawn")
-    if (!appState.graph.children) throw new Error("No model loaded")
-    //extract all elements with notes, with their corresponding IDs
-    let idsToNotes = appState.graph.children.filter(child => child.note)
-                  .reduce((result,child) => {
-                    result[child.id] = child.note
-                    return result
-                  }, {} )
-    //show the notes on the diagram
-    appState.diagramController.showNotes(idsToNotes)
-}
-
-function hideNotes()
-{
-    if (!appState.graph.children) throw new Error("No model loaded")
-    let elementsWithNotes = appState.graph.children.filter(child => child.note)
-                                            .map(child => child.id)
-    appState.diagramController.hideNotes(elementsWithNotes)
-}
-
-function getScenarioStepper(scenarioInd)
-{
-    
-    if (appState.scenarioStepper == null || appState.scenarioStepper.scenarioIndex != scenarioInd)
-    {
-        if (appState.scenarioStepper != null) appState.scenarioStepper.erasePreviousStep();
-        console.log(`New scenario stepper for scenario ${scenarioInd}`)
-        appState.scenarioStepper = new ScenarioStepper(scenarioInd,resolveScenario(scenarioInd),appState.diagramController)
+/**
+ * Shows notes for elements in the diagram
+ * @throws {Error} If diagram is not initialized or model not loaded
+ */
+function displayNotes() {
+    if (!appState.diagramController) {
+        throw new Error("Diagram must be initialized before showing notes");
     }
-    return appState.scenarioStepper
+    if (!appState.graph.children) {
+        throw new Error("Model must be loaded before showing notes");
+    }
+
+    const idsToNotes = appState.graph.children
+        .filter(child => child.note)
+        .reduce((notes, child) => {
+            notes[child.id] = child.note;
+            return notes;
+        }, {});
+
+    appState.diagramController.showNotes(idsToNotes);
 }
 
-function scenarioBack(scenarioInd,usrMsgCallback)
-{
-    let stepper = getScenarioStepper(scenarioInd)
-    stepper.prevStep(usrMsgCallback)
+/**
+ * Hides notes for elements in the diagram
+ * @throws {Error} If model is not loaded
+ */
+function hideNotes() {
+    if (!appState.graph.children) {
+        throw new Error("Model must be loaded before hiding notes");
+    }
+
+    const elementIdsWithNotes = appState.graph.children
+        .filter(child => child.note)
+        .map(child => child.id);
+
+    appState.diagramController.hideNotes(elementIdsWithNotes);
 }
 
-function scenarioNext(scenarioInd,usrMsgCallback)
-{
-    let stepper = getScenarioStepper(scenarioInd)
-    stepper.nextStep(usrMsgCallback)
+/**
+ * Gets or creates a scenario stepper for the given scenario
+ * @param {number} scenarioIndex Index of the scenario
+ * @returns {ScenarioStepper} The scenario stepper
+ */
+function getOrCreateScenarioStepper(scenarioIndex) {
+    const isNewScenario = !appState.scenarioStepper || 
+                         appState.scenarioStepper.scenarioIndex !== scenarioIndex;
+    
+    if (isNewScenario) {
+        if (appState.scenarioStepper) {
+            appState.scenarioStepper.erasePreviousStep();
+        }
+        console.log(`Creating new scenario stepper for scenario ${scenarioIndex}`);
+        appState.scenarioStepper = new ScenarioStepper(
+            scenarioIndex,
+            resolveScenario(scenarioIndex),
+            appState.diagramController
+        );
+    }
+    return appState.scenarioStepper;
+}
+
+/**
+ * Moves to the previous step in the scenario
+ * @param {number} scenarioIndex Index of the scenario
+ * @param {Function} messageCallback Callback for user messages
+ */
+function moveToPreviousStep(scenarioIndex, messageCallback) {
+    const stepper = getOrCreateScenarioStepper(scenarioIndex);
+    stepper.prevStep(messageCallback);
+}
+
+/**
+ * Moves to the next step in the scenario
+ * @param {number} scenarioIndex Index of the scenario
+ * @param {Function} messageCallback Callback for user messages
+ */
+function moveToNextStep(scenarioIndex, messageCallback) {
+    const stepper = getOrCreateScenarioStepper(scenarioIndex);
+    stepper.nextStep(messageCallback);
 }
 
 function resolveScenario(ind)
@@ -166,12 +201,15 @@ function resolveScenario(ind)
     return scenario;
 }
 
-function parseCode(programCode)
-{
-    let parser = createParser()
-    let program = parser(programCode);
-    return program;
-}
+/**
+ * Creates a new parser and parses the program code
+ * @param {string} programCode Code to parse
+ * @returns {Object} Parsed program
+ */
+const parseCode = (programCode) => {
+    const parser = createParser();
+    return parser(programCode);
+};
 
 /**
  * Given code representing the model and scenarios, parse it and present it on the initialized diagram container.
@@ -224,12 +262,12 @@ module.exports = {
     runScenario,
     parseAndPresent,
     reset,
-    scenarioBack,
-    scenarioNext,
+    scenarioBack: moveToPreviousStep,
+    scenarioNext: moveToNextStep,
     generateStateURLEncoding,
     setStateFromURL,
     getLanguageKeywords,
-    showNotes,
+    showNotes: displayNotes,
     hideNotes,
     layoutOptionsFromInputs
 }
