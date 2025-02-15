@@ -1,4 +1,3 @@
-
 const { createParser, getLanguageKeywords } = require("./lang/Lang")
 
 const assert = require('assert')
@@ -10,33 +9,53 @@ const { ScenarioStepper } = require('./ScenarioStepper')
 const { State } = require('./state/State')
 const { resolveAnnotations } = require('./SystemModel')
 
-var drawingContainer = null;
-var topLevelSVG = null;
-var diagramController = null;
-var model = null;
-var scenarioStepper = null;
-var graph = null;
+/**
+ * Application state containing all diagram-related objects
+ * @type {{
+ *   drawingContainer: HTMLElement|null,
+ *   topLevelSVG: Object|null,
+ *   diagramController: DiagramController|null,
+ *   model: Object|null,
+ *   scenarioStepper: ScenarioStepper|null,
+ *   graph: Object|null
+ * }}
+ */
+const appState = {
+    drawingContainer: null,
+    topLevelSVG: null,
+    diagramController: null,
+    model: null,
+    scenarioStepper: null,
+    graph: null
+};
 
-function initApp(_drawingContainer)
-{
-    drawingContainer = _drawingContainer
+/**
+ * Initializes the application with a drawing container
+ * @param {HTMLElement} container The container element for drawing
+ * @returns {Object} Empty object for backwards compatibility
+ */
+function initApp(container) {
+    appState.drawingContainer = container;
     return {};
 }
 
-
+/**
+ * Creates and configures an SVG element in the drawing container
+ * @param {HTMLElement} drawingElement Container element for the SVG
+ * @returns {Object} Configured SVG element
+ */
 const createSVGImpl = (drawingElement) => 
-    SVG().addTo(drawingElement).addClass("drawingSVG")
+    SVG().addTo(drawingElement).addClass("drawingSVG");
 
-
-
-function clearDiagram()
-{
-    if (topLevelSVG) //if this wasn't initialized - nothing to clear.
-    {
-        topLevelSVG.clear()
-        drawingContainer.removeChild(topLevelSVG.node)
-        topLevelSVG = null;
-    }
+/**
+ * Clears the current diagram and removes SVG element
+ */
+function clearDiagram() {
+    if (!appState.topLevelSVG) return;
+    
+    appState.topLevelSVG.clear();
+    appState.drawingContainer.removeChild(appState.topLevelSVG.node);
+    appState.topLevelSVG = null;
 }
 
 /**
@@ -51,67 +70,80 @@ function layoutOptionsFromInputs(spacing)
     return newLayoutOptionsFromInputs(spacing)
 }
 
-function presentModel(model,moveCB, layoutInputs)
-{
-     topLevelSVG = createSVGImpl(drawingContainer)
+/**
+ * Presents the model by creating and configuring the diagram
+ * @param {Object} model The model to present
+ * @param {Function} moveCB Callback function for move events
+ * @param {Object} layoutInputs Layout configuration options
+ * @returns {Promise<Object>} Promise resolving to the model
+ */
+function presentModel(model, moveCB, layoutInputs) {
+    appState.topLevelSVG = createSVGImpl(appState.drawingContainer);
 
     return layoutModel(model, layoutInputs)
-            .then(g => { 
-                graph = g;
-                return drawGraph(topLevelSVG,g,moveCB)
-            })
-            .then(diagramPainter => {
-                diagramController = new DiagramController(diagramPainter.svgElements,topLevelSVG)
-                return model
-            })
+        .then(g => {
+            appState.graph = g;
+            return drawGraph(appState.topLevelSVG, g, moveCB);
+        })
+        .then(diagramPainter => {
+            appState.diagramController = new DiagramController(diagramPainter.svgElements, appState.topLevelSVG);
+            return model;
+        });
 }
 
-function runScenario(scenarioInd, usrMsgCallback)
-{
-    if (!diagramController) throw new Error("Diagram not initialized/drawn")
-
-    if (scenarioStepper != null) 
-    { //in case we ran a stepper before this, erase the last step and forget it.
-        scenarioStepper.erasePreviousStep();
-        scenarioStepper = null;
+/**
+ * Runs a scenario with the given index
+ * @param {number} scenarioIndex Index of the scenario to run
+ * @param {Function} userMessageCallback Callback for user messages
+ * @throws {Error} If diagram is not initialized or scenario is invalid
+ */
+function runScenario(scenarioIndex, userMessageCallback) {
+    if (!appState.diagramController) {
+        throw new Error("Diagram must be initialized before running scenarios");
     }
-    let scenario = resolveScenario(scenarioInd)
-    let scenarioRunner = new ScenarioRunner(diagramController)
-    scenarioRunner.runScenario(scenario,usrMsgCallback)
+
+    if (appState.scenarioStepper) {
+        appState.scenarioStepper.erasePreviousStep();
+        appState.scenarioStepper = null;
+    }
+
+    const scenario = resolveScenario(scenarioIndex);
+    const scenarioRunner = new ScenarioRunner(appState.diagramController);
+    scenarioRunner.runScenario(scenario, userMessageCallback);
 }
 
 function showNotes()
 {
-    if (!diagramController) throw new Error("Diagram not initialized/drawn")
-    if (!graph.children) throw new Error("No model loaded")
+    if (!appState.diagramController) throw new Error("Diagram not initialized/drawn")
+    if (!appState.graph.children) throw new Error("No model loaded")
     //extract all elements with notes, with their corresponding IDs
-    let idsToNotes = graph.children.filter(child => child.note)
+    let idsToNotes = appState.graph.children.filter(child => child.note)
                   .reduce((result,child) => {
                     result[child.id] = child.note
                     return result
                   }, {} )
     //show the notes on the diagram
-    diagramController.showNotes(idsToNotes)
+    appState.diagramController.showNotes(idsToNotes)
 }
 
 function hideNotes()
 {
-    if (!graph.children) throw new Error("No model loaded")
-    let elementsWithNotes = graph.children.filter(child => child.note)
+    if (!appState.graph.children) throw new Error("No model loaded")
+    let elementsWithNotes = appState.graph.children.filter(child => child.note)
                                             .map(child => child.id)
-    diagramController.hideNotes(elementsWithNotes)
+    appState.diagramController.hideNotes(elementsWithNotes)
 }
 
 function getScenarioStepper(scenarioInd)
 {
     
-    if (scenarioStepper == null || scenarioStepper.scenarioIndex != scenarioInd)
+    if (appState.scenarioStepper == null || appState.scenarioStepper.scenarioIndex != scenarioInd)
     {
-        if (scenarioStepper != null) scenarioStepper.erasePreviousStep();
+        if (appState.scenarioStepper != null) appState.scenarioStepper.erasePreviousStep();
         console.log(`New scenario stepper for scenario ${scenarioInd}`)
-        scenarioStepper = new ScenarioStepper(scenarioInd,resolveScenario(scenarioInd),diagramController)
+        appState.scenarioStepper = new ScenarioStepper(scenarioInd,resolveScenario(scenarioInd),appState.diagramController)
     }
-    return scenarioStepper
+    return appState.scenarioStepper
 }
 
 function scenarioBack(scenarioInd,usrMsgCallback)
@@ -128,9 +160,9 @@ function scenarioNext(scenarioInd,usrMsgCallback)
 
 function resolveScenario(ind)
 {
-    if (!model) throw new Error("Model not initialized when running scenarion")
-    let scenario = model.scenarios[ind]
-    if (!scenario) throw new Error(`Invalid scenario to run: ${scenarioInd}`)
+    if (!appState.model) throw new Error("Model not initialized when running scenario")
+    let scenario = appState.model.scenarios[ind]
+    if (!scenario) throw new Error(`Invalid scenario to run: ${ind}`)
     return scenario;
 }
 
@@ -149,43 +181,42 @@ function parseCode(programCode)
  */
 function parseAndPresent(code,moveCB, layoutInputs)
 {
-    model = parseCode(code)
-    console.log(`Parsed code: ${JSON.stringify(model)}`)
-    model = resolveAnnotations(model)
-    return presentModel(model,moveCB, layoutInputs)
+    appState.model = parseCode(code)
+    console.log(`Parsed code: ${JSON.stringify(appState.model)}`)
+    appState.model = resolveAnnotations(appState.model)
+    return presentModel(appState.model,moveCB, layoutInputs)
 }
 
 /**
- * Reset the existing application state.
- * Also clear the diagram from the initialized drawing container.
+ * Resets the application state and clears the diagram
  */
 function reset()
 {
     clearDiagram()
-    scenarioRunner = null;
-    model = null;
-    graph = null;
+    appState.scenarioStepper = null;
+    appState.model = null;
+    appState.graph = null;
 }
 
 function generateStateURLEncoding(code)
 {
-    assert(graph != null, "Invalid graph state when generating state representation")
+    assert(appState.graph != null, "Invalid graph state when generating state representation")
 
-    return State.encode(graph,code)
+    return State.encode(appState.graph,code)
 
 }
 
 function setStateFromURL(stateParamValue,codeCB,moveCB)
 {
     let state = State.fromBase64(stateParamValue)
-    model = resolveAnnotations(parseCode(state.code))
+    appState.model = resolveAnnotations(parseCode(state.code))
     codeCB(state.code)
-    graph = state.graph
-    if (!topLevelSVG)
-        topLevelSVG = createSVGImpl(drawingContainer)
-    let painter = drawGraph(topLevelSVG,graph,moveCB)
-    diagramController = new DiagramController(painter.svgElements,topLevelSVG)
-    return model
+    appState.graph = state.graph
+    if (!appState.topLevelSVG)
+        appState.topLevelSVG = createSVGImpl(appState.drawingContainer)
+    let painter = drawGraph(appState.topLevelSVG,appState.graph,moveCB)
+    appState.diagramController = new DiagramController(painter.svgElements,appState.topLevelSVG)
+    return appState.model
 }
 
 module.exports = {
