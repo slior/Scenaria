@@ -18,7 +18,7 @@ You can easily describe a system's high level structure and several scenarios (=
 ## Usage
 
 - Enter the description of the system you'd like to discuss in the editor at the bottom half of the screen.
-    - See [Language Description](./docs/Language.md) for description of the syntax.
+    - See the **[Features & Language Guide](./docs/3_Features.md)** for a full description of the syntax, UI, and language features. The original language specification can be found [here](./docs/Language.md).
 - Click 'Apply' to see the diagram and load the scenarios.
  - You can make changes and click 'Apply' again, or you can reset by clicking the 'Reset' button.
 - You can layout the diagram (move nodes) for a more convenient view.
@@ -32,6 +32,11 @@ You can easily describe a system's high level structure and several scenarios (=
 
 The Scenaria tool is intentionally simple with minimal dependencies.
 It is built in plain javascript, using node.js and webpack, so it is easily viewed and run in a browser.
+
+For a deeper understanding of the codebase, consult the full documentation:
+- **[Codebase Discovery](./docs/1_Discovery.md)**: A high-level map of the source code.
+- **[Architecture Deep Dive](./docs/2_Architecture.md)**: An explanation of the system design and data flows.
+- **[Development & Operations](./docs/4_Operations.md)**: A guide to building, testing, and maintaining the application.
 
 Notable dependencies:
 - The [monaco editor](https://microsoft.github.io/monaco-editor/) for providing editor functionality.
