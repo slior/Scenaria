@@ -1,8 +1,4 @@
 ---
-description: JS code cleanup standards
-globs: *.js
----
- ---
 description: JavaScript Code Cleanup Standards
 globs: "*.js"
 ---
@@ -125,4 +121,4 @@ metadata:
     - javascript
     - cleanup
     - best-practices
-</rule>
+</rule> 
