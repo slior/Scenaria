@@ -16,7 +16,7 @@ Scenaria is built around a few simple concepts for modeling systems:
 
 ## 2. The Scenaria Language (DSL)
 
-The primary way to interact with Scenaria is by writing code in its custom Domain-Specific Language.
+The primary way to interact with Scenaria is by writing code in its custom domain-specific [language](./Language.md).
 
 *Identifiers* are alphanumeric names used for components (e.g., `cart_service`), and *text literals* are human-readable labels enclosed in single quotes (e.g., `'Cart Service'`).
 

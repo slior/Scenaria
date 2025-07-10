@@ -16,10 +16,10 @@ The following diagram illustrates the high-level components and the data flow be
 graph TD
     subgraph Browser
         A[User Interface]
-        B[Text Editor <br> (monaco-editor)]
-        C[Language Compiler <br> (ohm.js)]
-        D[Layout Engine <br> (elk.js)]
-        E[SVG Renderer <br> (@svgdotjs/svg.js)]
+        B[Text Editor monaco-editor]
+        C[Language Compiler <br> ohm.js]
+        D[Layout Engine <br> elk.js]
+        E[SVG Renderer <br> @svgdotjs/svg.js]
         F[Scenario Runner]
     end
 
@@ -64,7 +64,7 @@ sequenceDiagram
     activate DiagramController
     DiagramController-->>AppMain: diagramController
     deactivate DiagramController
-    AppMain-->>Client: returns
+    AppMain-->>Client:  
     deactivate AppMain
 ```
 
@@ -99,7 +99,7 @@ sequenceDiagram
     end
     ScenarioExecuter-->>AppMain: completion
     deactivate ScenarioExecuter
-    AppMain-->>User: returns
+    AppMain-->>User:  
     deactivate AppMain
 ```
 
