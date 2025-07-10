@@ -1,4 +1,4 @@
-# Phase 3: Feature Documentation
+# Features
 
 This document describes the user-facing features of the Scenaria application, focusing on the language (DSL) and user interface interactions.
 

@@ -1,4 +1,4 @@
-# Phase 2: Architecture Analysis
+# Architecture
 
 This document details the system design, component relationships, and key architectural patterns of the Scenaria application.
 

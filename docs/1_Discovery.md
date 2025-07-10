@@ -1,4 +1,4 @@
-# Phase 1: DISCOVERY
+# Project Overview
 
 This document provides a high-level overview of the Scenaria codebase structure, key components, dependencies, and development scripts.
 

@@ -1,4 +1,4 @@
-# Phase 4: Operations & Maintenance
+# Operations & Maintenance
 
 This document provides guidance on deploying, building, testing, and maintaining the Scenaria application.
 
