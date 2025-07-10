@@ -6,18 +6,27 @@ This document provides guidance on deploying, building, testing, and maintaining
 
 As a purely client-side application, Scenaria requires no backend infrastructure. Deployment is as simple as serving the contents of the project's root directory with any static web server.
 
-**Example using a simple Python server:**
+### Using Docker (Recommended)
+The easiest and most reliable way to deploy the application is by using the provided `Dockerfile`.
+
+1. **Build the image:**
+   ```bash
+   docker build -t scenaria-app .
+   ```
+
+2. **Run the container:**
+   ```bash
+   docker run -p 8080:80 scenaria-app
+   ```
+This will start a web server on port 8080, serving the application.
+
+### Using a Simple Python Server
+For quick local testing without Docker, you can use Python's built-in web server.
 ```bash
 # From the project root directory
 python3 -m http.server 8000
 ```
 Then, access the application at `http://localhost:8000`.
-
-The key files that need to be served are:
-- `index.html`
-- `main.js` (the bundled application code)
-- `viewer.html`
-- Other assets like `favicon.png`
 
 ## 2. Local Development
 
@@ -28,10 +37,8 @@ To run the application locally for development, you will need Node.js and npm in
 npm install
 ```
 
-**2. Start the Development Server**:
-The project is configured with `webpack-dev-server`, which provides live-reloading. (Note: This was mentioned in `techContext.md` but is not in `package.json`. If it were, the command would be `npm start`).
-
-To simply build the code after making changes, run:
+**2. Build the Code**:
+To build the code after making changes, run:
 ```bash
 npm run build
 ```

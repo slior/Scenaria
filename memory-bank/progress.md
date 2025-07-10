@@ -9,6 +9,7 @@ The Scenaria application is functional. Key working features include:
 - **Scenario Execution:** Scenarios can be selected and executed step-by-step, with visual feedback on the diagram.
 - **State Sharing:** The entire model and scenario set can be shared via a URL.
 - **In-browser Editor:** A full-featured editor is available for writing the Scenaria code.
+- **Docker Deployment:** The application can be built and deployed as a Docker container.
 
 ## What's Left to Build
 

@@ -2,16 +2,15 @@
 
 ## Current Focus
 
-The current focus is on **updating the Memory Bank** to accurately reflect the state of the existing "Scenaria" project. We are moving from a generic placeholder state to documenting the actual, implemented system.
+The current focus is on finalizing the documentation in the Memory Bank after successfully adding Docker-based deployment to the project.
 
 ## Recent Changes
 
-- `projectbrief.md` was updated with the true purpose of the project.
-- `productContext.md` was updated to reflect the problem space and audience for Scenaria.
-- `systemPatterns.md` was updated with the client-only architecture.
-- `techContext.md` was updated with the specific technology stack.
+- Created a multi-stage `Dockerfile` to build and serve the application with Nginx.
+- Added a `.dockerignore` file to optimize the build context.
+- Updated `README.md` and `docs/4_Operations.md` with instructions on how to build and run the Docker container.
+- Updated `techContext.md` and `progress.md` to reflect the new deployment capabilities.
 
 ## Next Steps
 
-1.  Update the final memory bank file, `progress.md`, to reflect the current state of the application.
-2.  Once the memory bank is synchronized, await further instructions for new tasks (e.g., feature enhancements, bug fixes, refactoring). 
+- Await further instructions for new tasks. 

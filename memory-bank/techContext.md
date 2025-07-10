@@ -18,6 +18,10 @@
 - `webpack-dev-server` provides a local development server with hot reloading.
 - Code is managed in a Git repository.
 
+## Deployment
+- The application is deployed as a static site using a multi-stage `Dockerfile`.
+- The final Docker image uses `nginx:stable-alpine` to serve the built static assets (`index.html`, `viewer.html`, `main.js`, etc.).
+
 ## Constraints
 
 - The application is intentionally kept simple with minimal dependencies.

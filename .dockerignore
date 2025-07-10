@@ -1,0 +1,8 @@
+node_modules
+.git
+.vscode
+.cursor
+devjournal.md
+memory-bank
+*.log
+Dockerfile 

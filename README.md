@@ -38,7 +38,23 @@ For a deeper understanding of the codebase, consult the full documentation:
 - **[Architecture Deep Dive](./docs/2_Architecture.md)**: An explanation of the system design and data flows.
 - **[Development & Operations](./docs/4_Operations.md)**: A guide to building, testing, and maintaining the application.
 
-Notable dependencies:
+## Docker Deployment
+
+The simplest way to run Scenaria is with Docker.
+
+1.  **Build the Docker image:**
+    ```bash
+    docker build -t scenaria-app .
+    ```
+
+2.  **Run the container:**
+    ```bash
+    docker run -p 8080:80 scenaria-app
+    ```
+
+You can then access the application at [http://localhost:8080](http://localhost:8080).
+
+## Notable dependencies:
 - The [monaco editor](https://microsoft.github.io/monaco-editor/) for providing editor functionality.
 - [SVG.js](https://svgjs.dev/docs/3.0/) for drawing and manipulating SVG diagram.
 - [elk.js](https://github.com/kieler/elkjs) for diagram layout.
