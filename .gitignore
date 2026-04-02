@@ -4,3 +4,6 @@ devjournal.md
 
 main.js
 favicon-32x32.png:Zone.Identifier
+
+tmp/
+.env
