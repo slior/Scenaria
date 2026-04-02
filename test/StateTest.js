@@ -1,5 +1,5 @@
-const { compress, decompress } = require('../src/state/State');
-const should = require('should');
+import { compress, decompress } from '../src/state/State.js'
+import should from 'should'
 
 describe('compress function', () => {
     it('should compress a simple object', () =>

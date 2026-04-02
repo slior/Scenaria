@@ -2,10 +2,22 @@
     "name": "dynseq",
     "version": "0.1.0",
     "description": "Dynamic Visualization of Sequence Diagrams",
-    "main": "index.js",
+    "type": "module",
+    "main": "./dist/scenaria.iife.js",
+    "module": "./dist/scenaria.es.js",
+    "exports": {
+        ".": {
+            "import": "./dist/scenaria.es.js"
+        }
+    },
+    "files": [
+        "dist"
+    ],
     "scripts": {
-        "test": "mocha",
-        "build": "webpack"
+        "dev": "vite",
+        "build": "vite build",
+        "test": "vitest run",
+        "test:watch": "vitest"
     },
     "author": "Lior Schejter",
     "license": "ISC",
@@ -13,13 +25,19 @@
         "mocha": "^8.4.0",
         "rewire": "^6.0.0",
         "should": "^13.2.3",
-        "webpack": "^4.44.1",
-        "webpack-cli": "^3.3.12"
+        "vite": "^6.0.0",
+        "vitest": "^3.0.0"
     },
     "dependencies": {
+        "@codemirror/commands": "^6.7.1",
+        "@codemirror/language": "^6.10.8",
+        "@codemirror/state": "^6.5.2",
+        "@codemirror/theme-one-dark": "^6.1.2",
+        "@codemirror/view": "^6.36.2",
+        "@lezer/highlight": "^1.2.1",
         "@svgdotjs/svg.js": "^3.1.2",
         "elkjs": "^0.8.2",
-        "monaco-editor": "^0.34.1",
+        "fflate": "^0.8.2",
         "ohm-js": "^16.4.0",
         "web-worker": "^1.2.0"
     }

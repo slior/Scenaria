@@ -1,12 +1,21 @@
-
-const assert = require('assert')
-const { createParser } = require('../src/lang/Lang')
-const { newActor, ACTOR_TYPE, newChannel,
-        CHANNEL_TYPE, newStep, SCENARIO_STEP_TYPE,
-        newContainer, newAnnotationDefElement, channelID,
-        newDataFlow, DATA_FLOW_TYPE, newAnnotation,
-        ANNOTATION_KEY, toID } = require('../src/SystemModel');
-const { create } = require('domain');
+import assert from 'assert'
+import { createParser } from '../src/lang/Lang.js'
+import {
+    newActor,
+    ACTOR_TYPE,
+    newChannel,
+    CHANNEL_TYPE,
+    newStep,
+    SCENARIO_STEP_TYPE,
+    newContainer,
+    newAnnotationDefElement,
+    channelID,
+    newDataFlow,
+    DATA_FLOW_TYPE,
+    newAnnotation,
+    ANNOTATION_KEY,
+    toID
+} from '../src/SystemModel.js'
 
 function createParserForTest()
 {

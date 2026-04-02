@@ -50,6 +50,4 @@ class SVGEventHandler
     }
 }
 
-module.exports = {
-    SVGEventHandler
-}
+export { SVGEventHandler }

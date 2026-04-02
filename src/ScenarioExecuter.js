@@ -2,7 +2,7 @@ const CHANNEL_REQUEST_COLOR = '#8B008B'
 const CHANNEL_RESPONSE_COLOR = '#A9A9A9'
 const DATA_FLOW_COLOR = CHANNEL_REQUEST_COLOR
 
-const { SCENARIO_STEP_TYPE }  = require('./SystemModel')
+import { SCENARIO_STEP_TYPE } from './SystemModel.js'
 /**
  * Base class for scenario execution and display
  */
@@ -73,6 +73,4 @@ class ScenarioExecuter
     }
 }
 
-module.exports = {
-    ScenarioExecuter
-}
+export { ScenarioExecuter }

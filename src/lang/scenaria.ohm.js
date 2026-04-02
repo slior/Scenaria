@@ -93,7 +93,4 @@ Scenaria {
 
 `
 
-module.exports = { 
-    grammar,
-    KEYWORDS
-}
+export { grammar, KEYWORDS }

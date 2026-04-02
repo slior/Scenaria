@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Scenaria IIFE bundle demo</title>
+  <script src="../dist/scenaria.iife.js"></script>
+  <style>
+    body { font-family: sans-serif; margin: 16px; }
+    scenaria-viewer { display: block; height: 400px; border: 1px solid #333; }
+  </style>
+</head>
+<body>
+  <p>Loads <code>dist/scenaria.iife.js</code> and renders <code>&lt;scenaria-viewer&gt;</code>.</p>
+  <scenaria-viewer id="v" spacing="20"></scenaria-viewer>
+  <script>
+    document.getElementById('v').code = String.raw`
+agent 'A' as a
+agent 'B' as b
+'s' {
+  a -('')-> b
+}
+`
+  </script>
+</body>
+</html>

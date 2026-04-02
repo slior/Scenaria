@@ -1,15 +1,33 @@
-const assert = require('assert')
-const { channelID, newChannel, CHANNEL_TYPE,
-        newActor,ACTOR_TYPE, newSystemModel,
-        isActor, newDataFlow, DATA_FLOW_TYPE,
-        isChannel, isDataFlow, isAnnotation, isContainer,
-        newAnnotation, newAnnotationDefElement, ANNOTATION_KEY, 
-        newContainer,ID_KEY,toID, 
-        resolveAnnotations, CONTAINER_KEY, assignContainerTo,
-        newModelObject, isModelObjectContainedIn, isTopLevelObject } = require('../src/SystemModel')
-
-const { outgoingChannelEdgeID, incomingChannelEdgeID, channelIDFromEdgeID} = require('../src/diagram/DiagramModel')
-const should = require('should')
+import assert from 'assert'
+import {
+    channelID,
+    newChannel,
+    CHANNEL_TYPE,
+    newActor,
+    ACTOR_TYPE,
+    newSystemModel,
+    isActor,
+    newDataFlow,
+    DATA_FLOW_TYPE,
+    isChannel,
+    isDataFlow,
+    isAnnotation,
+    isContainer,
+    newAnnotation,
+    newAnnotationDefElement,
+    ANNOTATION_KEY,
+    newContainer,
+    ID_KEY,
+    toID,
+    resolveAnnotations,
+    CONTAINER_KEY,
+    assignContainerTo,
+    newModelObject,
+    isModelObjectContainedIn,
+    isTopLevelObject
+} from '../src/SystemModel.js'
+import { outgoingChannelEdgeID, incomingChannelEdgeID, channelIDFromEdgeID } from '../src/diagram/DiagramModel.js'
+import should from 'should'
 
 describe("Model Classes", function() {
     it("Channel ID implementation is synchronized with model edge ID implementation", function() {

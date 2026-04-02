@@ -1,4 +1,4 @@
-const { ScenarioExecuter } = require('./ScenarioExecuter')
+import { ScenarioExecuter } from './ScenarioExecuter.js'
 
 /**
  * A scenario executer that runs one step at a time.
@@ -13,7 +13,7 @@ class ScenarioStepper extends ScenarioExecuter
         super(diagramController)
 
         if (!scenario) throw new Error("Invalid scenario when initializing a scenario stepper")
-        if (!scenarioInd || scenarioInd < 0) throw new Error(`Invalid scenario index: ${scenarioInd}`)
+        if (scenarioInd == null || scenarioInd < 0) throw new Error(`Invalid scenario index: ${scenarioInd}`)
         this._scenarioInd = scenarioInd
         this._scenario = scenario;
     }
@@ -61,6 +61,4 @@ class ScenarioStepper extends ScenarioExecuter
     }
 }
 
-module.exports = {
-    ScenarioStepper
-}
+export { ScenarioStepper }

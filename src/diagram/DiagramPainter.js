@@ -1,6 +1,6 @@
-const { EDGE_TYPE, ACTOR_TYPE, CHANNEL_TYPE,channelID } = require('../SystemModel')
-const { channelIDFromEdgeID } = require('./DiagramModel')
-const { SVGEventHandler } = require('./SVGEventHandler')
+import { EDGE_TYPE, ACTOR_TYPE, CHANNEL_TYPE, channelID } from '../SystemModel.js'
+import { channelIDFromEdgeID } from './DiagramModel.js'
+import { SVGEventHandler } from './SVGEventHandler.js'
 
 const USER_CAPTION_MARGIN = 5;
 const CAPTION_FONT_SIZE = 14;
@@ -808,7 +808,4 @@ function translatePointByNodeFace(point,face,h,w)
     }
 }
 
-module.exports = {
-    DiagramPainter,
-    CAPTION_FONT_SIZE
-}
+export { DiagramPainter, CAPTION_FONT_SIZE }

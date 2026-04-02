@@ -1,13 +1,21 @@
-const ELK = require('elkjs')
+import ELK from 'elkjs'
 const elk = new ELK()
 
-const { EDGE_TYPE,channelID,flowID,ACTOR_TYPE,
-        toID,isTopLevelObject,isContainer,
-        isModelObjectContainedIn, 
-        getContainedActors, getContainedChannels, getContainedContainers
-    } = require('../SystemModel')
-const { DiagramPainter, CAPTION_FONT_SIZE } = require("./DiagramPainter")
-const { incomingChannelEdgeID, outgoingChannelEdgeID } = require('./DiagramModel')
+import {
+    EDGE_TYPE,
+    channelID,
+    flowID,
+    ACTOR_TYPE,
+    toID,
+    isTopLevelObject,
+    isContainer,
+    isModelObjectContainedIn,
+    getContainedActors,
+    getContainedChannels,
+    getContainedContainers
+} from '../SystemModel.js'
+import { DiagramPainter, CAPTION_FONT_SIZE } from './DiagramPainter.js'
+import { incomingChannelEdgeID, outgoingChannelEdgeID } from './DiagramModel.js'
 
 const DRAW_MARGIN_HEIGHT = 10;
 const DRAW_TEXT_HEIGHT = 30;
@@ -368,12 +376,10 @@ function drawContainer(draw,graph,container, painter, parentGroup)
 }
 
 
-module.exports = {
+export {
     layoutModel,
     drawGraph,
     newLayoutOptionsFromInputs,
-
-    //for testing. should not be used outside this module.
-    graphNodeRepresentsAnActor 
-    , getContainedEdges
+    graphNodeRepresentsAnActor,
+    getContainedEdges
 }

@@ -1,5 +1,5 @@
 
-const { channelID} = require('../SystemModel')
+import { channelID } from '../SystemModel.js'
 
 const CHANNEL_EDGE_INCOMING_DELIM = ">>"
 const CHANNEL_EDGE_OUTGOING_DELIM = "<<"
@@ -30,8 +30,4 @@ function channelIDFromEdgeID(edgeID)
     return channelID
 }
 
-module.exports = {
-    incomingChannelEdgeID,
-    outgoingChannelEdgeID,
-    channelIDFromEdgeID
-}
+export { incomingChannelEdgeID, outgoingChannelEdgeID, channelIDFromEdgeID }

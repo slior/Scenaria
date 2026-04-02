@@ -1,7 +1,16 @@
-const { graphNodeRepresentsAnActor,getContainedEdges } = require('../src/diagram/DiagDraw');
-const { newActor,newChannel, newContainer,ACTOR_TYPE, CHANNEL_TYPE,
-        newDataFlow, newSystemModel, DATA_FLOW_TYPE, EDGE_TYPE
-        } = require('../src/SystemModel')
+import { graphNodeRepresentsAnActor, getContainedEdges } from '../src/diagram/DiagDraw.js'
+import {
+    newActor,
+    newChannel,
+    newContainer,
+    ACTOR_TYPE,
+    CHANNEL_TYPE,
+    newDataFlow,
+    newSystemModel,
+    DATA_FLOW_TYPE,
+    EDGE_TYPE
+} from '../src/SystemModel.js'
+import should from 'should'
 
 describe("Graph node type detection", function() {
     it("should correctly identify actors and non-actors in graph nodes", function() {

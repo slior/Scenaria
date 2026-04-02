@@ -197,6 +197,4 @@ class DiagramController
     }
 }
 
-module.exports = {
-    DiagramController
-}
+export { DiagramController }

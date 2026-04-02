@@ -1,32 +1,40 @@
-const _ohm = require('ohm-js')
-const ohm = _ohm.default || _ohm; //workaround to allow importing using common js in node (for testing), and packing w/ webpack.
+import * as _ohm from 'ohm-js'
+const ohm = _ohm.default || _ohm
 
-const { ACTOR_TYPE, DATA_FLOW_TYPE, CHANNEL_TYPE,
-        newChannel, newStep, SCENARIO_STEP_TYPE,
-        newDataFlow, newDataFlowStep, newActor,
-        ANNOTATION_KEY, newAnnotationDefElement, 
-        newSystemModel,newContainer,isActor, 
-        isChannel,
-        isDataFlow,
-        isAnnotation,
-        newAnnotation, toID,
-        isContainer} = require('../SystemModel')
+import {
+    ACTOR_TYPE,
+    DATA_FLOW_TYPE,
+    CHANNEL_TYPE,
+    newChannel,
+    newStep,
+    SCENARIO_STEP_TYPE,
+    newDataFlow,
+    newDataFlowStep,
+    newActor,
+    ANNOTATION_KEY,
+    newAnnotationDefElement,
+    newSystemModel,
+    newContainer,
+    isActor,
+    isChannel,
+    isDataFlow,
+    isAnnotation,
+    newAnnotation,
+    toID,
+    isContainer
+} from '../SystemModel.js'
+import { grammar as grammarSource, KEYWORDS } from './scenaria.ohm.js'
 
-
-function createGrammarNS()
-{
-    return ohm.createNamespace({BaseGrammar : ohm.grammar(loadGrammarSource())})
+function createGrammarNS() {
+    return ohm.createNamespace({ BaseGrammar: ohm.grammar(loadGrammarSource()) })
 }
 
-function loadGrammarSource()
-{
-    let grammarText = require(`./scenaria.ohm.js`).grammar
-    return grammarText;
+function loadGrammarSource() {
+    return grammarSource
 }
 
-function getLanguageKeywords()
-{
-    return Object.values(require(`./scenaria.ohm.js`).KEYWORDS)
+function getLanguageKeywords() {
+    return Object.values(KEYWORDS)
 }
 
 function resolveGrammar()
@@ -399,8 +407,5 @@ function createParser()
     }
 }
 
-module.exports = {
-    createParser,
-    getLanguageKeywords
-}
+export { createParser, getLanguageKeywords }
 

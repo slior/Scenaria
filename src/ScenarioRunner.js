@@ -1,5 +1,5 @@
 
-const { ScenarioExecuter } = require('./ScenarioExecuter')
+import { ScenarioExecuter } from './ScenarioExecuter.js'
 
 const RESET_STEP_RENDER_TIME = 800
 const NEXT_STEP_TIME = RESET_STEP_RENDER_TIME + 700
@@ -44,6 +44,4 @@ class ScenarioRunner extends ScenarioExecuter
     }
 }
 
-module.exports = {
-    ScenarioRunner
-}
+export { ScenarioRunner }

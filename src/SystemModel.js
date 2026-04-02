@@ -400,7 +400,7 @@ function toID(o)
 }
 
 
-module.exports = {
+export {
     EDGE_TYPE,
     ACTOR_TYPE,
     CHANNEL_TYPE,
@@ -424,7 +424,8 @@ module.exports = {
     isDataFlow,
     isAnnotation,
     newAnnotation,
-    toID, ID_KEY,
+    toID,
+    ID_KEY,
     isModelObjectContainedIn,
     isTopLevelObject,
     getContainedActors,
