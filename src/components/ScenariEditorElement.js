@@ -1,5 +1,6 @@
 import { getLanguageKeywords } from '../lang/Lang.js'
 import { createEditor } from '../Editor.js'
+import { SCENARIA_CHANGE_EVENT } from './scenaria-attrs.js'
 
 function debounce(fn, ms) {
     let t = 0
@@ -18,7 +19,7 @@ class ScenariEditorElement extends HTMLElement {
         super()
         this._api = null
         this._debouncedEmit = debounce(code => {
-            this.dispatchEvent(new CustomEvent('scenaria-change', { detail: { code }, bubbles: true }))
+            this.dispatchEvent(new CustomEvent(SCENARIA_CHANGE_EVENT, { detail: { code }, bubbles: true }))
         }, 200)
     }
 

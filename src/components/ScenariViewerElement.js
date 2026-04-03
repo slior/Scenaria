@@ -1,9 +1,15 @@
 import { ScenariaDiagram } from '../ScenariaDiagram.js'
 import { newLayoutOptionsFromInputs } from '../diagram/DiagDraw.js'
+import {
+    SHOW_NOTES_ATTR,
+    SCENARIA_READY_EVENT,
+    SCENARIA_ERROR_EVENT,
+    SCENARIA_MOVE_EVENT
+} from './scenaria-attrs.js'
 
 class ScenariViewerElement extends HTMLElement {
     static get observedAttributes() {
-        return ['code', 'spacing', 'show-notes']
+        return ['code', 'spacing', SHOW_NOTES_ATTR]
     }
 
     constructor() {
@@ -45,7 +51,7 @@ class ScenariViewerElement extends HTMLElement {
         if (!this._diagram) return
         if (name === 'code' && val != null) this._applyCode(val)
         if (name === 'spacing' && this.hasAttribute('code')) this._applyCode(this.getAttribute('code'))
-        if (name === 'show-notes') this._syncNotes()
+        if (name === SHOW_NOTES_ATTR) this._syncNotes()
     }
 
     _spacing() {
@@ -62,10 +68,10 @@ class ScenariViewerElement extends HTMLElement {
         const c = String(code)
         this._diagram.reset()
         this._diagram
-            .parseAndPresent(c, () => this.dispatchEvent(new CustomEvent('scenaria-move', { bubbles: true })), this._layoutOpts())
+            .parseAndPresent(c, () => this.dispatchEvent(new CustomEvent(SCENARIA_MOVE_EVENT, { bubbles: true })), this._layoutOpts())
             .then(model => {
                 this.dispatchEvent(
-                    new CustomEvent('scenaria-ready', {
+                    new CustomEvent(SCENARIA_READY_EVENT, {
                         detail: { scenarios: model.scenarios, model },
                         bubbles: true
                     })
@@ -74,7 +80,7 @@ class ScenariViewerElement extends HTMLElement {
             })
             .catch(err =>
                 this.dispatchEvent(
-                    new CustomEvent('scenaria-error', {
+                    new CustomEvent(SCENARIA_ERROR_EVENT, {
                         detail: { message: err.message },
                         bubbles: true
                     })
@@ -83,7 +89,8 @@ class ScenariViewerElement extends HTMLElement {
     }
 
     _syncNotes() {
-        const show = this.getAttribute('show-notes') === 'true' || this.getAttribute('show-notes') === ''
+        const v = this.getAttribute(SHOW_NOTES_ATTR)
+        const show = v === 'true' || v === ''
         try {
             if (show) this._diagram.displayNotes()
             else this._diagram.hideNotes()
@@ -111,7 +118,7 @@ class ScenariViewerElement extends HTMLElement {
         try {
             const model = this._diagram.setStateFromURL(encoded, onCode, onMove)
             this.dispatchEvent(
-                new CustomEvent('scenaria-ready', {
+                new CustomEvent(SCENARIA_READY_EVENT, {
                     detail: { scenarios: model.scenarios, model },
                     bubbles: true
                 })
@@ -119,7 +126,7 @@ class ScenariViewerElement extends HTMLElement {
             this._syncNotes()
         } catch (err) {
             this.dispatchEvent(
-                new CustomEvent('scenaria-error', {
+                new CustomEvent(SCENARIA_ERROR_EVENT, {
                     detail: { message: err.message },
                     bubbles: true
                 })

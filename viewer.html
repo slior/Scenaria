@@ -46,6 +46,11 @@
   <div id="cons" class="consoleText"></div>
   <span id="error" class="errorText"></span>
   <script type="module">
+    import {
+      SHOW_NOTES_ATTR,
+      SCENARIA_READY_EVENT,
+      SCENARIA_ERROR_EVENT
+    } from '/src/components/scenaria-attrs.js'
     const STATE_PARAM = 's'
     const viewer = document.getElementById('viewer')
     const scenarioSelect = document.getElementById('scenarioSelect')
@@ -70,12 +75,12 @@
       })
     }
 
-    viewer.addEventListener('scenaria-ready', e => {
+    viewer.addEventListener(SCENARIA_READY_EVENT, e => {
       setScenariosToSelect(e.detail.scenarios)
       showMsg('Model loaded.')
       showMsg('Done, from URL.')
     })
-    viewer.addEventListener('scenaria-error', e => showError(e.detail.message))
+    viewer.addEventListener(SCENARIA_ERROR_EVENT, e => showError(e.detail.message))
 
     const params = new URLSearchParams(window.location.search)
     if (params.has(STATE_PARAM)) {
@@ -107,7 +112,7 @@
     }
     document.getElementById('chkShowNotes').onchange = () => {
       const on = document.getElementById('chkShowNotes').checked
-      viewer.setAttribute('show-notes', on ? 'true' : 'false')
+      viewer.setAttribute(SHOW_NOTES_ATTR, on ? 'true' : 'false')
       try {
         if (on) viewer.showNotes()
         else viewer.hideNotes()

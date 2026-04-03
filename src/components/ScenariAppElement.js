@@ -1,3 +1,12 @@
+import './ScenariAppElement.css'
+import {
+    SHOW_NOTES_ATTR,
+    SCENARIA_CHANGE_EVENT,
+    SCENARIA_MOVE_EVENT,
+    SCENARIA_READY_EVENT,
+    SCENARIA_ERROR_EVENT
+} from './scenaria-attrs.js'
+
 const STATE_PARAM = 's'
 const VIEWER_PAGE = 'viewer.html'
 
@@ -6,44 +15,6 @@ class ScenariAppElement extends HTMLElement {
         if (this.querySelector('#_vw')) return
 
         this.innerHTML = `
-<style>
-  .errorText { color: red; font-family: Courier, monospace; }
-  .consoleText {
-    color: black; font-family: Courier, monospace;
-    overflow-y: auto; height: 100px; border: 1px solid black;
-  }
-  button {
-    color: #090909; padding: 0.7em 1.7em; font-size: 18px; border-radius: 0.5em;
-    background: #e8e8e8; border: 1px solid #e8e8e8;
-    transition: all .3s;
-    box-shadow: 6px 6px 12px #c5c5c5, -6px -6px 12px #ffffff;
-  }
-  button:active {
-    color: #666;
-    box-shadow: inset 4px 4px 12px #c5c5c5, inset -4px -4px 12px #ffffff;
-  }
-  .drawingWrap {
-    height: 30vh; width: 100%; border: 1px solid black;
-    overflow-y: scroll; border-radius: 6px;
-  }
-  scenaria-viewer { display: block; width: 100%; height: 100%; min-height: 100px; }
-  .wrapper {
-    width: 100%; display: flex; align-items: stretch;
-    justify-content: left; flex-direction: column;
-  }
-  .cmd {
-    position: relative; display: block; height: 40vh; width: 100%;
-    border: 1px solid #000; border-radius: 4px; overflow: hidden;
-    box-shadow: 0 8px 18px #4b1d3f;
-  }
-  scenaria-editor { display: block; height: 100%; }
-  .title-bar {
-    width: 100%; height: 40px; line-height: 40px; font-weight: 600;
-    background: #242424; color: #fff; border-bottom: 1px solid white;
-    padding-left: 5px;
-  }
-  .spacingInput { width: 60px; margin-left: 10px; }
-</style>
 <div class="drawingWrap"><scenaria-viewer id="_vw" spacing="20"></scenaria-viewer></div>
 <hr/>
 <div class="wrapper">
@@ -77,14 +48,14 @@ class ScenariAppElement extends HTMLElement {
         this._cons = this.querySelector('#_cons')
         this._err = this.querySelector('#_err')
 
-        this._ed.addEventListener('scenaria-change', e => {
+        this._ed.addEventListener(SCENARIA_CHANGE_EVENT, e => {
             this._vw.setAttribute('spacing', this.querySelector('#_spacing').value)
             this._vw.code = e.detail.code
         })
 
-        this._vw.addEventListener('scenaria-move', () => this._updateStateLink())
-        this._vw.addEventListener('scenaria-ready', () => this._updateStateLink())
-        this._vw.addEventListener('scenaria-error', e => this._showError(e.detail.message))
+        this._vw.addEventListener(SCENARIA_MOVE_EVENT, () => this._updateStateLink())
+        this._vw.addEventListener(SCENARIA_READY_EVENT, () => this._updateStateLink())
+        this._vw.addEventListener(SCENARIA_ERROR_EVENT, e => this._showError(e.detail.message))
 
         this.querySelector('#_btnReset').onclick = () => this._reset()
         this.querySelector('#_btnApply').onclick = () => this._parseAndDraw()
@@ -142,6 +113,7 @@ class ScenariAppElement extends HTMLElement {
             opt.value = String(ind)
             opt.innerHTML = scenario.name || `Scenario ${ind}`
             this._scenarioSelect.append(opt)
+            opt.selected = ind === 0 // select the first scenario by default
         })
     }
 
@@ -160,7 +132,7 @@ class ScenariAppElement extends HTMLElement {
             const code = this._getCodeFromEditor()
             this._vw.setAttribute('spacing', this.querySelector('#_spacing').value)
             this._vw.addEventListener(
-                'scenaria-ready',
+                SCENARIA_READY_EVENT,
                 e => {
                     this._setScenariosToSelect(e.detail.scenarios)
                     this._updateStateLink()
@@ -168,7 +140,7 @@ class ScenariAppElement extends HTMLElement {
                 },
                 { once: true }
             )
-            this._vw.addEventListener('scenaria-error', e => this._showError(e.detail.message), { once: true })
+            this._vw.addEventListener(SCENARIA_ERROR_EVENT, e => this._showError(e.detail.message), { once: true })
             this._vw.code = code
         } catch (err) {
             this._showError(err.toString())
@@ -241,7 +213,7 @@ class ScenariAppElement extends HTMLElement {
 
     _toggleNotes() {
         const on = this.querySelector('#_chkNotes').checked
-        this._vw.setAttribute('show-notes', on ? 'true' : 'false')
+        this._vw.setAttribute(SHOW_NOTES_ATTR, on ? 'true' : 'false')
         try {
             if (on) this._vw.showNotes()
             else this._vw.hideNotes()
@@ -254,7 +226,7 @@ class ScenariAppElement extends HTMLElement {
         const params = new URLSearchParams(window.location.search)
         if (params.has(STATE_PARAM)) {
             this._vw.addEventListener(
-                'scenaria-ready',
+                SCENARIA_READY_EVENT,
                 e => {
                     this._setScenariosToSelect(e.detail.scenarios)
                     this._updateStateLink()
@@ -263,7 +235,7 @@ class ScenariAppElement extends HTMLElement {
                 },
                 { once: true }
             )
-            this._vw.addEventListener('scenaria-error', e => this._showError(e.detail.message), { once: true })
+            this._vw.addEventListener(SCENARIA_ERROR_EVENT, e => this._showError(e.detail.message), { once: true })
             this._vw.setStateFromURL(params.get(STATE_PARAM), {
                 onCode: code => this._ed.setCode(code),
                 onMove: () => this._updateStateLink()
