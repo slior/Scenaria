@@ -4,10 +4,11 @@ This document provides guidance on deploying, building, testing, and maintaining
 
 ## 1. Deployment
 
-As a purely client-side application, Scenaria requires no backend infrastructure. Deployment is as simple as serving the contents of the project's root directory with any static web server.
+As a purely client-side application, Scenaria requires no backend infrastructure. How you deploy depends on whether you ship the **development** entry (`index.html` importing `src/`) or a **built** bundle (`dist/scenaria.iife.js` + HTML that loads it, as in `docker/index.html`).
 
-### Using Docker (Recommended)
-The easiest and most reliable way to deploy the application is by using the provided `Dockerfile`.
+### Using Docker (recommended for a production-style bundle)
+
+The `Dockerfile` runs `npm run build` and serves `docker/index.html` plus the contents of `dist/` with nginx.
 
 1. **Build the image:**
    ```bash
@@ -18,60 +19,75 @@ The easiest and most reliable way to deploy the application is by using the prov
    ```bash
    docker run -p 8080:80 scenaria-app
    ```
-This will start a web server on port 8080, serving the application.
 
-### Using a Simple Python Server
-For quick local testing without Docker, you can use Python's built-in web server.
+This serves the full **scenaria-app** UI at `http://localhost:8080`. The standalone **viewer** page (`viewer.html`) is intended for use with `npm run dev` and is not part of this image.
+
+### Local development server
+
+From the project root, with dependencies installed:
+
 ```bash
-# From the project root directory
-python3 -m http.server 8000
+npm run dev
 ```
-Then, access the application at `http://localhost:8000`.
 
-## 2. Local Development
+This starts the Vite dev server so `index.html` and `viewer.html` can load ES modules from `src/`.
 
-To run the application locally for development, you will need Node.js and npm installed.
+### Plain static server (built assets only)
 
-**1. Install Dependencies**:
+If you only run `python3 -m http.server` (or any static host) on the repo root **without** Vite, the default `index.html` will not work (it references `/src/...`). Use a small HTML page that loads `./dist/scenaria.iife.js` and `./dist/scenaria.css` (see `docker/index.html` or `examples/iife-demo.html`).
+
+## 2. Local development
+
+You need [Node.js](https://nodejs.org/) and npm.
+
+**1. Install dependencies:**
+
 ```bash
 npm install
 ```
 
-**2. Build the Code**:
-To build the code after making changes, run:
+**2. Run the dev server:**
+
+```bash
+npm run dev
+```
+
+**3. Build production bundles:**
+
 ```bash
 npm run build
 ```
-This command uses `webpack` to bundle all source files, starting from `src/AppMain.js`, into a single `main.js` file in the root directory.
+
+This runs **Vite** in library mode. Output is under `dist/`: `scenaria.es.js`, `scenaria.iife.js`, and `scenaria.css` (see `vite.config.js`).
 
 ## 3. Testing
 
-The project uses [Mocha](https://mochajs.org/) as its testing framework. Tests are located in the `/test` directory.
+Tests live in the `/test` directory and are run with **[Vitest](https://vitest.dev/)** (configured in `vite.config.js`).
 
-To run the test suite, execute the following command:
 ```bash
 npm test
 ```
-This will run all files ending in `.js` within the `/test` directory.
+
+For watch mode:
+
+```bash
+npm run test:watch
+```
 
 ## 4. Troubleshooting
 
-- **Parsing Errors**: If the Scenaria code is invalid, the diagram will not render. Check the browser's developer console for parsing errors originating from the `Lang.js` or `scenaria.ohm.js` modules. The UI should also display a parsing error message.
-- **Diagram Layout Issues**: If the diagram looks incorrect or fails to render, check the console for errors from `elkjs` or the `DiagDraw.js` module. The layout engine runs in a web worker, so errors might be logged with a "worker" context.
-- **Scenario Execution Errors**: If a scenario does not run as expected, use the "Step" button to execute it one step at a time to isolate the failing step. Check the console for errors from the `ScenarioExecuter.js` module.
+- **Parsing errors**: If the Scenaria source is invalid, the diagram will not render. Check the browser console for errors from the language/parser modules (`Lang.js`, grammar). The UI should also surface a parsing error when applicable.
+- **Diagram layout issues**: Check the console for errors from `elkjs` or `DiagDraw.js`. Layout runs on the main thread via `elkjs` in the current codebase.
+- **Scenario execution errors**: Step through with the arrow controls to isolate the failing step. Check the console for errors from scenario execution code (e.g. `ScenarioExecuter.js`).
 
-## 5. Dependency Management
+## 5. Dependency management
 
-Project dependencies are managed via `npm` and are defined in `package.json`.
+Dependencies are defined in `package.json`.
 
-- **To Check for Outdated Dependencies**:
+- **Check for outdated packages:**
   ```bash
   npm outdated
   ```
-- **To Update a Dependency**:
-  1. Update the version number in `package.json`.
-  2. Run `npm install` to download the new version.
-  3. Run the test suite (`npm test`) to ensure the update has not introduced breaking changes.
-  4. Manually test the application's core functionality.
+- **Update a dependency:** change the version in `package.json`, run `npm install`, then `npm test` and smoke-test the app.
 
-Due to the minimal nature of the project, dependencies should be updated with care, as a breaking change in a core library (like `elkjs` or `ohm-js`) could have a significant impact. 
+Core libraries (`elkjs`, `ohm-js`, CodeMirror, SVG.js) warrant extra care when upgrading.
