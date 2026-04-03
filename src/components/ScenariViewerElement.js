@@ -1,6 +1,8 @@
 import { ScenariaDiagram } from '../ScenariaDiagram.js'
 import { newLayoutOptionsFromInputs } from '../diagram/DiagDraw.js'
 import {
+    CODE_ATTR,
+    SPACING_ATTR,
     SHOW_NOTES_ATTR,
     SCENARIA_READY_EVENT,
     SCENARIA_ERROR_EVENT,
@@ -9,7 +11,7 @@ import {
 
 class ScenariViewerElement extends HTMLElement {
     static get observedAttributes() {
-        return ['code', 'spacing', SHOW_NOTES_ATTR]
+        return [CODE_ATTR, SPACING_ATTR, SHOW_NOTES_ATTR]
     }
 
     constructor() {
@@ -37,7 +39,7 @@ class ScenariViewerElement extends HTMLElement {
       <div id="container"></div>`
         const container = this.shadowRoot.getElementById('container')
         this._diagram = new ScenariaDiagram(container)
-        if (this.hasAttribute('code')) this.applyCode(this.getAttribute('code'))
+        if (this.hasAttribute(CODE_ATTR)) this.applyCode(this.getAttribute(CODE_ATTR))
     }
 
     disconnectedCallback() {
@@ -49,13 +51,13 @@ class ScenariViewerElement extends HTMLElement {
 
     attributeChangedCallback(name, _old, val) {
         if (!this._diagram) return
-        if (name === 'code' && val != null) this.applyCode(val)
-        if (name === 'spacing' && this.hasAttribute('code')) this.applyCode(this.getAttribute('code'))
+        if (name === CODE_ATTR && val != null) this.applyCode(val)
+        if (name === SPACING_ATTR && this.hasAttribute(CODE_ATTR)) this.applyCode(this.getAttribute(CODE_ATTR))
         if (name === SHOW_NOTES_ATTR) this._syncNotes()
     }
 
     _spacing() {
-        const v = parseInt(this.getAttribute('spacing') || '20', 10)
+        const v = parseInt(this.getAttribute(SPACING_ATTR) || '20', 10)
         return Number.isFinite(v) ? v : 20
     }
 
@@ -123,12 +125,12 @@ class ScenariViewerElement extends HTMLElement {
     }
 
     set code(v) {
-        if (v == null) this.removeAttribute('code')
-        else this.setAttribute('code', v)
+        if (v == null) this.removeAttribute(CODE_ATTR)
+        else this.setAttribute(CODE_ATTR, v)
     }
 
     get code() {
-        return this.getAttribute('code')
+        return this.getAttribute(CODE_ATTR)
     }
 
     /**

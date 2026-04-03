@@ -1,3 +1,9 @@
+/** HTML attribute for Scenaria source text (`<scenaria-viewer>`, `<scenaria-editor>`, `<scenaria-app>`). */
+export const CODE_ATTR = 'code'
+
+/** HTML attribute on `<scenaria-viewer>` for node/edge layout spacing (number, default 20). */
+export const SPACING_ATTR = 'spacing'
+
 /** HTML attribute on `<scenaria-viewer>` for diagram notes (`true` or empty = show). */
 export const SHOW_NOTES_ATTR = 'show-notes'
 

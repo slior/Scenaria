@@ -1,5 +1,7 @@
 import './ScenariAppElement.css'
 import {
+    CODE_ATTR,
+    SPACING_ATTR,
     SHOW_NOTES_ATTR,
     SCENARIA_CHANGE_EVENT,
     SCENARIA_MOVE_EVENT,
@@ -15,7 +17,7 @@ class ScenariAppElement extends HTMLElement {
         if (this.querySelector('#_vw')) return
 
         this.innerHTML = `
-<div class="drawingWrap"><scenaria-viewer id="_vw" spacing="20"></scenaria-viewer></div>
+<div class="drawingWrap"><scenaria-viewer id="_vw" ${SPACING_ATTR}="20"></scenaria-viewer></div>
 <hr/>
 <div class="wrapper">
   <div class="title-bar">Program</div>
@@ -49,7 +51,7 @@ class ScenariAppElement extends HTMLElement {
         this._err = this.querySelector('#_err')
 
         this._ed.addEventListener(SCENARIA_CHANGE_EVENT, e => {
-            this._vw.setAttribute('spacing', this.querySelector('#_spacing').value)
+            this._vw.setAttribute(SPACING_ATTR, this.querySelector('#_spacing').value)
             this._vw.code = e.detail.code
         })
 
@@ -64,14 +66,14 @@ class ScenariAppElement extends HTMLElement {
         this.querySelector('#_btnFwd').onclick = () => this._stepForward()
         this.querySelector('#_chkNotes').onchange = () => this._toggleNotes()
         this.querySelector('#_spacing').onchange = () => {
-            this._vw.setAttribute('spacing', this.querySelector('#_spacing').value)
+            this._vw.setAttribute(SPACING_ATTR, this.querySelector('#_spacing').value)
             if (this._vw.code) this._vw.code = this._vw.code
         }
 
-        if (this.hasAttribute('code')) {
-            const c = this.getAttribute('code')
+        if (this.hasAttribute(CODE_ATTR)) {
+            const c = this.getAttribute(CODE_ATTR)
             this._ed.setCode(c)
-            this._vw.setAttribute('spacing', this.querySelector('#_spacing').value)
+            this._vw.setAttribute(SPACING_ATTR, this.querySelector('#_spacing').value)
             this._vw.code = c
         }
 
@@ -129,7 +131,7 @@ class ScenariAppElement extends HTMLElement {
         try {
             this._clearError()
             const code = this._getCodeFromEditor()
-            this._vw.setAttribute('spacing', this.querySelector('#_spacing').value)
+            this._vw.setAttribute(SPACING_ATTR, this.querySelector('#_spacing').value)
             this._vw.addEventListener(
                 SCENARIA_READY_EVENT,
                 e => {

@@ -12,6 +12,8 @@ export { ScenariViewerElement } from './ScenariViewerElement.js'
 export { ScenariEditorElement } from './ScenariEditorElement.js'
 export { ScenariAppElement } from './ScenariAppElement.js'
 export {
+    CODE_ATTR,
+    SPACING_ATTR,
     SHOW_NOTES_ATTR,
     SCENARIA_READY_EVENT,
     SCENARIA_ERROR_EVENT,

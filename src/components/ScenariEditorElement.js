@@ -1,6 +1,6 @@
 import { getLanguageKeywords } from '../lang/Lang.js'
 import { createEditor } from '../Editor.js'
-import { SCENARIA_CHANGE_EVENT } from './scenaria-attrs.js'
+import { CODE_ATTR, SCENARIA_CHANGE_EVENT } from './scenaria-attrs.js'
 
 function debounce(fn, ms) {
     let t = 0
@@ -12,7 +12,7 @@ function debounce(fn, ms) {
 
 class ScenariEditorElement extends HTMLElement {
     static get observedAttributes() {
-        return ['code', 'readonly']
+        return [CODE_ATTR, 'readonly']
     }
 
     constructor() {
@@ -30,7 +30,7 @@ class ScenariEditorElement extends HTMLElement {
         this._editorDiv.style.minHeight = '120px'
         this.appendChild(this._editorDiv)
 
-        const initial = this.getAttribute('code') || ''
+        const initial = this.getAttribute(CODE_ATTR) || ''
         const readonly = this.hasAttribute('readonly')
         this._api = createEditor(this._editorDiv, getLanguageKeywords(), {
             initialDoc: initial,
@@ -50,7 +50,7 @@ class ScenariEditorElement extends HTMLElement {
 
     attributeChangedCallback(name, _old, val) {
         if (!this._api) return
-        if (name === 'code' && val != null) this._api.setCode(val)
+        if (name === CODE_ATTR && val != null) this._api.setCode(val)
     }
 
     getCode() {
