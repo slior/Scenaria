@@ -37,7 +37,7 @@ class ScenariViewerElement extends HTMLElement {
       <div id="container"></div>`
         const container = this.shadowRoot.getElementById('container')
         this._diagram = new ScenariaDiagram(container)
-        if (this.hasAttribute('code')) this._applyCode(this.getAttribute('code'))
+        if (this.hasAttribute('code')) this.applyCode(this.getAttribute('code'))
     }
 
     disconnectedCallback() {
@@ -49,8 +49,8 @@ class ScenariViewerElement extends HTMLElement {
 
     attributeChangedCallback(name, _old, val) {
         if (!this._diagram) return
-        if (name === 'code' && val != null) this._applyCode(val)
-        if (name === 'spacing' && this.hasAttribute('code')) this._applyCode(this.getAttribute('code'))
+        if (name === 'code' && val != null) this.applyCode(val)
+        if (name === 'spacing' && this.hasAttribute('code')) this.applyCode(this.getAttribute('code'))
         if (name === SHOW_NOTES_ATTR) this._syncNotes()
     }
 
@@ -63,16 +63,39 @@ class ScenariViewerElement extends HTMLElement {
         return newLayoutOptionsFromInputs(this._spacing())
     }
 
-    _applyCode(code) {
+    /**
+     * @param {string} code
+     * @param {{ forceReset?: boolean }} [options] — if forceReset, clear diagram on parse failure (e.g. Apply button)
+     */
+    applyCode(code, options = {}) {
+        this._applyCode(code, options)
+    }
+
+    _applyCode(code, { forceReset = false } = {}) {
         if (code == null) return
         const c = String(code)
+
+        let model
+        try {
+            model = this._diagram.tryParseCode(c)
+        } catch (err) {
+            if (forceReset) this._diagram.reset()
+            this.dispatchEvent(
+                new CustomEvent(SCENARIA_ERROR_EVENT, {
+                    detail: { message: err.message },
+                    bubbles: true
+                })
+            )
+            return
+        }
+
         this._diagram.reset()
         this._diagram
-            .parseAndPresent(c, () => this.dispatchEvent(new CustomEvent(SCENARIA_MOVE_EVENT, { bubbles: true })), this._layoutOpts())
-            .then(model => {
+            .presentModel(model, () => this.dispatchEvent(new CustomEvent(SCENARIA_MOVE_EVENT, { bubbles: true })), this._layoutOpts())
+            .then(m => {
                 this.dispatchEvent(
                     new CustomEvent(SCENARIA_READY_EVENT, {
-                        detail: { scenarios: model.scenarios, model },
+                        detail: { scenarios: m.scenarios, model: m },
                         bubbles: true
                     })
                 )

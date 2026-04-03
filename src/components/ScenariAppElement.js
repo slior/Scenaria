@@ -128,7 +128,6 @@ class ScenariAppElement extends HTMLElement {
     _parseAndDraw() {
         try {
             this._clearError()
-            this._vw.reset()
             const code = this._getCodeFromEditor()
             this._vw.setAttribute('spacing', this.querySelector('#_spacing').value)
             this._vw.addEventListener(
@@ -141,7 +140,7 @@ class ScenariAppElement extends HTMLElement {
                 { once: true }
             )
             this._vw.addEventListener(SCENARIA_ERROR_EVENT, e => this._showError(e.detail.message), { once: true })
-            this._vw.code = code
+            this._vw.applyCode(code, { forceReset: true })
         } catch (err) {
             this._showError(err.toString())
         }

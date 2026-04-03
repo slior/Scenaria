@@ -47,15 +47,24 @@ class ScenariaDiagram {
      * @param {Object} layoutInputs
      */
     presentModel(model, moveCB, layoutInputs) {
+        this._model = model
         this._topLevelSVG = this._createSVGImpl(this._drawingContainer)
+        // Capture the SVG reference at call time. If reset() is called before the
+        // async layout resolves, this._topLevelSVG will point to a newer SVG and
+        // this render will be treated as stale — preventing double-draw into the
+        // same SVG when _applyCode is triggered concurrently (e.g. spacing + code
+        // attributes both changing in the same synchronous block).
+        const svgForThisRender = this._topLevelSVG
 
         return layoutModel(model, layoutInputs)
             .then(g => {
+                if (this._topLevelSVG !== svgForThisRender) return null
                 this._graph = g
-                return drawGraph(this._topLevelSVG, g, moveCB)
+                return drawGraph(svgForThisRender, g, moveCB)
             })
             .then(diagramPainter => {
-                this._diagramController = new DiagramController(diagramPainter.svgElements, this._topLevelSVG)
+                if (!diagramPainter) return model
+                this._diagramController = new DiagramController(diagramPainter.svgElements, svgForThisRender)
                 return model
             })
     }
@@ -167,14 +176,23 @@ class ScenariaDiagram {
     }
 
     /**
+     * Parse program text and resolve annotations. Throws if code is invalid.
+     * @param {string} code
+     * @returns {Object} resolved model
+     */
+    tryParseCode(code) {
+        const model = this.parseCode(code)
+        return resolveAnnotations(model)
+    }
+
+    /**
      * @param {string} code
      * @param {() => void} [moveCB]
      * @param {Object} layoutInputs
      */
     parseAndPresent(code, moveCB, layoutInputs) {
-        this._model = this.parseCode(code)
+        this._model = this.tryParseCode(code)
         console.log(`Parsed code: ${JSON.stringify(this._model)}`)
-        this._model = resolveAnnotations(this._model)
         return this.presentModel(this._model, moveCB, layoutInputs)
     }
 
