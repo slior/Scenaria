@@ -274,6 +274,7 @@ class DiagramPainter
 
         if (points.length > 2)
         { //we have bend points
+            let prevCurveRadius = 0;
             for (var i = 0; i < points.length - 2; i++) // Loop through the points array, creating rounded corners
             {
                 let [xlast,ylast] = points[i]
@@ -281,7 +282,8 @@ class DiagramPainter
                 let [xnextnext,ynextnext] = points[i+2]
                 let isHoriz = ynext == ylast; //is the line to the next point horizontal or vertical
 
-                let curveRadius = determineCornerRadius(points[i],points[i+1],points[i+2])
+                let curveRadius = determineCornerRadius(points[i],points[i+1],points[i+2],prevCurveRadius)
+                prevCurveRadius = curveRadius;
                 let isExtendingPositive = isHoriz ? (xnext > xlast) : (ynext > ylast) //is the next point extends the last point in the positive direction (down or to the right)
                 let isCurvingPositive = isHoriz ? ynextnext > ynext : xnextnext > xnext; //is the point after the next extends in the positive direction (down or to the right)
                 //The rounded corner starts just before the next point, and ends right after it.
@@ -303,7 +305,7 @@ class DiagramPainter
         path.stroke({width: 1, color : DEFAULT_EDGE_COLOR}).fill(NO_FILL)
         return path;
 
-        function determineCornerRadius(p1,p2,p3)
+        function determineCornerRadius(p1,p2,p3, prevRadius = 0)
         {
             let [x1,y1] = p1;
             let [x2,y2] = p2;
@@ -312,8 +314,11 @@ class DiagramPainter
             let isHoriz = y2 == y1
             let afterBendDistance = isHoriz ? Math.abs(y3-y2) : Math.abs(x3-x2)
             let beforeBendDistance = isHoriz ? Math.abs(x2-x1) : Math.abs(y2-y1)
+            // Subtract the radius consumed by the previous arc from the shared segment,
+            // preventing the next arc's start point from overshooting the current cursor position.
+            let effectiveBefore = Math.max(beforeBendDistance - prevRadius, 0)
 
-            let distanceToCompare = Math.min(afterBendDistance,beforeBendDistance)
+            let distanceToCompare = Math.min(effectiveBefore, afterBendDistance)
 
             return distanceToCompare < DEFAULT_LINE_CORNER_RADIUS ? 
                      distanceToCompare/2 : 
