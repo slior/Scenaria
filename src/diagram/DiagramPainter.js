@@ -207,6 +207,13 @@ class DiagramPainter
         addTooltipIfAvailable(channel.text, c);
         if (channel.type == CHANNEL_TYPE.REQ_RES)
             this._drawReqResDecoration(g,channel,parentModelObj)
+        // Store the circle's offset relative to the group's bounding box.
+        // The text label decoration extends the group bbox beyond the circle,
+        // so g.x()/g.y()/g.height() alone give wrong connection points after drag.
+        g._circleYOffset = c.y() - g.y();
+        g._circleXOffset = c.x() - g.x();
+        g._circleH = c.height();
+        g._circleW = c.width();
         SVGEventHandler.attachTo(g,() => { 
                                     this._redrawEdges(channel,g)
                                     this._raiseNodeMoved()
@@ -693,8 +700,8 @@ function addTooltipIfAvailable(text, svgEl)
 
 function updateGraphObjPositionAttributes(graphNode, svgEl)
 {
-    graphNode.x = svgEl.x();
-    graphNode.y = svgEl.y();
+    graphNode.x = svgEl.x() + (svgEl._circleXOffset || 0);
+    graphNode.y = svgEl.y() + (svgEl._circleYOffset || 0);
 }
 
 /*
@@ -739,14 +746,21 @@ function reconstructEdge(edge, targetPoint, sourcePoint, isVertical)
  */
 function findEdgePoints(isIncoming, otherNode, svgEl) 
 {
-    let sourceX = isIncoming ? otherNode.x : svgEl.x();
-    let sourceY = isIncoming ? otherNode.y : svgEl.y();
-    let sourceH = isIncoming ? otherNode.height : svgEl.height();
-    let sourceW = isIncoming ? otherNode.width : svgEl.width();
-    let targetX = isIncoming ? svgEl.x() : otherNode.x;
-    let targetY = isIncoming ? svgEl.y() : otherNode.y;
-    let targetH = isIncoming ? svgEl.height() : otherNode.height;
-    let targetW = isIncoming ? svgEl.width() : otherNode.width;
+    // Use circle-specific offsets when the svgEl is a channel node (circle with text label).
+    // Without these offsets, the group's bounding box includes the text decoration,
+    // giving wrong midpoint calculations for connection points.
+    const svgElX = svgEl.x() + (svgEl._circleXOffset || 0);
+    const svgElY = svgEl.y() + (svgEl._circleYOffset || 0);
+    const svgElH = svgEl._circleH || svgEl.height();
+    const svgElW = svgEl._circleW || svgEl.width();
+    let sourceX = isIncoming ? otherNode.x : svgElX;
+    let sourceY = isIncoming ? otherNode.y : svgElY;
+    let sourceH = isIncoming ? otherNode.height : svgElH;
+    let sourceW = isIncoming ? otherNode.width : svgElW;
+    let targetX = isIncoming ? svgElX : otherNode.x;
+    let targetY = isIncoming ? svgElY : otherNode.y;
+    let targetH = isIncoming ? svgElH : otherNode.height;
+    let targetW = isIncoming ? svgElW : otherNode.width;
 
     let dx = targetX - sourceX;
     let dy = targetY - sourceY;
